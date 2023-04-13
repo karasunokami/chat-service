@@ -6,6 +6,8 @@ type Config struct {
 	Servers ServersConfig `toml:"servers"`
 }
 
+const GlobalEnvProd = "prod"
+
 type GlobalConfig struct {
 	Env string `toml:"env" validation:"required,oneof=dev stage prod"`
 }
