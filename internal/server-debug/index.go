@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/karasunokami/chat-service/internal/logger"
+
 	"github.com/labstack/echo/v4"
 )
 

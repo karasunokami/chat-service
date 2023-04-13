@@ -9,11 +9,11 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/karasunokami/chat-service/internal/logger"
-	"golang.org/x/sync/errgroup"
-
 	"github.com/karasunokami/chat-service/internal/config"
+	"github.com/karasunokami/chat-service/internal/logger"
 	serverdebug "github.com/karasunokami/chat-service/internal/server-debug"
+
+	"golang.org/x/sync/errgroup"
 )
 
 var configPath = flag.String("config", "configs/config.toml", "Path to config file")

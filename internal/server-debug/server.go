@@ -5,17 +5,17 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	_ "net/http/pprof"
+	_ "net/http/pprof" //nolint:gosec
 	"time"
 
 	"github.com/karasunokami/chat-service/internal/buildinfo"
 	"github.com/karasunokami/chat-service/internal/logger"
-	"github.com/labstack/echo/v4"
-	"go.uber.org/zap/zapcore"
-	"golang.org/x/sync/errgroup"
 
+	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	"golang.org/x/sync/errgroup"
 )
 
 const (
