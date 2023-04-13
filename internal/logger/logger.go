@@ -17,6 +17,8 @@ type Options struct {
 	productionMode bool
 }
 
+var Al zap.AtomicLevel
+
 func MustInit(opts Options) {
 	if err := Init(opts); err != nil {
 		panic(err)
@@ -33,6 +35,8 @@ func Init(opts Options) error {
 		return fmt.Errorf("zap parse atomic level, err=%w", err)
 	}
 
+	Al = al
+
 	config := zap.NewProductionEncoderConfig()
 	config.EncodeTime = zapcore.ISO8601TimeEncoder
 	config.TimeKey = "T"
@@ -47,7 +51,7 @@ func Init(opts Options) error {
 	}
 
 	cores := []zapcore.Core{
-		zapcore.NewCore(encoder, zapcore.AddSync(os.Stdout), al.Level()),
+		zapcore.NewCore(encoder, zapcore.AddSync(os.Stdout), al),
 	}
 	l := zap.New(zapcore.NewTee(cores...))
 	zap.ReplaceGlobals(l)
