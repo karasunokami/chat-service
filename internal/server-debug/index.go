@@ -35,7 +35,7 @@ func (i indexPage) handler(eCtx echo.Context) error {
 	<h2>Chat Service Debug</h2>
 	<ul>
 		{{range  .Pages}}
-			 <li><a href="{{.Path}}">{{.Path}}</a>{{.Description}}</li>
+			 <li><a href="{{.Path}}">{{.Path}}</a> {{.Description}}</li>
 		{{end}}
 	</ul>
 
