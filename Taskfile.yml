@@ -33,7 +33,7 @@ tasks:
   fmt:
     - echo "- Format"
     - docker run --rm -v "$(pwd):/app" -w /app chat-service-tools gofumpt -l -w {{.GO_FILES}}
-    # - docker run --rm -v "$(pwd):/app" -w /app chat-service-tools gci -l {{.GO_MODULE}} {{.GO_FILES}}
+    - docker run --rm -v "$(pwd):/app" -w /app chat-service-tools gci -l {{.GO_MODULE}} {{.GO_FILES}}
 
   lint:
     cmds:
@@ -60,6 +60,11 @@ tasks:
     cmds:
       - echo "- Build"
       - go build ./cmd/chat-service
+
+  gen:
+    cmds:
+      - echo "- Gen"
+      - docker run --rm -v "$(pwd):/app" -w /app chat-service-tools go generate ./...
 
   dev-tools:install:
     cmds:
