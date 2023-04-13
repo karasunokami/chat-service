@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/karasunokami/chat-system/internal/validator"
+	"github.com/karasunokami/chat-service/internal/validator"
 
 	"github.com/stretchr/testify/assert"
 )

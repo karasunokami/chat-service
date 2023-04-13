@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/karasunokami/chat-system/internal/validator"
+	"github.com/karasunokami/chat-service/internal/validator"
 
 	"github.com/pelletier/go-toml"
 )

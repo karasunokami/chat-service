@@ -5,7 +5,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/karasunokami/chat-system/internal/config"
+	"github.com/karasunokami/chat-service/internal/config"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

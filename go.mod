@@ -1,4 +1,4 @@
-module github.com/karasunokami/chat-system
+module github.com/karasunokami/chat-service
 
 go 1.20
 
@@ -7,6 +7,7 @@ require (
 	github.com/kazhuravlev/options-gen v0.28.4
 	github.com/pelletier/go-toml v1.9.5
 	github.com/stretchr/testify v1.8.2
+	go.uber.org/zap v1.24.0
 )
 
 require (
@@ -15,6 +16,8 @@ require (
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/leodido/go-urn v1.2.2 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	go.uber.org/atomic v1.7.0 // indirect
+	go.uber.org/multierr v1.6.0 // indirect
 	golang.org/x/crypto v0.7.0 // indirect
 	golang.org/x/sys v0.6.0 // indirect
 	golang.org/x/text v0.8.0 // indirect

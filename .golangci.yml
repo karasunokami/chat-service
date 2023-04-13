@@ -11,7 +11,7 @@ linters-settings:
     custom-order: true
     sections:
       - standard
-      - prefix(github.com/karasunokami/chat-system)
+      - prefix(github.com/karasunokami/chat-service)
       - default
 
   godox:
