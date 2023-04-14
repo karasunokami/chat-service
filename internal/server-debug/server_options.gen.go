@@ -3,6 +3,7 @@ package serverdebug
 
 import (
 	fmt461e464ebed9 "fmt"
+	_ "net/http/pprof"
 
 	errors461e464ebed9 "github.com/kazhuravlev/options-gen/pkg/errors"
 	validator461e464ebed9 "github.com/kazhuravlev/options-gen/pkg/validator"

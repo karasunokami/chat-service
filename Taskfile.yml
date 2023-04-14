@@ -48,8 +48,8 @@ tasks:
         docker run --rm \
           -v "$(pwd):/app" -w /app \
           -v "{{.GOLANGCI_LINT_CACHE}}:/root/.cache" \
-          golangci/golangci-lint:{{.GOLANGCI_LINT_VERSION}} \
-          git config --global --add safe.directory . & golangci-lint {{.CLI_ARGS}}
+          chat-service-tools \
+          golangci-lint {{.CLI_ARGS}}
 
   tests:
     cmds:
@@ -69,4 +69,8 @@ tasks:
   dev-tools:install:
     cmds:
       - echo "- Install dev tools"
-      - docker build . -f tools.dockerfile -t chat-service-tools
+      - |
+        docker build . \
+        -f tools.dockerfile \
+        --build-arg GOLANGCI_LINT_VERSION={{.GOLANGCI_LINT_VERSION}} \
+        -t chat-service-tools
