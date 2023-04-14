@@ -1,0 +1,76 @@
+# https://taskfile.dev
+version: '3'
+
+silent: true
+
+vars:
+  GO_MODULE: github.com/karasunokami/chat-service
+  GO_FILES:
+    sh: find . -type f -name '*.go' -not -path "./vendor/*" -not -path "*.gen.go" | tr "\n" " "
+
+  GOLANGCI_LINT_VERSION: v1.52.2
+  GOLANGCI_LINT_CACHE:
+    sh: echo "$HOME/.libscache"
+
+tasks:
+  default:
+    cmds:
+      - task: tidy
+      - task: fmt
+      - task: lint
+      - task: tests
+      - task: build
+
+  tidy:
+    - echo "- Tidy"
+    - go mod tidy
+    - task: vendor
+
+  vendor:
+    - echo "- Vendor"
+    - go mod vendor
+
+  fmt:
+    - echo "- Format"
+    - docker run --rm -v "$(pwd):/app" -w /app chat-service-tools gofumpt -l -w {{.GO_FILES}}
+    - docker run --rm -v "$(pwd):/app" -w /app chat-service-tools gci -l {{.GO_MODULE}} {{.GO_FILES}}
+
+  lint:
+    cmds:
+      - echo "- Lint"
+      - mkdir -p {{.GOLANGCI_LINT_CACHE}}
+      - task: lint:cmd
+        vars: {CLI_ARGS: "run -v --fix --timeout=5m ./..."}
+
+  lint:cmd:
+    cmds:
+      - |
+        docker run --rm \
+          -v "$(pwd):/app" -w /app \
+          -v "{{.GOLANGCI_LINT_CACHE}}:/root/.cache" \
+          chat-service-tools \
+          golangci-lint {{.CLI_ARGS}}
+
+  tests:
+    cmds:
+      - echo "- Tests"
+      - go test -race ./...
+
+  build:
+    cmds:
+      - echo "- Build"
+      - go build ./cmd/chat-service
+
+  gen:
+    cmds:
+      - echo "- Gen"
+      - docker run --rm -v "$(pwd):/app" -w /app chat-service-tools go generate ./...
+
+  dev-tools:install:
+    cmds:
+      - echo "- Install dev tools"
+      - |
+        docker build . \
+        -f tools.dockerfile \
+        --build-arg GOLANGCI_LINT_VERSION={{.GOLANGCI_LINT_VERSION}} \
+        -t chat-service-tools
