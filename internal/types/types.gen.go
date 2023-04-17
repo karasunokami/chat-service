@@ -13,7 +13,7 @@ import (
 var ChatIDNil ChatID
 
 type ChatID struct {
-	NUUID uuid.NullUUID
+	ID uuid.NullUUID
 }
 
 func NewChatID() ChatID {
@@ -23,7 +23,7 @@ func NewChatID() ChatID {
 	}
 
 	return ChatID{
-		NUUID: uuid.NullUUID{
+		ID: uuid.NullUUID{
 			UUID:  u,
 			Valid: true,
 		},
@@ -31,11 +31,11 @@ func NewChatID() ChatID {
 }
 
 func (c *ChatID) MarshalText() (text []byte, err error) {
-	return c.NUUID.MarshalText()
+	return c.ID.MarshalText()
 }
 
 func (c *ChatID) UnmarshalText(text []byte) error {
-	return c.NUUID.UnmarshalText(text)
+	return c.ID.UnmarshalText(text)
 }
 
 func (c *ChatID) Matches(x interface{}) bool {
@@ -47,19 +47,19 @@ func (c *ChatID) Matches(x interface{}) bool {
 }
 
 func (c *ChatID) String() string {
-	return c.NUUID.UUID.String()
+	return c.ID.UUID.String()
 }
 
 func (c ChatID) Value() (driver.Value, error) {
-	return c.NUUID.UUID.Value()
+	return c.ID.UUID.Value()
 }
 
 func (c *ChatID) Scan(src any) error {
-	return c.NUUID.Scan(src)
+	return c.ID.Scan(src)
 }
 
 func (c ChatID) Validate() error {
-	if !c.NUUID.Valid {
+	if !c.ID.Valid {
 		return errors.New("")
 	}
 
@@ -73,7 +73,7 @@ func (c *ChatID) IsZero() bool {
 var MessageIDNil MessageID
 
 type MessageID struct {
-	NUUID uuid.NullUUID
+	ID uuid.NullUUID
 }
 
 func NewMessageID() MessageID {
@@ -83,7 +83,7 @@ func NewMessageID() MessageID {
 	}
 
 	return MessageID{
-		NUUID: uuid.NullUUID{
+		ID: uuid.NullUUID{
 			UUID:  u,
 			Valid: true,
 		},
@@ -91,11 +91,11 @@ func NewMessageID() MessageID {
 }
 
 func (c *MessageID) MarshalText() (text []byte, err error) {
-	return c.NUUID.MarshalText()
+	return c.ID.MarshalText()
 }
 
 func (c *MessageID) UnmarshalText(text []byte) error {
-	return c.NUUID.UnmarshalText(text)
+	return c.ID.UnmarshalText(text)
 }
 
 func (c *MessageID) Matches(x interface{}) bool {
@@ -107,19 +107,19 @@ func (c *MessageID) Matches(x interface{}) bool {
 }
 
 func (c *MessageID) String() string {
-	return c.NUUID.UUID.String()
+	return c.ID.UUID.String()
 }
 
 func (c MessageID) Value() (driver.Value, error) {
-	return c.NUUID.UUID.Value()
+	return c.ID.UUID.Value()
 }
 
 func (c *MessageID) Scan(src any) error {
-	return c.NUUID.Scan(src)
+	return c.ID.Scan(src)
 }
 
 func (c MessageID) Validate() error {
-	if !c.NUUID.Valid {
+	if !c.ID.Valid {
 		return errors.New("")
 	}
 
@@ -133,7 +133,7 @@ func (c *MessageID) IsZero() bool {
 var ProblemIDNil ProblemID
 
 type ProblemID struct {
-	NUUID uuid.NullUUID
+	ID uuid.NullUUID
 }
 
 func NewProblemID() ProblemID {
@@ -143,7 +143,7 @@ func NewProblemID() ProblemID {
 	}
 
 	return ProblemID{
-		NUUID: uuid.NullUUID{
+		ID: uuid.NullUUID{
 			UUID:  u,
 			Valid: true,
 		},
@@ -151,11 +151,11 @@ func NewProblemID() ProblemID {
 }
 
 func (c *ProblemID) MarshalText() (text []byte, err error) {
-	return c.NUUID.MarshalText()
+	return c.ID.MarshalText()
 }
 
 func (c *ProblemID) UnmarshalText(text []byte) error {
-	return c.NUUID.UnmarshalText(text)
+	return c.ID.UnmarshalText(text)
 }
 
 func (c *ProblemID) Matches(x interface{}) bool {
@@ -167,19 +167,19 @@ func (c *ProblemID) Matches(x interface{}) bool {
 }
 
 func (c *ProblemID) String() string {
-	return c.NUUID.UUID.String()
+	return c.ID.UUID.String()
 }
 
 func (c ProblemID) Value() (driver.Value, error) {
-	return c.NUUID.UUID.Value()
+	return c.ID.UUID.Value()
 }
 
 func (c *ProblemID) Scan(src any) error {
-	return c.NUUID.Scan(src)
+	return c.ID.Scan(src)
 }
 
 func (c ProblemID) Validate() error {
-	if !c.NUUID.Valid {
+	if !c.ID.Valid {
 		return errors.New("")
 	}
 
@@ -193,7 +193,7 @@ func (c *ProblemID) IsZero() bool {
 var UserIDNil UserID
 
 type UserID struct {
-	NUUID uuid.NullUUID
+	ID uuid.NullUUID
 }
 
 func NewUserID() UserID {
@@ -203,7 +203,7 @@ func NewUserID() UserID {
 	}
 
 	return UserID{
-		NUUID: uuid.NullUUID{
+		ID: uuid.NullUUID{
 			UUID:  u,
 			Valid: true,
 		},
@@ -211,11 +211,11 @@ func NewUserID() UserID {
 }
 
 func (c *UserID) MarshalText() (text []byte, err error) {
-	return c.NUUID.MarshalText()
+	return c.ID.MarshalText()
 }
 
 func (c *UserID) UnmarshalText(text []byte) error {
-	return c.NUUID.UnmarshalText(text)
+	return c.ID.UnmarshalText(text)
 }
 
 func (c *UserID) Matches(x interface{}) bool {
@@ -227,19 +227,19 @@ func (c *UserID) Matches(x interface{}) bool {
 }
 
 func (c *UserID) String() string {
-	return c.NUUID.UUID.String()
+	return c.ID.UUID.String()
 }
 
 func (c UserID) Value() (driver.Value, error) {
-	return c.NUUID.UUID.Value()
+	return c.ID.UUID.Value()
 }
 
 func (c *UserID) Scan(src any) error {
-	return c.NUUID.Scan(src)
+	return c.ID.Scan(src)
 }
 
 func (c UserID) Validate() error {
-	if !c.NUUID.Valid {
+	if !c.ID.Valid {
 		return errors.New("")
 	}
 
@@ -256,7 +256,7 @@ func Parse[T ChatID | MessageID | ProblemID | UserID](id string) (T, error) {
 		return T{}, fmt.Errorf("uuid parse, err=%w", err)
 	}
 
-	return T{NUUID: uuid.NullUUID{
+	return T{ID: uuid.NullUUID{
 		UUID:  u,
 		Valid: true,
 	}}, nil
@@ -268,7 +268,7 @@ func MustParse[T ChatID | MessageID | ProblemID | UserID](id string) T {
 		panic(err)
 	}
 
-	return T{NUUID: uuid.NullUUID{
+	return T{ID: uuid.NullUUID{
 		UUID:  u,
 		Valid: true,
 	}}

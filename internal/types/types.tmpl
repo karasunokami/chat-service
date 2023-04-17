@@ -15,7 +15,7 @@ import (
 var {{$type}}Nil {{$type}}
 
 type {{$type}} struct {
-	NUUID uuid.NullUUID
+	ID uuid.NullUUID
 }
 
 func New{{$type}}() {{$type}} {
@@ -25,7 +25,7 @@ func New{{$type}}() {{$type}} {
 	}
 
 	return {{$type}}{
-		NUUID: uuid.NullUUID{
+		ID: uuid.NullUUID{
 			UUID: u,
 			Valid: true,
 		},
@@ -33,11 +33,11 @@ func New{{$type}}() {{$type}} {
 }
 
 func (c *{{$type}}) MarshalText() (text []byte, err error) {
-	return c.NUUID.MarshalText()
+	return c.ID.MarshalText()
 }
 
 func (c *{{$type}}) UnmarshalText(text []byte) error {
-	return c.NUUID.UnmarshalText(text)
+	return c.ID.UnmarshalText(text)
 }
 
 func (c *{{$type}}) Matches(x interface{}) bool {
@@ -49,19 +49,19 @@ func (c *{{$type}}) Matches(x interface{}) bool {
 }
 
 func (c *{{$type}}) String() string {
-	return c.NUUID.UUID.String()
+	return c.ID.UUID.String()
 }
 
 func (c {{$type}}) Value() (driver.Value, error) {
-	return c.NUUID.UUID.Value()
+	return c.ID.UUID.Value()
 }
 
 func (c *{{$type}}) Scan(src any) error {
-	return c.NUUID.Scan(src)
+	return c.ID.Scan(src)
 }
 
 func (c {{$type}}) Validate() error {
-	if !c.NUUID.Valid {
+	if !c.ID.Valid {
 		return errors.New("")
 	}
 
@@ -80,7 +80,7 @@ func Parse[T {{StringsJoin .Types "|"}}](id string) (T, error) {
 		return T{}, fmt.Errorf("uuid parse, err=%w", err)
 	}
 
-	return T{NUUID: uuid.NullUUID{
+	return T{ID: uuid.NullUUID{
 		UUID:  u,
 		Valid: true,
 	}}, nil
@@ -92,7 +92,7 @@ func MustParse[T {{StringsJoin .Types "|"}}](id string) T {
 		panic(err)
 	}
 
-	return T{NUUID: uuid.NullUUID{
+	return T{ID: uuid.NullUUID{
 		UUID:  u,
 		Valid: true,
 	}}

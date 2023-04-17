@@ -6,7 +6,7 @@ silent: true
 vars:
   GO_MODULE: github.com/karasunokami/chat-service
   GO_FILES:
-    sh: find . -type f -name '*.go' -not -path "./vendor/*" -not -path "*.gen.go" | tr "\n" " "
+    sh: find . -type f -name '*.go' -not -path "./vendor/*" -not -path "./internal/store/*" -not -path "*.gen.go" | tr "\n" " "
 
   GOLANGCI_LINT_VERSION: v1.52.2
   GOLANGCI_LINT_CACHE:
@@ -17,6 +17,7 @@ vars:
     ./deploy/local/docker-compose.sentry.yml
 
   DOCKER_COMPOSE_CMD: docker compose --env-file .env -f {{.DOCKER_COMPOSE_PATHS | trim | splitLines | join " -f "}}
+  DOCKER_TOOLS_CMD: docker run --user $(id -u):$(id -g) --rm -v "$(pwd):/app" -w /app chat-service-tools
 
   TYPES: |
     ChatID
@@ -26,6 +27,8 @@ vars:
   TYPES_PKG: types
   TYPES_DST: ./internal/types/types.gen.go
   TYPES_TEMPLATE: ./internal/types/types.tmpl
+
+  ENT_SCHEMA: ./internal/store/schema
 
 tasks:
   default:
@@ -47,8 +50,8 @@ tasks:
 
   fmt:
     - echo "- Format"
-    - docker run --rm -v "$(pwd):/app" -w /app chat-service-tools gofumpt -l -w {{.GO_FILES}}
-    - docker run --rm -v "$(pwd):/app" -w /app chat-service-tools gci -l {{.GO_MODULE}} {{.GO_FILES}}
+    - true && {{.DOCKER_TOOLS_CMD}} gofumpt -l -w {{.GO_FILES}}
+    - true && {{.DOCKER_TOOLS_CMD}} gci -l {{.GO_MODULE}} {{.GO_FILES}}
 
   lint:
     cmds:
@@ -81,6 +84,7 @@ tasks:
       - echo "- Run go generate..."
       - docker run --rm -v "$(pwd):/app" -w /app chat-service-tools go generate ./...
       - task: gen:types
+      - task: ent:gen
 
   gen:types:
     cmds:
@@ -91,7 +95,16 @@ tasks:
          {{.TYPES | trim | splitLines | join ","}} \
          {{.TYPES_DST}} \
          {{.TYPES_TEMPLATE}}
-        
+
+  ent:gen:
+    cmds:
+      - docker run --rm -v "$(pwd):/app" -w /app chat-service-tools ent generate {{.ENT_SCHEMA}}
+      - task: tidy
+
+  ent:new:
+    cmds:
+      - true && {{.DOCKER_TOOLS_CMD}} ent new --target={{.ENT_SCHEMA}} {{.CLI_ARGS}}
+      - task: tidy
 
   dev-tools:install:
     cmds:
@@ -101,6 +114,10 @@ tasks:
         -f tools.dockerfile \
         --build-arg GOLANGCI_LINT_VERSION={{.GOLANGCI_LINT_VERSION}} \
         -t chat-service-tools
+
+  dev-tools:cmd:
+    cmds:
+      - true && {{.DOCKER_TOOLS_CMD}} {{.CLI_ARGS}}
 
   deps:
     cmds:
