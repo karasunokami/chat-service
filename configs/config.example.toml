@@ -7,3 +7,6 @@ level = "info"
 [servers]
 [servers.debug]
 addr = ":8079"
+
+[sentry]
+dsn = "http://8386679e9758470f9bb586ce1132dd4e@localhost:9000/2"

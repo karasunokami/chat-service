@@ -12,6 +12,21 @@ vars:
   GOLANGCI_LINT_CACHE:
     sh: echo "$HOME/.libscache"
 
+  DOCKER_COMPOSE_PATHS: |
+    ./deploy/local/docker-compose.yml
+    ./deploy/local/docker-compose.sentry.yml
+
+  DOCKER_COMPOSE_CMD: docker compose --env-file .env -f {{.DOCKER_COMPOSE_PATHS | trim | splitLines | join " -f "}}
+
+  TYPES: |
+    ChatID
+    MessageID
+    ProblemID
+    UserID
+  TYPES_PKG: types
+  TYPES_DST: ./internal/types/types.gen.go
+  TYPES_TEMPLATE: ./internal/types/types.tmpl
+
 tasks:
   default:
     cmds:
@@ -61,10 +76,22 @@ tasks:
       - echo "- Build"
       - go build ./cmd/chat-service
 
-  gen:
+  generate:
     cmds:
-      - echo "- Gen"
+      - echo "- Run go generate..."
       - docker run --rm -v "$(pwd):/app" -w /app chat-service-tools go generate ./...
+      - task: gen:types
+
+  gen:types:
+    cmds:
+      - echo "- Generate types..."
+      - |
+         go run ./cmd/gen-types \
+         {{.TYPES_PKG}} \
+         {{.TYPES | trim | splitLines | join ","}} \
+         {{.TYPES_DST}} \
+         {{.TYPES_TEMPLATE}}
+        
 
   dev-tools:install:
     cmds:
@@ -74,3 +101,43 @@ tasks:
         -f tools.dockerfile \
         --build-arg GOLANGCI_LINT_VERSION={{.GOLANGCI_LINT_VERSION}} \
         -t chat-service-tools
+
+  deps:
+    cmds:
+      - test -f .env || cp .env.example .env
+      - "{{.DOCKER_COMPOSE_CMD}} up -d"
+
+  deps:cmd:
+    cmds:
+      - "{{.DOCKER_COMPOSE_CMD}} {{.CLI_ARGS}}"
+
+  deps:status:
+    cmds:
+      - "{{.DOCKER_COMPOSE_CMD}} ps"
+
+  deps:logs:
+    cmds:
+      - "{{.DOCKER_COMPOSE_CMD}} logs -f {{.CLI_ARGS}}"
+
+  deps:stop:
+    cmds:
+      - "{{.DOCKER_COMPOSE_CMD}} stop"
+
+  deps:reset-psql:
+    cmds:
+      - task: deps:reset
+        vars:
+          SERVICE: postgres
+
+  deps:sentry-init:
+    cmds:
+      - "COMPOSE_PROFILES=sentry {{.DOCKER_COMPOSE_CMD}} run -it sentry upgrade"
+
+  deps:sentry-create-user:
+    cmds:
+      - "COMPOSE_PROFILES=sentry {{.DOCKER_COMPOSE_CMD}} run -it sentry createuser"
+
+  deps:reset:
+    cmds:
+      - "{{.DOCKER_COMPOSE_CMD}} rm -fsv {{.SERVICE}}"
+      - "{{.DOCKER_COMPOSE_CMD}} up -d {{.SERVICE}}"

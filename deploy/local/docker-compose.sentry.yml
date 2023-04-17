@@ -1,0 +1,52 @@
+version: "3.8"
+
+services:
+  sentry:
+    image: sentry
+    container_name: sentry
+    links:
+      - redis
+      - postgres
+    environment:
+      SENTRY_POSTGRES_HOST: postgres
+      SENTRY_DB_USER: sentry
+      SENTRY_DB_PASSWORD: sentry
+      SENTRY_REDIS_HOST: redis
+      SENTRY_SECRET_KEY: $SENTRY_SECRET_KEY
+    profiles: ["sentry"]
+    ports:
+      - "9000:9000"
+
+  sentry-worker:
+    image: sentry
+    profiles: ["sentry"]
+    container_name: sentry-worker
+    command: "sentry run worker"
+    links:
+      - redis
+      - postgres
+    environment:
+      SENTRY_POSTGRES_HOST: postgres
+      SENTRY_DB_USER: sentry
+      SENTRY_DB_PASSWORD: sentry
+      SENTRY_REDIS_HOST: redis
+      SENTRY_SECRET_KEY: $SENTRY_SECRET_KEY
+
+  sentry-cron:
+    image: sentry
+    container_name: sentry-cron
+    profiles: ["sentry"]
+    command: "sentry run cron"
+    links:
+      - redis
+      - postgres
+    environment:
+      SENTRY_POSTGRES_HOST: postgres
+      SENTRY_DB_USER: sentry
+      SENTRY_DB_PASSWORD: sentry
+      SENTRY_REDIS_HOST: redis
+      SENTRY_SECRET_KEY: $SENTRY_SECRET_KEY
+
+  redis:
+    image: redis:5.0.6
+    container_name: redis

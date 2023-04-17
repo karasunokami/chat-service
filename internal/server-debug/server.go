@@ -55,12 +55,15 @@ func New(opts Options) (*Server, error) {
 
 	e.GET("/version", s.Version)
 	e.GET("/debug/*", echo.WrapHandler(http.DefaultServeMux))
+	e.GET("/debug/error", s.DebugError)
+
 	e.PUT("/log/level", s.LogLevel)
 
 	index := newIndexPage()
 	index.addPage("/version", "Get build information")
 	index.addPage("/debug/pprof", "Go std profiler")
 	index.addPage("/debug/pprof/profile?seconds=30", "Take half-min profile")
+	index.addPage("/debug/error", "Debug Sentry error event")
 	e.GET("/", index.handler)
 
 	return s, nil
@@ -108,6 +111,17 @@ func (s *Server) LogLevel(eCtx echo.Context) error {
 	}
 
 	logger.Al.SetLevel(l)
+
+	return nil
+}
+
+func (s *Server) DebugError(eCtx echo.Context) error {
+	s.lg.Error("look for me in the Sentry")
+
+	err := eCtx.String(200, "event sent")
+	if err != nil {
+		return fmt.Errorf("ectx string")
+	}
 
 	return nil
 }
