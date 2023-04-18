@@ -58,6 +58,9 @@ github.com/go-playground/universal-translator
 # github.com/go-playground/validator/v10 v10.12.0
 ## explicit; go 1.18
 github.com/go-playground/validator/v10
+# github.com/go-resty/resty/v2 v2.7.0
+## explicit; go 1.11
+github.com/go-resty/resty/v2
 # github.com/golang-jwt/jwt v3.2.2+incompatible
 ## explicit
 github.com/golang-jwt/jwt
@@ -88,6 +91,9 @@ github.com/hashicorp/hcl/v2/json
 ## explicit; go 1.18
 github.com/kazhuravlev/options-gen/pkg/errors
 github.com/kazhuravlev/options-gen/pkg/validator
+# github.com/kelseyhightower/envconfig v1.4.0
+## explicit
+github.com/kelseyhightower/envconfig
 # github.com/labstack/echo/v4 v4.10.2
 ## explicit; go 1.17
 github.com/labstack/echo/v4
@@ -123,6 +129,7 @@ github.com/pmezard/go-difflib/difflib
 ## explicit; go 1.13
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
+github.com/stretchr/testify/suite
 # github.com/valyala/bytebufferpool v1.0.0
 ## explicit
 github.com/valyala/bytebufferpool
@@ -168,6 +175,7 @@ golang.org/x/net/http2
 golang.org/x/net/http2/h2c
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
+golang.org/x/net/publicsuffix
 # golang.org/x/sync v0.1.0
 ## explicit
 golang.org/x/sync/errgroup
