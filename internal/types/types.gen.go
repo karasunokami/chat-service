@@ -24,7 +24,7 @@ func NewChatID() ChatID {
 
 	return ChatID{
 		ID: uuid.NullUUID{
-			UUID:  u,
+			UUID: u,
 			Valid: true,
 		},
 	}
@@ -84,7 +84,7 @@ func NewMessageID() MessageID {
 
 	return MessageID{
 		ID: uuid.NullUUID{
-			UUID:  u,
+			UUID: u,
 			Valid: true,
 		},
 	}
@@ -144,7 +144,7 @@ func NewProblemID() ProblemID {
 
 	return ProblemID{
 		ID: uuid.NullUUID{
-			UUID:  u,
+			UUID: u,
 			Valid: true,
 		},
 	}
@@ -204,7 +204,7 @@ func NewUserID() UserID {
 
 	return UserID{
 		ID: uuid.NullUUID{
-			UUID:  u,
+			UUID: u,
 			Valid: true,
 		},
 	}
@@ -250,7 +250,7 @@ func (c *UserID) IsZero() bool {
 	return c.String() == UserIDNil.String()
 }
 
-func Parse[T ChatID | MessageID | ProblemID | UserID](id string) (T, error) {
+func Parse[T ChatID|MessageID|ProblemID|UserID](id string) (T, error) {
 	u, err := uuid.Parse(id)
 	if err != nil {
 		return T{}, fmt.Errorf("uuid parse, err=%w", err)
@@ -262,7 +262,7 @@ func Parse[T ChatID | MessageID | ProblemID | UserID](id string) (T, error) {
 	}}, nil
 }
 
-func MustParse[T ChatID | MessageID | ProblemID | UserID](id string) T {
+func MustParse[T ChatID|MessageID|ProblemID|UserID](id string) T {
 	u, err := uuid.Parse(id)
 	if err != nil {
 		panic(err)
