@@ -250,7 +250,67 @@ func (c *UserID) IsZero() bool {
 	return c.String() == UserIDNil.String()
 }
 
-func Parse[T ChatID|MessageID|ProblemID|UserID](id string) (T, error) {
+var RequestIDNil RequestID
+
+type RequestID struct {
+	ID uuid.NullUUID
+}
+
+func NewRequestID() RequestID {
+	u, err := uuid.NewUUID()
+	if err != nil {
+		panic(err)
+	}
+
+	return RequestID{
+		ID: uuid.NullUUID{
+			UUID: u,
+			Valid: true,
+		},
+	}
+}
+
+func (c *RequestID) MarshalText() (text []byte, err error) {
+	return c.ID.MarshalText()
+}
+
+func (c *RequestID) UnmarshalText(text []byte) error {
+	return c.ID.UnmarshalText(text)
+}
+
+func (c *RequestID) Matches(x interface{}) bool {
+	if xStr, ok := x.(string); ok {
+		return xStr == c.String()
+	}
+
+	return false
+}
+
+func (c *RequestID) String() string {
+	return c.ID.UUID.String()
+}
+
+func (c RequestID) Value() (driver.Value, error) {
+	return c.ID.UUID.Value()
+}
+
+func (c *RequestID) Scan(src any) error {
+	return c.ID.Scan(src)
+}
+
+func (c RequestID) Validate() error {
+	if !c.ID.Valid {
+		return errors.New("")
+	}
+
+	return nil
+}
+
+func (c *RequestID) IsZero() bool {
+	return c.String() == RequestIDNil.String()
+}
+
+func Parse[T ChatID|MessageID|ProblemID|UserID|RequestID](id string) (T, error) {
 	u, err := uuid.Parse(id)
 	if err != nil {
 		return T{}, fmt.Errorf("uuid parse, err=%w", err)
@@ -262,7 +322,7 @@ func Parse[T ChatID|MessageID|ProblemID|UserID](id string) (T, error) {
 	}}, nil
 }
 
-func MustParse[T ChatID|MessageID|ProblemID|UserID](id string) T {
+func MustParse[T ChatID|MessageID|ProblemID|UserID|RequestID](id string) T {
 	u, err := uuid.Parse(id)
 	if err != nil {
 		panic(err)

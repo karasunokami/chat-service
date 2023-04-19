@@ -15,6 +15,7 @@ vars:
   DOCKER_COMPOSE_PATHS: |
     ./deploy/local/docker-compose.yml
     ./deploy/local/docker-compose.sentry.yml
+    ./deploy/local/docker-compose.swagger-ui.yml
 
   DOCKER_COMPOSE_CMD: docker compose --env-file .env -f {{.DOCKER_COMPOSE_PATHS | trim | splitLines | join " -f "}}
   DOCKER_TOOLS_CMD: docker run --user $(id -u):$(id -g) --rm -v "$(pwd):/app" -w /app chat-service-tools
@@ -24,11 +25,17 @@ vars:
     MessageID
     ProblemID
     UserID
+    RequestID
+
   TYPES_PKG: types
   TYPES_DST: ./internal/types/types.gen.go
   TYPES_TEMPLATE: ./internal/types/types.tmpl
 
   ENT_SCHEMA: ./internal/store/schema
+
+  CLIENT_V1_SRC: ./api/client.v1.swagger.yml
+  CLIENT_V1_DST: ./internal/server-client/v1/server.gen.go
+  CLIENT_V1_PKG: clientv1
 
 tasks:
   default:
@@ -97,6 +104,7 @@ tasks:
       - docker run --rm -v "$(pwd):/app" -w /app chat-service-tools go generate ./...
       - task: gen:types
       - task: ent:gen
+      - task: gen:api
 
   gen:types:
     cmds:
@@ -107,6 +115,9 @@ tasks:
          {{.TYPES | trim | splitLines | join ","}} \
          {{.TYPES_DST}} \
          {{.TYPES_TEMPLATE}}
+
+  gen:api:
+    - "{{.DOCKER_TOOLS_CMD}} oapi-codegen -generate server,spec,types -package {{.CLIENT_V1_PKG}} {{.CLIENT_V1_SRC}} > {{.CLIENT_V1_DST}}"
 
   ent:gen:
     cmds:
