@@ -8,15 +8,22 @@ import (
 
 //go:generate options-gen -out-filename=client_options.gen.go -from-struct=Options
 type Options struct {
+	basePath     string `option:"mandatory" validate:"url"`
+	realm        string `option:"mandatory"`
+	clientID     string `option:"mandatory"`
+	clientSecret string `option:"mandatory" validate:"alphanum"`
+
 	debugMode bool
-	basePath  string `validate:"url"`
 }
 
 // Client is a tiny client to the KeyCloak realm operations. UMA configuration:
 // http://localhost:3010/realms/Bank/.well-known/uma2-configuration
 type Client struct {
-	// FIXME: заполни меня
-	cli *resty.Client
+	cli          *resty.Client
+	basePath     string
+	realm        string
+	clientID     string
+	clientSecret string
 }
 
 func New(opts Options) (*Client, error) {
@@ -29,7 +36,9 @@ func New(opts Options) (*Client, error) {
 	cli.SetBaseURL(opts.basePath)
 
 	return &Client{
-		// FIXME: заполни меня
-		cli: cli,
+		cli:          cli,
+		realm:        opts.realm,
+		clientID:     opts.clientID,
+		clientSecret: opts.clientSecret,
 	}, nil
 }

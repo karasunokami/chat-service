@@ -11,11 +11,20 @@ import (
 type OptOptionsSetter func(o *Options)
 
 func NewOptions(
+	basePath string,
+	realm string,
+	clientID string,
+	clientSecret string,
 	options ...OptOptionsSetter,
 ) Options {
 	o := Options{}
 
 	// Setting defaults from field tag (if present)
+
+	o.basePath = basePath
+	o.realm = realm
+	o.clientID = clientID
+	o.clientSecret = clientSecret
 
 	for _, opt := range options {
 		opt(&o)
@@ -29,21 +38,23 @@ func WithDebugMode(opt bool) OptOptionsSetter {
 	}
 }
 
-func WithBasePath(opt string) OptOptionsSetter {
-	return func(o *Options) {
-		o.basePath = opt
-	}
-}
-
 func (o *Options) Validate() error {
 	errs := new(errors461e464ebed9.ValidationErrors)
 	errs.Add(errors461e464ebed9.NewValidationError("basePath", _validate_Options_basePath(o)))
+	errs.Add(errors461e464ebed9.NewValidationError("clientSecret", _validate_Options_clientSecret(o)))
 	return errs.AsError()
 }
 
 func _validate_Options_basePath(o *Options) error {
 	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.basePath, "url"); err != nil {
 		return fmt461e464ebed9.Errorf("field `basePath` did not pass the test: %w", err)
+	}
+	return nil
+}
+
+func _validate_Options_clientSecret(o *Options) error {
+	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.clientSecret, "alphanum"); err != nil {
+		return fmt461e464ebed9.Errorf("field `clientSecret` did not pass the test: %w", err)
 	}
 	return nil
 }

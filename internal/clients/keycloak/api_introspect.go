@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 
 	"github.com/go-resty/resty/v2"
 )
@@ -43,12 +44,31 @@ func (r *IntrospectTokenResult) UnmarshalJSON(data []byte) error {
 // IntrospectToken implements
 // https://www.keycloak.org/docs/latest/authorization_services/index.html#obtaining-information-about-an-rpt
 func (c *Client) IntrospectToken(ctx context.Context, token string) (*IntrospectTokenResult, error) {
-	// FIXME: реализуй меня
-	return nil, nil
+	url := fmt.Sprintf("realms/%s/protocol/openid-connect/token/introspect", c.realm)
+
+	var result IntrospectTokenResult
+
+	resp, err := c.auth(ctx).
+		SetHeader("Content-Type", "application/x-www-form-urlencoded").
+		SetFormData(map[string]string{
+			"token_type_hint": "requesting_party_token",
+			"token":           token,
+		}).
+		SetResult(&result).
+		Post(url)
+	if err != nil {
+		return nil, fmt.Errorf("send request to keycloak: %v", err)
+	}
+	if resp.StatusCode() != http.StatusOK {
+		return nil, fmt.Errorf("errored keycloak response: %v", resp.Status())
+	}
+
+	return &result, nil
 }
 
 func (c *Client) auth(ctx context.Context) *resty.Request {
-	// FIXME: исправь меня
+	c.cli.SetBasicAuth(c.clientID, c.clientSecret)
+
 	return c.cli.R().SetContext(ctx)
 }
 
