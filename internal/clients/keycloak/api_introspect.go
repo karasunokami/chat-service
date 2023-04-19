@@ -77,7 +77,7 @@ func unmarshalStringOrStringSliceToSlice(data []byte) ([]string, error) {
 		return nil, nil
 	}
 
-	var firstChar = string(data[0])
+	firstChar := string(data[0])
 
 	if firstChar == "\"" {
 		var str string

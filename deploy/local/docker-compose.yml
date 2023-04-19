@@ -21,7 +21,9 @@ services:
     depends_on:
       - postgres
     command:
-      - start-dev
+      - "start-dev --import-realm"
+    volumes:
+      - ./bank-realm.json:/opt/keycloak/data/import/bank-realm.json
     environment:
       DB_VENDOR: POSTGRES
       DB_ADDR: postgres

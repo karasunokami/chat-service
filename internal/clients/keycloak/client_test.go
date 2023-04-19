@@ -5,10 +5,10 @@ package keycloakclient_test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/suite"
-
 	keycloakclient "github.com/karasunokami/chat-service/internal/clients/keycloak"
 	"github.com/karasunokami/chat-service/internal/testingh"
+
+	"github.com/stretchr/testify/suite"
 )
 
 type KeycloakSuite struct {

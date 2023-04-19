@@ -50,8 +50,8 @@ tasks:
 
   fmt:
     - echo "- Format"
-    - true && {{.DOCKER_TOOLS_CMD}} gofumpt -l -w {{.GO_FILES}}
-    - true && {{.DOCKER_TOOLS_CMD}} gci -l {{.GO_MODULE}} {{.GO_FILES}}
+    - "{{.DOCKER_TOOLS_CMD}} gofumpt -l -w {{.GO_FILES}}"
+    - "{{.DOCKER_TOOLS_CMD}} gci -l {{.GO_MODULE}} {{.GO_FILES}}"
 
   lint:
     cmds:
@@ -115,8 +115,15 @@ tasks:
 
   ent:new:
     cmds:
-      - true && {{.DOCKER_TOOLS_CMD}} ent new --target={{.ENT_SCHEMA}} {{.CLI_ARGS}}
+      - "{{.DOCKER_TOOLS_CMD}} ent new --target={{.ENT_SCHEMA}} {{.CLI_ARGS}}"
       - task: tidy
+
+  kc:export:
+    cmds:
+      - echo "- Exporting data from keycloak..."
+      - "{{.DOCKER_COMPOSE_CMD}} exec -it keycloak /opt/keycloak/bin/kc.sh export --file /tmp/bank-realm.json --realm Bank"
+      - "{{.DOCKER_COMPOSE_CMD}} cp keycloak:/tmp/bank-realm.json ./deploy/local/bank-realm.json"
+      - echo "- Exported in ./deploy/local/bank-realm.json"
 
   dev-tools:install:
     cmds:
@@ -129,7 +136,7 @@ tasks:
 
   dev-tools:cmd:
     cmds:
-      - true && {{.DOCKER_TOOLS_CMD}} {{.CLI_ARGS}}
+      - "{{.DOCKER_TOOLS_CMD}} {{.CLI_ARGS}}"
 
   deps:
     cmds:

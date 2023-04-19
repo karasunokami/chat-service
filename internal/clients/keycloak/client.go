@@ -20,7 +20,6 @@ type Options struct {
 // http://localhost:3010/realms/Bank/.well-known/uma2-configuration
 type Client struct {
 	cli          *resty.Client
-	basePath     string
 	realm        string
 	clientID     string
 	clientSecret string

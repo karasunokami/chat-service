@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"testing"
 
+	keycloakclient "github.com/karasunokami/chat-service/internal/clients/keycloak"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	keycloakclient "github.com/karasunokami/chat-service/internal/clients/keycloak"
 )
 
 func TestIntrospectTokenResult(t *testing.T) {

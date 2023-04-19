@@ -5,10 +5,10 @@ package testingh
 import (
 	"fmt"
 
-	"github.com/kelseyhightower/envconfig"
-
 	"github.com/karasunokami/chat-service/internal/logger"
 	"github.com/karasunokami/chat-service/internal/validator"
+
+	"github.com/kelseyhightower/envconfig"
 )
 
 var Config config
