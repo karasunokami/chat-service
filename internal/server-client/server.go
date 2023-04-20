@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/karasunokami/chat-service/internal/middlewares"
 	clientv1 "github.com/karasunokami/chat-service/internal/server-client/v1"
 
 	oapimdlwr "github.com/deepmap/oapi-codegen/pkg/middleware"
@@ -45,13 +46,6 @@ func New(opts Options) (*Server, error) {
 
 	e := echo.New()
 
-	e.Use(
-		middleware.CORSWithConfig(middleware.CORSConfig{
-			AllowOrigins: opts.allowOrigins,
-			AllowMethods: []string{echo.POST},
-		}),
-	)
-
 	s := Server{
 		lg: opts.logger,
 		srv: &http.Server{
@@ -60,6 +54,27 @@ func New(opts Options) (*Server, error) {
 			ReadHeaderTimeout: readHeaderTimeout,
 		},
 	}
+
+	e.Use(
+		middlewares.NewLoggerMiddleware(s.lg),
+		middleware.RecoverWithConfig(middleware.RecoverConfig{
+			Skipper:           nil,
+			StackSize:         0,
+			DisableStackAll:   false,
+			DisablePrintStack: false,
+			LogLevel:          0,
+			LogErrorFunc: func(c echo.Context, err error, stack []byte) error {
+				s.lg.Sugar().Error("recovered, stack=%s, err=%v", stack, err)
+
+				return nil
+			},
+		}),
+		middleware.BodyLimit("4K"),
+		middleware.CORSWithConfig(middleware.CORSConfig{
+			AllowOrigins: opts.allowOrigins,
+			AllowMethods: []string{echo.POST},
+		}),
+	)
 
 	v1 := e.Group("v1", oapimdlwr.OapiRequestValidatorWithOptions(opts.v1Swagger, &oapimdlwr.Options{
 		Options: openapi3filter.Options{
