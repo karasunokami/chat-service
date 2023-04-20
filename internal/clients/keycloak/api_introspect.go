@@ -10,35 +10,10 @@ import (
 )
 
 type IntrospectTokenResult struct {
-	Exp    int      `json:"exp"`
-	Iat    int      `json:"iat"`
-	Aud    []string `json:"aud"`
-	Active bool     `json:"active"`
-}
-
-func (r *IntrospectTokenResult) UnmarshalJSON(data []byte) error {
-	tr := struct {
-		Exp    int             `json:"exp"`
-		Iat    int             `json:"iat"`
-		Aud    json.RawMessage `json:"aud"`
-		Active bool            `json:"active"`
-	}{}
-
-	err := json.Unmarshal(data, &tr)
-	if err != nil {
-		return fmt.Errorf("unmarshal data to tmp introspect token result, err=%v", err)
-	}
-
-	r.Exp = tr.Exp
-	r.Iat = tr.Iat
-	r.Active = tr.Active
-
-	r.Aud, err = unmarshalStringOrStringSliceToSlice(tr.Aud)
-	if err != nil {
-		return fmt.Errorf("unamrshal string or string slice to slice, err=%w", err)
-	}
-
-	return nil
+	Exp    int                           `json:"exp"`
+	Iat    int                           `json:"iat"`
+	Aud    StringsSliceFromStringOrSlice `json:"aud"`
+	Active bool                          `json:"active"`
 }
 
 // IntrospectToken implements
@@ -70,6 +45,19 @@ func (c *Client) auth(ctx context.Context) *resty.Request {
 	c.cli.SetBasicAuth(c.clientID, c.clientSecret)
 
 	return c.cli.R().SetContext(ctx)
+}
+
+type StringsSliceFromStringOrSlice []string
+
+func (v *StringsSliceFromStringOrSlice) UnmarshalJSON(data []byte) error {
+	val, err := unmarshalStringOrStringSliceToSlice(data)
+	if err != nil {
+		return fmt.Errorf("unmarshal string or slice to string slice, err=%v", err)
+	}
+
+	*v = val
+
+	return nil
 }
 
 func unmarshalStringOrStringSliceToSlice(data []byte) ([]string, error) {
