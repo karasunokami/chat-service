@@ -3,6 +3,8 @@ package keycloakclient
 import (
 	"fmt"
 
+	"github.com/karasunokami/chat-service/internal/buildinfo"
+
 	"github.com/go-resty/resty/v2"
 )
 
@@ -33,6 +35,7 @@ func New(opts Options) (*Client, error) {
 	cli := resty.New()
 	cli.SetDebug(opts.debugMode)
 	cli.SetBaseURL(opts.basePath)
+	cli.SetHeader("User-Agent", fmt.Sprintf("chat-service/%v", buildinfo.BuildInfo.Main.Version))
 
 	return &Client{
 		cli:          cli,

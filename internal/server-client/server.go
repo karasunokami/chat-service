@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	keycloakclient "github.com/karasunokami/chat-service/internal/clients/keycloak"
 	"github.com/karasunokami/chat-service/internal/middlewares"
 	clientv1 "github.com/karasunokami/chat-service/internal/server-client/v1"
 
@@ -26,11 +27,14 @@ const (
 
 //go:generate options-gen -out-filename=server_options.gen.go -from-struct=Options
 type Options struct {
-	logger       *zap.Logger              `option:"mandatory" validate:"required"`
-	addr         string                   `option:"mandatory" validate:"required,hostname_port"`
-	allowOrigins []string                 `option:"mandatory" validate:"min=1"`
-	v1Swagger    *openapi3.T              `option:"mandatory" validate:"required"`
-	v1Handlers   clientv1.ServerInterface `option:"mandatory" validate:"required"`
+	logger         *zap.Logger              `option:"mandatory" validate:"required"`
+	addr           string                   `option:"mandatory" validate:"required,hostname_port"`
+	allowOrigins   []string                 `option:"mandatory" validate:"min=1"`
+	v1Swagger      *openapi3.T              `option:"mandatory" validate:"required"`
+	v1Handlers     clientv1.ServerInterface `option:"mandatory" validate:"required"`
+	keycloakClient *keycloakclient.Client   `option:"mandatory" validate:"required"`
+	resource       string                   `option:"mandatory" validate:"required"`
+	role           string                   `option:"mandatory" validate:"required"`
 }
 
 type Server struct {
@@ -69,11 +73,12 @@ func New(opts Options) (*Server, error) {
 				return nil
 			},
 		}),
-		middleware.BodyLimit("4K"),
 		middleware.CORSWithConfig(middleware.CORSConfig{
 			AllowOrigins: opts.allowOrigins,
 			AllowMethods: []string{echo.POST},
 		}),
+		middlewares.NewKeyCloakTokenAuth(opts.keycloakClient, opts.resource, opts.role),
+		middleware.BodyLimit("4K"),
 	)
 
 	v1 := e.Group("v1", oapimdlwr.OapiRequestValidatorWithOptions(opts.v1Swagger, &oapimdlwr.Options{

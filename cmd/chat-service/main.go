@@ -46,17 +46,26 @@ func run() (errReturned error) {
 	))
 	logger.Sync()
 
-	srvDebug, err := serverdebug.New(serverdebug.NewOptions(cfg.Servers.Debug.Addr))
-	if err != nil {
-		return fmt.Errorf("init debug server: %v", err)
-	}
-
 	t, err := openapi3.NewLoader().LoadFromFile(*swaggerClientV1Path)
 	if err != nil {
 		return fmt.Errorf("load openapi from file, err=%v", err)
 	}
 
-	srvClient, err := initServerClient(cfg.Servers.Client.Addr, cfg.Servers.Client.AllowOrigins, t)
+	srvDebug, err := serverdebug.New(serverdebug.NewOptions(
+		cfg.Servers.Debug.Addr,
+		t,
+	))
+	if err != nil {
+		return fmt.Errorf("init debug server: %v", err)
+	}
+
+	srvClient, err := initServerClient(
+		cfg.Servers.Client,
+		t,
+		cfg.Clients.KeycloakClient,
+		cfg.Servers.Client.RequiredAccess,
+		cfg.Global,
+	)
 	if err != nil {
 		return fmt.Errorf("init client server: %v", err)
 	}
