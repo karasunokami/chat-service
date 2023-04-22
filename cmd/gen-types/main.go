@@ -35,6 +35,8 @@ func run(pkg string, types []string, outFile, tmplPath string) error {
 		return fmt.Errorf("open file, err=%v", err)
 	}
 
+	defer file.Close()
+
 	_, err = file.WriteString(content)
 	if err != nil {
 		return fmt.Errorf("write string to file, err=%v", err)

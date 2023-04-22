@@ -55,7 +55,7 @@ func New(opts Options) (*Server, error) {
 			DisablePrintStack: false,
 			LogLevel:          0,
 			LogErrorFunc: func(c echo.Context, err error, stack []byte) error {
-				lg.Sugar().Error("recovered, stack=%s, err=%v", stack, err)
+				lg.Error("recovered", zap.ByteString("stack", stack), zap.Error(err))
 
 				return nil
 			},

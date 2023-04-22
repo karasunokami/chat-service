@@ -40,7 +40,7 @@ func initServerClient(
 	}
 
 	if kcClientConfig.DebugMode && globalConfig.IsInProdEnv() {
-		lg.Sugar().Warn("Attention! Keycloak client is in debug mode and env is prod")
+		lg.Warn("Attention! Keycloak client is in debug mode and env is prod")
 	}
 
 	srv, err := serverclient.New(serverclient.NewOptions(

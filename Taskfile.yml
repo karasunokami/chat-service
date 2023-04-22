@@ -3,6 +3,8 @@ version: '3'
 
 silent: true
 
+dotenv: ['.env']
+
 vars:
   GO_MODULE: github.com/karasunokami/chat-service
   GO_FILES:
@@ -17,7 +19,7 @@ vars:
     ./deploy/local/docker-compose.sentry.yml
     ./deploy/local/docker-compose.swagger-ui.yml
 
-  DOCKER_COMPOSE_CMD: docker compose --env-file .env -f {{.DOCKER_COMPOSE_PATHS | trim | splitLines | join " -f "}}
+  DOCKER_COMPOSE_CMD: docker compose -f {{.DOCKER_COMPOSE_PATHS | trim | splitLines | join " -f "}}
   DOCKER_TOOLS_CMD: docker run --user $(id -u):$(id -g) --rm -v "$(pwd):/app" -w /app chat-service-tools
 
   TYPES: |
@@ -82,13 +84,6 @@ tasks:
       - go test -race ./...
 
   tests:integration:
-    env:
-      TEST_LOG_LEVEL: info
-      TEST_KEYCLOAK_REALM: Bank
-      TEST_KEYCLOAK_CLIENT_ID: integration-testing
-      TEST_KEYCLOAK_CLIENT_SECRET: bVWcjPxZ0zOnIuhoo9MIacEVEdtN4Iz1
-      TEST_KEYCLOAK_TEST_USER: integration-testing
-      TEST_KEYCLOAK_TEST_PASSWORD: integration-testing
     cmds:
       - echo "- Integration tests"
       - go test -tags integration -count 1 -race ./...

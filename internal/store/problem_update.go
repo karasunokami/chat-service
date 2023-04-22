@@ -36,6 +36,20 @@ func (pu *ProblemUpdate) SetManagerID(ti types.UserID) *ProblemUpdate {
 	return pu
 }
 
+// SetNillableManagerID sets the "manager_id" field if the given value is not nil.
+func (pu *ProblemUpdate) SetNillableManagerID(ti *types.UserID) *ProblemUpdate {
+	if ti != nil {
+		pu.SetManagerID(*ti)
+	}
+	return pu
+}
+
+// ClearManagerID clears the value of the "manager_id" field.
+func (pu *ProblemUpdate) ClearManagerID() *ProblemUpdate {
+	pu.mutation.ClearManagerID()
+	return pu
+}
+
 // SetResolvedAt sets the "resolved_at" field.
 func (pu *ProblemUpdate) SetResolvedAt(t time.Time) *ProblemUpdate {
 	pu.mutation.SetResolvedAt(t)
@@ -47,6 +61,12 @@ func (pu *ProblemUpdate) SetNillableResolvedAt(t *time.Time) *ProblemUpdate {
 	if t != nil {
 		pu.SetResolvedAt(*t)
 	}
+	return pu
+}
+
+// ClearResolvedAt clears the value of the "resolved_at" field.
+func (pu *ProblemUpdate) ClearResolvedAt() *ProblemUpdate {
+	pu.mutation.ClearResolvedAt()
 	return pu
 }
 
@@ -146,8 +166,14 @@ func (pu *ProblemUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := pu.mutation.ManagerID(); ok {
 		_spec.SetField(problem.FieldManagerID, field.TypeUUID, value)
 	}
+	if pu.mutation.ManagerIDCleared() {
+		_spec.ClearField(problem.FieldManagerID, field.TypeUUID)
+	}
 	if value, ok := pu.mutation.ResolvedAt(); ok {
 		_spec.SetField(problem.FieldResolvedAt, field.TypeTime, value)
+	}
+	if pu.mutation.ResolvedAtCleared() {
+		_spec.ClearField(problem.FieldResolvedAt, field.TypeTime)
 	}
 	if pu.mutation.MessagesCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -220,6 +246,20 @@ func (puo *ProblemUpdateOne) SetManagerID(ti types.UserID) *ProblemUpdateOne {
 	return puo
 }
 
+// SetNillableManagerID sets the "manager_id" field if the given value is not nil.
+func (puo *ProblemUpdateOne) SetNillableManagerID(ti *types.UserID) *ProblemUpdateOne {
+	if ti != nil {
+		puo.SetManagerID(*ti)
+	}
+	return puo
+}
+
+// ClearManagerID clears the value of the "manager_id" field.
+func (puo *ProblemUpdateOne) ClearManagerID() *ProblemUpdateOne {
+	puo.mutation.ClearManagerID()
+	return puo
+}
+
 // SetResolvedAt sets the "resolved_at" field.
 func (puo *ProblemUpdateOne) SetResolvedAt(t time.Time) *ProblemUpdateOne {
 	puo.mutation.SetResolvedAt(t)
@@ -231,6 +271,12 @@ func (puo *ProblemUpdateOne) SetNillableResolvedAt(t *time.Time) *ProblemUpdateO
 	if t != nil {
 		puo.SetResolvedAt(*t)
 	}
+	return puo
+}
+
+// ClearResolvedAt clears the value of the "resolved_at" field.
+func (puo *ProblemUpdateOne) ClearResolvedAt() *ProblemUpdateOne {
+	puo.mutation.ClearResolvedAt()
 	return puo
 }
 
@@ -360,8 +406,14 @@ func (puo *ProblemUpdateOne) sqlSave(ctx context.Context) (_node *Problem, err e
 	if value, ok := puo.mutation.ManagerID(); ok {
 		_spec.SetField(problem.FieldManagerID, field.TypeUUID, value)
 	}
+	if puo.mutation.ManagerIDCleared() {
+		_spec.ClearField(problem.FieldManagerID, field.TypeUUID)
+	}
 	if value, ok := puo.mutation.ResolvedAt(); ok {
 		_spec.SetField(problem.FieldResolvedAt, field.TypeTime, value)
+	}
+	if puo.mutation.ResolvedAtCleared() {
+		_spec.ClearField(problem.FieldResolvedAt, field.TypeTime)
 	}
 	if puo.mutation.MessagesCleared() {
 		edge := &sqlgraph.EdgeSpec{

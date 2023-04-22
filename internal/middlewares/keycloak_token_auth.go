@@ -33,9 +33,7 @@ func NewKeyCloakTokenAuth(introspector Introspector, resource, role string) echo
 		KeyLookup:  "header:Authorization",
 		AuthScheme: "Bearer",
 		Validator: func(tokenStr string, eCtx echo.Context) (bool, error) {
-			ctx := context.Background()
-
-			res, err := introspector.IntrospectToken(ctx, tokenStr)
+			res, err := introspector.IntrospectToken(eCtx.Request().Context(), tokenStr)
 			if err != nil {
 				return false, fmt.Errorf("introspect token, err=%w", err)
 			}
@@ -56,7 +54,7 @@ func NewKeyCloakTokenAuth(introspector Introspector, resource, role string) echo
 				return false, fmt.Errorf("validate claims, err=%w", err)
 			}
 
-			if !cl.hasRoleForResource(role, resource) {
+			if !cl.ResourceAccess.HasResourceRole(resource, role) {
 				return false, ErrNoRequiredResourceRole
 			}
 

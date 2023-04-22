@@ -68,7 +68,7 @@ func New(opts Options) (*Server, error) {
 			DisablePrintStack: false,
 			LogLevel:          0,
 			LogErrorFunc: func(c echo.Context, err error, stack []byte) error {
-				s.lg.Sugar().Error("recovered, stack=%s, err=%v", stack, err)
+				s.lg.Error("recovered", zap.ByteString("stack", stack), zap.Error(err))
 
 				return nil
 			},
@@ -78,7 +78,7 @@ func New(opts Options) (*Server, error) {
 			AllowMethods: []string{echo.POST},
 		}),
 		middlewares.NewKeyCloakTokenAuth(opts.keycloakClient, opts.resource, opts.role),
-		middleware.BodyLimit("4K"),
+		middleware.BodyLimit("12K"),
 	)
 
 	v1 := e.Group("v1", oapimdlwr.OapiRequestValidatorWithOptions(opts.v1Swagger, &oapimdlwr.Options{

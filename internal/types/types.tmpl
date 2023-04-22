@@ -62,7 +62,7 @@ func (c *{{$type}}) Scan(src any) error {
 
 func (c {{$type}}) Validate() error {
 	if !c.ID.Valid {
-		return errors.New("")
+		return errors.New("{{$type}} is not valid")
 	}
 
 	return nil

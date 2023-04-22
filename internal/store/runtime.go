@@ -58,10 +58,6 @@ func init() {
 	message.DefaultID = messageDescID.Default.(func() types.MessageID)
 	problemFields := schema.Problem{}.Fields()
 	_ = problemFields
-	// problemDescResolvedAt is the schema descriptor for resolved_at field.
-	problemDescResolvedAt := problemFields[3].Descriptor()
-	// problem.DefaultResolvedAt holds the default value on creation for the resolved_at field.
-	problem.DefaultResolvedAt = problemDescResolvedAt.Default.(func() time.Time)
 	// problemDescCreatedAt is the schema descriptor for created_at field.
 	problemDescCreatedAt := problemFields[4].Descriptor()
 	// problem.DefaultCreatedAt holds the default value on creation for the created_at field.

@@ -10,10 +10,10 @@ import (
 
 //go:generate options-gen -out-filename=client_options.gen.go -from-struct=Options
 type Options struct {
-	basePath     string `option:"mandatory" validate:"url"`
-	realm        string `option:"mandatory"`
-	clientID     string `option:"mandatory"`
-	clientSecret string `option:"mandatory" validate:"alphanum"`
+	basePath     string `option:"mandatory" validate:"required,url"`
+	realm        string `option:"mandatory" validate:"required"`
+	clientID     string `option:"mandatory" validate:"required"`
+	clientSecret string `option:"mandatory" validate:"required,alphanum"`
 
 	debugMode bool
 }

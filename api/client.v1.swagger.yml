@@ -97,7 +97,7 @@ components:
             path: "github.com/karasunokami/chat-service/internal/types"
         body:
           type: string
-          maxLength: 300
+          maxLength: 3000
 
         createdAt:
           type: string

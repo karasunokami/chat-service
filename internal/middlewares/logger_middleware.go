@@ -10,6 +10,9 @@ import (
 
 func NewLoggerMiddleware(lg *zap.Logger) echo.MiddlewareFunc {
 	return middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
+		Skipper: func(c echo.Context) bool {
+			return c.Request().Method == http.MethodOptions
+		},
 		LogLatency:   true,
 		LogRemoteIP:  true,
 		LogHost:      true,
@@ -20,24 +23,20 @@ func NewLoggerMiddleware(lg *zap.Logger) echo.MiddlewareFunc {
 		LogStatus:    true,
 		HandleError:  true,
 		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
-			if c.Request().Method == http.MethodOptions {
-				return nil
-			}
-
-			lg.Sugar().Infof(
-				"latency=%v, logr_emote_ip=%v, host=%v, method=%v, uri_path=%v, request_id=%v, user_agent=%v, status=%v",
-				v.Latency,
-				v.RemoteIP,
-				v.Host,
-				v.Method,
-				v.URIPath,
-				v.RequestID,
-				v.UserAgent,
-				v.Status,
+			lg.Info(
+				"request",
+				zap.Duration("latency", v.Latency),
+				zap.String("remote_ip", v.RemoteIP),
+				zap.String("Host", v.Host),
+				zap.String("method", v.Method),
+				zap.String("uri_path", v.URIPath),
+				zap.String("request_id", v.RequestID),
+				zap.String("user_agent", v.UserAgent),
+				zap.Int("status", v.Status),
 			)
 
 			if v.Error != nil {
-				lg.Sugar().Errorf("middleware error, err=%v", v.Error)
+				lg.Error("middleware error", zap.Error(v.Error))
 			}
 
 			return nil

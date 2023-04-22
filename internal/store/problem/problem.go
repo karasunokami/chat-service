@@ -63,8 +63,6 @@ func ValidColumn(column string) bool {
 }
 
 var (
-	// DefaultResolvedAt holds the default value on creation for the "resolved_at" field.
-	DefaultResolvedAt func() time.Time
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultID holds the default value on creation for the "id" field.

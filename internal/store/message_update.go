@@ -36,6 +36,26 @@ func (mu *MessageUpdate) SetProblemID(ti types.ProblemID) *MessageUpdate {
 	return mu
 }
 
+// SetAuthorID sets the "author_id" field.
+func (mu *MessageUpdate) SetAuthorID(ti types.UserID) *MessageUpdate {
+	mu.mutation.SetAuthorID(ti)
+	return mu
+}
+
+// SetNillableAuthorID sets the "author_id" field if the given value is not nil.
+func (mu *MessageUpdate) SetNillableAuthorID(ti *types.UserID) *MessageUpdate {
+	if ti != nil {
+		mu.SetAuthorID(*ti)
+	}
+	return mu
+}
+
+// ClearAuthorID clears the value of the "author_id" field.
+func (mu *MessageUpdate) ClearAuthorID() *MessageUpdate {
+	mu.mutation.ClearAuthorID()
+	return mu
+}
+
 // SetIsVisibleForClient sets the "is_visible_for_client" field.
 func (mu *MessageUpdate) SetIsVisibleForClient(b bool) *MessageUpdate {
 	mu.mutation.SetIsVisibleForClient(b)
@@ -156,6 +176,11 @@ func (mu *MessageUpdate) check() error {
 			return &ValidationError{Name: "problem_id", err: fmt.Errorf(`store: validator failed for field "Message.problem_id": %w`, err)}
 		}
 	}
+	if v, ok := mu.mutation.AuthorID(); ok {
+		if err := v.Validate(); err != nil {
+			return &ValidationError{Name: "author_id", err: fmt.Errorf(`store: validator failed for field "Message.author_id": %w`, err)}
+		}
+	}
 	if _, ok := mu.mutation.ChatID(); mu.mutation.ChatCleared() && !ok {
 		return errors.New(`store: clearing a required unique edge "Message.chat"`)
 	}
@@ -176,6 +201,12 @@ func (mu *MessageUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := mu.mutation.AuthorID(); ok {
+		_spec.SetField(message.FieldAuthorID, field.TypeUUID, value)
+	}
+	if mu.mutation.AuthorIDCleared() {
+		_spec.ClearField(message.FieldAuthorID, field.TypeUUID)
 	}
 	if value, ok := mu.mutation.IsVisibleForClient(); ok {
 		_spec.SetField(message.FieldIsVisibleForClient, field.TypeBool, value)
@@ -244,6 +275,26 @@ type MessageUpdateOne struct {
 // SetProblemID sets the "problem_id" field.
 func (muo *MessageUpdateOne) SetProblemID(ti types.ProblemID) *MessageUpdateOne {
 	muo.mutation.SetProblemID(ti)
+	return muo
+}
+
+// SetAuthorID sets the "author_id" field.
+func (muo *MessageUpdateOne) SetAuthorID(ti types.UserID) *MessageUpdateOne {
+	muo.mutation.SetAuthorID(ti)
+	return muo
+}
+
+// SetNillableAuthorID sets the "author_id" field if the given value is not nil.
+func (muo *MessageUpdateOne) SetNillableAuthorID(ti *types.UserID) *MessageUpdateOne {
+	if ti != nil {
+		muo.SetAuthorID(*ti)
+	}
+	return muo
+}
+
+// ClearAuthorID clears the value of the "author_id" field.
+func (muo *MessageUpdateOne) ClearAuthorID() *MessageUpdateOne {
+	muo.mutation.ClearAuthorID()
 	return muo
 }
 
@@ -380,6 +431,11 @@ func (muo *MessageUpdateOne) check() error {
 			return &ValidationError{Name: "problem_id", err: fmt.Errorf(`store: validator failed for field "Message.problem_id": %w`, err)}
 		}
 	}
+	if v, ok := muo.mutation.AuthorID(); ok {
+		if err := v.Validate(); err != nil {
+			return &ValidationError{Name: "author_id", err: fmt.Errorf(`store: validator failed for field "Message.author_id": %w`, err)}
+		}
+	}
 	if _, ok := muo.mutation.ChatID(); muo.mutation.ChatCleared() && !ok {
 		return errors.New(`store: clearing a required unique edge "Message.chat"`)
 	}
@@ -417,6 +473,12 @@ func (muo *MessageUpdateOne) sqlSave(ctx context.Context) (_node *Message, err e
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := muo.mutation.AuthorID(); ok {
+		_spec.SetField(message.FieldAuthorID, field.TypeUUID, value)
+	}
+	if muo.mutation.AuthorIDCleared() {
+		_spec.ClearField(message.FieldAuthorID, field.TypeUUID)
 	}
 	if value, ok := muo.mutation.IsVisibleForClient(); ok {
 		_spec.SetField(message.FieldIsVisibleForClient, field.TypeBool, value)

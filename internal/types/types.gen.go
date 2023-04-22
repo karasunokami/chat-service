@@ -60,7 +60,7 @@ func (c *ChatID) Scan(src any) error {
 
 func (c ChatID) Validate() error {
 	if !c.ID.Valid {
-		return errors.New("")
+		return errors.New("ChatID is not valid")
 	}
 
 	return nil
@@ -120,7 +120,7 @@ func (c *MessageID) Scan(src any) error {
 
 func (c MessageID) Validate() error {
 	if !c.ID.Valid {
-		return errors.New("")
+		return errors.New("MessageID is not valid")
 	}
 
 	return nil
@@ -180,7 +180,7 @@ func (c *ProblemID) Scan(src any) error {
 
 func (c ProblemID) Validate() error {
 	if !c.ID.Valid {
-		return errors.New("")
+		return errors.New("ProblemID is not valid")
 	}
 
 	return nil
@@ -240,7 +240,7 @@ func (c *UserID) Scan(src any) error {
 
 func (c UserID) Validate() error {
 	if !c.ID.Valid {
-		return errors.New("")
+		return errors.New("UserID is not valid")
 	}
 
 	return nil
@@ -300,7 +300,7 @@ func (c *RequestID) Scan(src any) error {
 
 func (c RequestID) Validate() error {
 	if !c.ID.Valid {
-		return errors.New("")
+		return errors.New("RequestID is not valid")
 	}
 
 	return nil

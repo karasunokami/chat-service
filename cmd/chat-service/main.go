@@ -11,16 +11,13 @@ import (
 
 	"github.com/karasunokami/chat-service/internal/config"
 	"github.com/karasunokami/chat-service/internal/logger"
+	clientv1 "github.com/karasunokami/chat-service/internal/server-client/v1"
 	serverdebug "github.com/karasunokami/chat-service/internal/server-debug"
 
-	"github.com/getkin/kin-openapi/openapi3"
 	"golang.org/x/sync/errgroup"
 )
 
-var (
-	configPath          = flag.String("config", "./configs/config.example.toml", "Path to config file")
-	swaggerClientV1Path = flag.String("v1client", "./api/client.v1.swagger.yml", "Path to swagger client v1 file")
-)
+var configPath = flag.String("config", "./configs/config.example.toml", "Path to config file")
 
 func main() {
 	if err := run(); err != nil {
@@ -46,9 +43,9 @@ func run() (errReturned error) {
 	))
 	logger.Sync()
 
-	t, err := openapi3.NewLoader().LoadFromFile(*swaggerClientV1Path)
+	t, err := clientv1.GetSwagger()
 	if err != nil {
-		return fmt.Errorf("load openapi from file, err=%v", err)
+		return fmt.Errorf("client v1 get swagger, err=%v", err)
 	}
 
 	srvDebug, err := serverdebug.New(serverdebug.NewOptions(

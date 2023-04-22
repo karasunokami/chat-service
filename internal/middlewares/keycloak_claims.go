@@ -19,7 +19,7 @@ type claims struct {
 	jwt.StandardClaims
 
 	Subject        types.UserID                                 `json:"sub,omitempty"`
-	ResourceAccess map[string]map[string][]string               `json:"resource_access,omitempty"`
+	ResourceAccess resourceAccess                               `json:"resource_access,omitempty"`
 	Audience       keycloakclient.StringsSliceFromStringOrSlice `json:"aud,omitempty"`
 }
 
@@ -47,20 +47,20 @@ func (c claims) UserID() types.UserID {
 	return c.Subject
 }
 
-func (c claims) hasRoleForResource(role string, resource string) bool {
-	for res, data := range c.ResourceAccess {
-		if res == resource {
-			for key, list := range data {
-				if key == "roles" {
-					for _, rl := range list {
-						if rl == role {
-							return true
-						}
-					}
-				}
-			}
-		}
+type resourceAccess map[string]struct {
+	Roles []string `json:"roles"`
+}
+
+func (ra resourceAccess) HasResourceRole(resource, role string) bool {
+	access, ok := ra[resource]
+	if !ok {
+		return false
 	}
 
+	for _, r := range access.Roles {
+		if r == role {
+			return true
+		}
+	}
 	return false
 }

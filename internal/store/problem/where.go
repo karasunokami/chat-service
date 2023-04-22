@@ -136,6 +136,16 @@ func ManagerIDLTE(v types.UserID) predicate.Problem {
 	return predicate.Problem(sql.FieldLTE(FieldManagerID, v))
 }
 
+// ManagerIDIsNil applies the IsNil predicate on the "manager_id" field.
+func ManagerIDIsNil() predicate.Problem {
+	return predicate.Problem(sql.FieldIsNull(FieldManagerID))
+}
+
+// ManagerIDNotNil applies the NotNil predicate on the "manager_id" field.
+func ManagerIDNotNil() predicate.Problem {
+	return predicate.Problem(sql.FieldNotNull(FieldManagerID))
+}
+
 // ResolvedAtEQ applies the EQ predicate on the "resolved_at" field.
 func ResolvedAtEQ(v time.Time) predicate.Problem {
 	return predicate.Problem(sql.FieldEQ(FieldResolvedAt, v))
@@ -174,6 +184,16 @@ func ResolvedAtLT(v time.Time) predicate.Problem {
 // ResolvedAtLTE applies the LTE predicate on the "resolved_at" field.
 func ResolvedAtLTE(v time.Time) predicate.Problem {
 	return predicate.Problem(sql.FieldLTE(FieldResolvedAt, v))
+}
+
+// ResolvedAtIsNil applies the IsNil predicate on the "resolved_at" field.
+func ResolvedAtIsNil() predicate.Problem {
+	return predicate.Problem(sql.FieldIsNull(FieldResolvedAt))
+}
+
+// ResolvedAtNotNil applies the NotNil predicate on the "resolved_at" field.
+func ResolvedAtNotNil() predicate.Problem {
+	return predicate.Problem(sql.FieldNotNull(FieldResolvedAt))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.

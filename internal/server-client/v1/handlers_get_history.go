@@ -1,7 +1,7 @@
 package clientv1
 
 import (
-	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/karasunokami/chat-service/internal/types"
@@ -25,10 +25,5 @@ var stub = MessagesPage{Messages: []Message{
 }}
 
 func (h Handlers) PostGetHistory(eCtx echo.Context, _ PostGetHistoryParams) error {
-	err := eCtx.JSON(200, GetHistoryResponse{Data: stub})
-	if err != nil {
-		return fmt.Errorf("ectx json, err=%v", err)
-	}
-
-	return nil
+	return eCtx.JSON(http.StatusOK, GetHistoryResponse{Data: stub})
 }

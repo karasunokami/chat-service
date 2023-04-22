@@ -100,9 +100,6 @@ func createSentryCore(dsn, env string) (zapcore.Core, error) {
 		Level:             zapcore.WarnLevel, // when to send message to sentry
 		EnableBreadcrumbs: true,              // enable sending breadcrumbs to Sentry
 		BreadcrumbLevel:   zapcore.InfoLevel, // at what level should we sent breadcrumbs to sentry
-		Tags: map[string]string{
-			"component": "system",
-		},
 	}
 
 	core, err := zapsentry.NewCore(coreCfg, zapsentry.NewSentryClientFromClient(sentryClient))
