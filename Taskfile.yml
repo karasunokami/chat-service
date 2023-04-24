@@ -3,14 +3,41 @@ version: '3'
 
 silent: true
 
+dotenv: ['.env']
+
 vars:
   GO_MODULE: github.com/karasunokami/chat-service
   GO_FILES:
-    sh: find . -type f -name '*.go' -not -path "./vendor/*" -not -path "*.gen.go" | tr "\n" " "
+    sh: find . -type f -name '*.go' -not -path "./vendor/*" -not -path "./internal/store/*" -not -path "*.gen.go" | tr "\n" " "
 
   GOLANGCI_LINT_VERSION: v1.52.2
   GOLANGCI_LINT_CACHE:
     sh: echo "$HOME/.libscache"
+
+  DOCKER_COMPOSE_PATHS: |
+    ./deploy/local/docker-compose.yml
+    ./deploy/local/docker-compose.sentry.yml
+    ./deploy/local/docker-compose.swagger-ui.yml
+
+  DOCKER_COMPOSE_CMD: docker compose -f {{.DOCKER_COMPOSE_PATHS | trim | splitLines | join " -f "}}
+  DOCKER_TOOLS_CMD: docker run --user $(id -u):$(id -g) --rm -v "$(pwd):/app" -w /app chat-service-tools
+
+  TYPES: |
+    ChatID
+    MessageID
+    ProblemID
+    UserID
+    RequestID
+
+  TYPES_PKG: types
+  TYPES_DST: ./internal/types/types.gen.go
+  TYPES_TEMPLATE: ./internal/types/types.tmpl
+
+  ENT_SCHEMA: ./internal/store/schema
+
+  CLIENT_V1_SRC: ./api/client.v1.swagger.yml
+  CLIENT_V1_DST: ./internal/server-client/v1/server.gen.go
+  CLIENT_V1_PKG: clientv1
 
 tasks:
   default:
@@ -32,8 +59,8 @@ tasks:
 
   fmt:
     - echo "- Format"
-    - docker run --rm -v "$(pwd):/app" -w /app chat-service-tools gofumpt -l -w {{.GO_FILES}}
-    - docker run --rm -v "$(pwd):/app" -w /app chat-service-tools gci -l {{.GO_MODULE}} {{.GO_FILES}}
+    - "{{.DOCKER_TOOLS_CMD}} gofumpt -l -w {{.GO_FILES}}"
+    - "{{.DOCKER_TOOLS_CMD}} gci -l {{.GO_MODULE}} {{.GO_FILES}}"
 
   lint:
     cmds:
@@ -56,15 +83,53 @@ tasks:
       - echo "- Tests"
       - go test -race ./...
 
+  tests:integration:
+    cmds:
+      - echo "- Integration tests"
+      - go test -tags integration -count 1 -race ./...
+
   build:
     cmds:
       - echo "- Build"
       - go build ./cmd/chat-service
 
-  gen:
+  generate:
     cmds:
-      - echo "- Gen"
+      - echo "- Run go generate..."
       - docker run --rm -v "$(pwd):/app" -w /app chat-service-tools go generate ./...
+      - task: gen:types
+      - task: ent:gen
+      - task: gen:api
+
+  gen:types:
+    cmds:
+      - echo "- Generate types..."
+      - |
+         go run ./cmd/gen-types \
+         {{.TYPES_PKG}} \
+         {{.TYPES | trim | splitLines | join ","}} \
+         {{.TYPES_DST}} \
+         {{.TYPES_TEMPLATE}}
+
+  gen:api:
+    - "{{.DOCKER_TOOLS_CMD}} oapi-codegen -generate server,spec,types -package {{.CLIENT_V1_PKG}} {{.CLIENT_V1_SRC}} > {{.CLIENT_V1_DST}}"
+
+  ent:gen:
+    cmds:
+      - docker run --rm -v "$(pwd):/app" -w /app chat-service-tools ent generate {{.ENT_SCHEMA}}
+      - task: tidy
+
+  ent:new:
+    cmds:
+      - "{{.DOCKER_TOOLS_CMD}} ent new --target={{.ENT_SCHEMA}} {{.CLI_ARGS}}"
+      - task: tidy
+
+  kc:export:
+    cmds:
+      - echo "- Exporting data from keycloak..."
+      - "{{.DOCKER_COMPOSE_CMD}} exec -it keycloak /opt/keycloak/bin/kc.sh export --file /tmp/bank-realm.json --realm Bank"
+      - "{{.DOCKER_COMPOSE_CMD}} cp keycloak:/tmp/bank-realm.json ./deploy/local/bank-realm.json"
+      - echo "- Exported in ./deploy/local/bank-realm.json"
 
   dev-tools:install:
     cmds:
@@ -74,3 +139,47 @@ tasks:
         -f tools.dockerfile \
         --build-arg GOLANGCI_LINT_VERSION={{.GOLANGCI_LINT_VERSION}} \
         -t chat-service-tools
+
+  dev-tools:cmd:
+    cmds:
+      - "{{.DOCKER_TOOLS_CMD}} {{.CLI_ARGS}}"
+
+  deps:
+    cmds:
+      - test -f .env || cp .env.example .env
+      - "{{.DOCKER_COMPOSE_CMD}} up -d"
+
+  deps:cmd:
+    cmds:
+      - "{{.DOCKER_COMPOSE_CMD}} {{.CLI_ARGS}}"
+
+  deps:status:
+    cmds:
+      - "{{.DOCKER_COMPOSE_CMD}} ps"
+
+  deps:logs:
+    cmds:
+      - "{{.DOCKER_COMPOSE_CMD}} logs -f {{.CLI_ARGS}}"
+
+  deps:stop:
+    cmds:
+      - "{{.DOCKER_COMPOSE_CMD}} stop"
+
+  deps:reset-psql:
+    cmds:
+      - task: deps:reset
+        vars:
+          SERVICE: postgres
+
+  deps:sentry-init:
+    cmds:
+      - "COMPOSE_PROFILES=sentry {{.DOCKER_COMPOSE_CMD}} run -it sentry upgrade"
+
+  deps:sentry-create-user:
+    cmds:
+      - "COMPOSE_PROFILES=sentry {{.DOCKER_COMPOSE_CMD}} run -it sentry createuser"
+
+  deps:reset:
+    cmds:
+      - "{{.DOCKER_COMPOSE_CMD}} rm -fsv {{.SERVICE}}"
+      - "{{.DOCKER_COMPOSE_CMD}} up -d {{.SERVICE}}"

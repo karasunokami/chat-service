@@ -26,21 +26,35 @@ func NewOptions(
 	return o
 }
 
-func WithProductionMode(opt bool) OptOptionsSetter {
+func WithSentryDSN(opt string) OptOptionsSetter {
 	return func(o *Options) {
-		o.productionMode = opt
+		o.sentryDSN = opt
+	}
+}
+
+func WithEnv(opt string) OptOptionsSetter {
+	return func(o *Options) {
+		o.env = opt
 	}
 }
 
 func (o *Options) Validate() error {
 	errs := new(errors461e464ebed9.ValidationErrors)
 	errs.Add(errors461e464ebed9.NewValidationError("level", _validate_Options_level(o)))
+	errs.Add(errors461e464ebed9.NewValidationError("sentryDSN", _validate_Options_sentryDSN(o)))
 	return errs.AsError()
 }
 
 func _validate_Options_level(o *Options) error {
 	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.level, "required,oneof=debug info warn error"); err != nil {
 		return fmt461e464ebed9.Errorf("field `level` did not pass the test: %w", err)
+	}
+	return nil
+}
+
+func _validate_Options_sentryDSN(o *Options) error {
+	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.sentryDSN, "unix_addr"); err != nil {
+		return fmt461e464ebed9.Errorf("field `sentryDSN` did not pass the test: %w", err)
 	}
 	return nil
 }

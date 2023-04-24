@@ -7,3 +7,22 @@ level = "info"
 [servers]
 [servers.debug]
 addr = ":8079"
+
+[servers.client]
+addr = ":8080"
+allow_origins = ["http://localhost:3011", "http://localhost:3000"]
+
+[servers.client.required_access]
+resource = "chat-ui-client"
+role = "support-chat-client"
+
+[sentry]
+dsn = "http://8386679e9758470f9bb586ce1132dd4e@localhost:9000/2"
+
+[clients]
+[clients.keycloak]
+base_path = "http://localhost:3010"
+realm = "Bank"
+client_id = "chat-service"
+client_secret = "63BYwNafWBXbH0tRCdIhQ5ZAj91uj0bd"
+debug_mode = true
