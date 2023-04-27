@@ -56,7 +56,7 @@ func (o *PgxOptions) connString() string {
 func NewPgxDB(opts PgxOptions) (*sql.DB, error) {
 	err := opts.Validate()
 	if err != nil {
-		return nil, fmt.Errorf("validate %T options, err=%v", opts, err)
+		return nil, fmt.Errorf("validate options, err=%v", err)
 	}
 
 	cfg, err := pgx.ParseConfig(opts.connString())

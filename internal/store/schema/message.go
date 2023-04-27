@@ -24,7 +24,7 @@ func (Message) Fields() []ent.Field {
 		field.Bool("is_visible_for_client").Default(false),
 		field.Bool("is_visible_for_manager").Default(false),
 		field.Text("body").Immutable(),
-		field.Time("checked_at").Default(time.Now),
+		field.Time("checked_at").Optional(),
 		field.Bool("is_blocked").Default(false),
 		field.Bool("is_service").Default(false),
 		field.Time("created_at").Default(time.Now).Immutable(),

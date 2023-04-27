@@ -982,9 +982,22 @@ func (m *MessageMutation) OldCheckedAt(ctx context.Context) (v time.Time, err er
 	return oldValue.CheckedAt, nil
 }
 
+// ClearCheckedAt clears the value of the "checked_at" field.
+func (m *MessageMutation) ClearCheckedAt() {
+	m.checked_at = nil
+	m.clearedFields[message.FieldCheckedAt] = struct{}{}
+}
+
+// CheckedAtCleared returns if the "checked_at" field was cleared in this mutation.
+func (m *MessageMutation) CheckedAtCleared() bool {
+	_, ok := m.clearedFields[message.FieldCheckedAt]
+	return ok
+}
+
 // ResetCheckedAt resets all changes to the "checked_at" field.
 func (m *MessageMutation) ResetCheckedAt() {
 	m.checked_at = nil
+	delete(m.clearedFields, message.FieldCheckedAt)
 }
 
 // SetIsBlocked sets the "is_blocked" field.
@@ -1381,6 +1394,9 @@ func (m *MessageMutation) ClearedFields() []string {
 	if m.FieldCleared(message.FieldAuthorID) {
 		fields = append(fields, message.FieldAuthorID)
 	}
+	if m.FieldCleared(message.FieldCheckedAt) {
+		fields = append(fields, message.FieldCheckedAt)
+	}
 	return fields
 }
 
@@ -1397,6 +1413,9 @@ func (m *MessageMutation) ClearField(name string) error {
 	switch name {
 	case message.FieldAuthorID:
 		m.ClearAuthorID()
+		return nil
+	case message.FieldCheckedAt:
+		m.ClearCheckedAt()
 		return nil
 	}
 	return fmt.Errorf("unknown Message nullable field %s", name)

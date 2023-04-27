@@ -36,10 +36,6 @@ func init() {
 	messageDescIsVisibleForManager := messageFields[5].Descriptor()
 	// message.DefaultIsVisibleForManager holds the default value on creation for the is_visible_for_manager field.
 	message.DefaultIsVisibleForManager = messageDescIsVisibleForManager.Default.(bool)
-	// messageDescCheckedAt is the schema descriptor for checked_at field.
-	messageDescCheckedAt := messageFields[7].Descriptor()
-	// message.DefaultCheckedAt holds the default value on creation for the checked_at field.
-	message.DefaultCheckedAt = messageDescCheckedAt.Default.(func() time.Time)
 	// messageDescIsBlocked is the schema descriptor for is_blocked field.
 	messageDescIsBlocked := messageFields[8].Descriptor()
 	// message.DefaultIsBlocked holds the default value on creation for the is_blocked field.

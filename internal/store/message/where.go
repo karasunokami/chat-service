@@ -321,6 +321,16 @@ func CheckedAtLTE(v time.Time) predicate.Message {
 	return predicate.Message(sql.FieldLTE(FieldCheckedAt, v))
 }
 
+// CheckedAtIsNil applies the IsNil predicate on the "checked_at" field.
+func CheckedAtIsNil() predicate.Message {
+	return predicate.Message(sql.FieldIsNull(FieldCheckedAt))
+}
+
+// CheckedAtNotNil applies the NotNil predicate on the "checked_at" field.
+func CheckedAtNotNil() predicate.Message {
+	return predicate.Message(sql.FieldNotNull(FieldCheckedAt))
+}
+
 // IsBlockedEQ applies the EQ predicate on the "is_blocked" field.
 func IsBlockedEQ(v bool) predicate.Message {
 	return predicate.Message(sql.FieldEQ(FieldIsBlocked, v))

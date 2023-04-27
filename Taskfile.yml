@@ -95,6 +95,7 @@ tasks:
       - go build ./cmd/chat-service
 
   generate:
+    aliases: [gen]
     cmds:
       - echo "- Run go generate..."
       - docker run --rm -v "$(pwd):/app" -w /app chat-service-tools go generate ./...

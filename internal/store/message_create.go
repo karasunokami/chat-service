@@ -206,10 +206,6 @@ func (mc *MessageCreate) defaults() {
 		v := message.DefaultIsVisibleForManager
 		mc.mutation.SetIsVisibleForManager(v)
 	}
-	if _, ok := mc.mutation.CheckedAt(); !ok {
-		v := message.DefaultCheckedAt()
-		mc.mutation.SetCheckedAt(v)
-	}
 	if _, ok := mc.mutation.IsBlocked(); !ok {
 		v := message.DefaultIsBlocked
 		mc.mutation.SetIsBlocked(v)
@@ -259,9 +255,6 @@ func (mc *MessageCreate) check() error {
 	}
 	if _, ok := mc.mutation.Body(); !ok {
 		return &ValidationError{Name: "body", err: errors.New(`store: missing required field "Message.body"`)}
-	}
-	if _, ok := mc.mutation.CheckedAt(); !ok {
-		return &ValidationError{Name: "checked_at", err: errors.New(`store: missing required field "Message.checked_at"`)}
 	}
 	if _, ok := mc.mutation.IsBlocked(); !ok {
 		return &ValidationError{Name: "is_blocked", err: errors.New(`store: missing required field "Message.is_blocked"`)}

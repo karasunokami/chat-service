@@ -85,8 +85,6 @@ var (
 	DefaultIsVisibleForClient bool
 	// DefaultIsVisibleForManager holds the default value on creation for the "is_visible_for_manager" field.
 	DefaultIsVisibleForManager bool
-	// DefaultCheckedAt holds the default value on creation for the "checked_at" field.
-	DefaultCheckedAt func() time.Time
 	// DefaultIsBlocked holds the default value on creation for the "is_blocked" field.
 	DefaultIsBlocked bool
 	// DefaultIsService holds the default value on creation for the "is_service" field.

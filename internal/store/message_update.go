@@ -98,6 +98,12 @@ func (mu *MessageUpdate) SetNillableCheckedAt(t *time.Time) *MessageUpdate {
 	return mu
 }
 
+// ClearCheckedAt clears the value of the "checked_at" field.
+func (mu *MessageUpdate) ClearCheckedAt() *MessageUpdate {
+	mu.mutation.ClearCheckedAt()
+	return mu
+}
+
 // SetIsBlocked sets the "is_blocked" field.
 func (mu *MessageUpdate) SetIsBlocked(b bool) *MessageUpdate {
 	mu.mutation.SetIsBlocked(b)
@@ -216,6 +222,9 @@ func (mu *MessageUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := mu.mutation.CheckedAt(); ok {
 		_spec.SetField(message.FieldCheckedAt, field.TypeTime, value)
+	}
+	if mu.mutation.CheckedAtCleared() {
+		_spec.ClearField(message.FieldCheckedAt, field.TypeTime)
 	}
 	if value, ok := mu.mutation.IsBlocked(); ok {
 		_spec.SetField(message.FieldIsBlocked, field.TypeBool, value)
@@ -337,6 +346,12 @@ func (muo *MessageUpdateOne) SetNillableCheckedAt(t *time.Time) *MessageUpdateOn
 	if t != nil {
 		muo.SetCheckedAt(*t)
 	}
+	return muo
+}
+
+// ClearCheckedAt clears the value of the "checked_at" field.
+func (muo *MessageUpdateOne) ClearCheckedAt() *MessageUpdateOne {
+	muo.mutation.ClearCheckedAt()
 	return muo
 }
 
@@ -488,6 +503,9 @@ func (muo *MessageUpdateOne) sqlSave(ctx context.Context) (_node *Message, err e
 	}
 	if value, ok := muo.mutation.CheckedAt(); ok {
 		_spec.SetField(message.FieldCheckedAt, field.TypeTime, value)
+	}
+	if muo.mutation.CheckedAtCleared() {
+		_spec.ClearField(message.FieldCheckedAt, field.TypeTime)
 	}
 	if value, ok := muo.mutation.IsBlocked(); ok {
 		_spec.SetField(message.FieldIsBlocked, field.TypeBool, value)
