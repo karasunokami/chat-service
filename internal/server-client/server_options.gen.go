@@ -9,6 +9,7 @@ import (
 	clientv1 "github.com/karasunokami/chat-service/internal/server-client/v1"
 	errors461e464ebed9 "github.com/kazhuravlev/options-gen/pkg/errors"
 	validator461e464ebed9 "github.com/kazhuravlev/options-gen/pkg/validator"
+	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 )
 
@@ -23,6 +24,7 @@ func NewOptions(
 	keycloakClient *keycloakclient.Client,
 	resource string,
 	role string,
+	errorHandler echo.HTTPErrorHandler,
 	options ...OptOptionsSetter,
 ) Options {
 	o := Options{}
@@ -37,6 +39,7 @@ func NewOptions(
 	o.keycloakClient = keycloakClient
 	o.resource = resource
 	o.role = role
+	o.errorHandler = errorHandler
 
 	for _, opt := range options {
 		opt(&o)
@@ -54,6 +57,7 @@ func (o *Options) Validate() error {
 	errs.Add(errors461e464ebed9.NewValidationError("keycloakClient", _validate_Options_keycloakClient(o)))
 	errs.Add(errors461e464ebed9.NewValidationError("resource", _validate_Options_resource(o)))
 	errs.Add(errors461e464ebed9.NewValidationError("role", _validate_Options_role(o)))
+	errs.Add(errors461e464ebed9.NewValidationError("errorHandler", _validate_Options_errorHandler(o)))
 	return errs.AsError()
 }
 
@@ -109,6 +113,13 @@ func _validate_Options_resource(o *Options) error {
 func _validate_Options_role(o *Options) error {
 	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.role, "required"); err != nil {
 		return fmt461e464ebed9.Errorf("field `role` did not pass the test: %w", err)
+	}
+	return nil
+}
+
+func _validate_Options_errorHandler(o *Options) error {
+	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.errorHandler, "required"); err != nil {
+		return fmt461e464ebed9.Errorf("field `errorHandler` did not pass the test: %w", err)
 	}
 	return nil
 }

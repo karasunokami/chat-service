@@ -48,7 +48,7 @@ func (c *{{$type}}) Matches(x interface{}) bool {
 	return false
 }
 
-func (c *{{$type}}) String() string {
+func (c {{$type}}) String() string {
 	return c.ID.UUID.String()
 }
 

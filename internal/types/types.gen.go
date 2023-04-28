@@ -46,7 +46,7 @@ func (c *ChatID) Matches(x interface{}) bool {
 	return false
 }
 
-func (c *ChatID) String() string {
+func (c ChatID) String() string {
 	return c.ID.UUID.String()
 }
 
@@ -106,7 +106,7 @@ func (c *MessageID) Matches(x interface{}) bool {
 	return false
 }
 
-func (c *MessageID) String() string {
+func (c MessageID) String() string {
 	return c.ID.UUID.String()
 }
 
@@ -166,7 +166,7 @@ func (c *ProblemID) Matches(x interface{}) bool {
 	return false
 }
 
-func (c *ProblemID) String() string {
+func (c ProblemID) String() string {
 	return c.ID.UUID.String()
 }
 
@@ -226,7 +226,7 @@ func (c *UserID) Matches(x interface{}) bool {
 	return false
 }
 
-func (c *UserID) String() string {
+func (c UserID) String() string {
 	return c.ID.UUID.String()
 }
 
@@ -286,7 +286,7 @@ func (c *RequestID) Matches(x interface{}) bool {
 	return false
 }
 
-func (c *RequestID) String() string {
+func (c RequestID) String() string {
 	return c.ID.UUID.String()
 }
 

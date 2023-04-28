@@ -9,7 +9,6 @@ import (
 	"github.com/karasunokami/chat-service/internal/store"
 
 	"github.com/google/uuid"
-	"go.uber.org/zap"
 )
 
 type DBSuite struct {

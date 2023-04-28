@@ -8,6 +8,10 @@ import (
 	"go.uber.org/zap"
 )
 
+// FIXME: В мидлваре, логирующей запрос, необходимо заиспользовать internal/errors.GetServerErrorCode,
+// FIXME: чтобы при наличии ошибки менять status на соответствующий код.
+// FIXME: Иначе в логах мы всегда будем видеть 200 OK и пропускать ошибки :)
+
 func NewLoggerMiddleware(lg *zap.Logger) echo.MiddlewareFunc {
 	return middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
 		Skipper: func(c echo.Context) bool {

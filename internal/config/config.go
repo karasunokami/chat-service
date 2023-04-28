@@ -48,6 +48,7 @@ type SentryConfig struct {
 
 type ClientsConfig struct {
 	KeycloakClient KeycloakClientConfig `toml:"keycloak" validate:"required"`
+	PSQLClient     PSQLClientConfig     `toml:"psql" validate:"required"`
 }
 
 type KeycloakClientConfig struct {
@@ -56,4 +57,12 @@ type KeycloakClientConfig struct {
 	ClientID     string `toml:"client_id" validate:"required"`
 	ClientSecret string `toml:"client_secret" validate:"required"`
 	DebugMode    bool   `toml:"debug_mode"`
+}
+
+type PSQLClientConfig struct {
+	Address   string `toml:"address" validate:"required,hostname_port"`
+	Username  string `toml:"username" validate:"required"`
+	Password  string `toml:"password" validate:"required"`
+	Database  string `toml:"database" validate:"required"`
+	DebugMode bool   `toml:"debug_mode"`
 }

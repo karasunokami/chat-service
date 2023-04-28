@@ -24,6 +24,17 @@ const (
 	BearerAuthScopes = "bearerAuth.Scopes"
 )
 
+// Error defines model for Error.
+type Error struct {
+	// Code contains HTTP error codes and specific business logic error codes (the last must be >= 1000).
+	Code    ErrorCode `json:"code"`
+	Details *string   `json:"details,omitempty"`
+	Message string    `json:"message"`
+}
+
+// ErrorCode contains HTTP error codes and specific business logic error codes (the last must be >= 1000).
+type ErrorCode = int
+
 // GetHistoryRequest defines model for GetHistoryRequest.
 type GetHistoryRequest struct {
 	Cursor   *string `json:"cursor,omitempty"`
@@ -32,15 +43,19 @@ type GetHistoryRequest struct {
 
 // GetHistoryResponse defines model for GetHistoryResponse.
 type GetHistoryResponse struct {
-	Data MessagesPage `json:"data"`
+	Data  MessagesPage `json:"data"`
+	Error *Error       `json:"error,omitempty"`
 }
 
 // Message defines model for Message.
 type Message struct {
-	AuthorId  types.UserID    `json:"authorId"`
-	Body      string          `json:"body"`
-	CreatedAt time.Time       `json:"createdAt"`
-	Id        types.MessageID `json:"id"`
+	AuthorId   *types.UserID   `json:"authorId,omitempty"`
+	Body       string          `json:"body"`
+	CreatedAt  time.Time       `json:"createdAt"`
+	Id         types.MessageID `json:"id"`
+	IsBlocked  bool            `json:"isBlocked"`
+	IsReceived bool            `json:"isReceived"`
+	IsService  bool            `json:"isService"`
 }
 
 // MessagesPage defines model for MessagesPage.
@@ -48,11 +63,8 @@ type MessagesPage struct {
 	Messages []Message `json:"messages"`
 }
 
-// RequestID defines model for RequestID.
-type RequestID = types.RequestID
-
 // XRequestIDHeader defines model for XRequestIDHeader.
-type XRequestIDHeader = RequestID
+type XRequestIDHeader = types.RequestID
 
 // PostGetHistoryParams defines parameters for PostGetHistory.
 type PostGetHistoryParams struct {
@@ -142,18 +154,21 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/7RU3U7bTBB9lWi+79KJTblBvuNHhVSthEqrIqFcDPZgb/H+MDuOSFHevdpdJw4EqQiJ",
-	"q2Q9szPnnJk9T1BZ7awhIx7KJ3DIqEmI4+n6Oz305GV+dkFYE4dvykAJbTpmYFATlHA9HTKn8zPIgOmh",
-	"V0w1lMI9ZeCrljSG2/8z3UEJ/+Vj2zxFfb5tBuv1enMp4jgnuVBeLK+GnAiVrSMWRTGl6tnbCFBWLkDy",
-	"wso0sM7AYUNX6g+FoMZHpXsN5UFRZKCV2ZyyzT1lhBrihGG3sXfWeNrvXKP8k9o38h4b8pfYEITCo0I3",
-	"qcBincGQtd8Ce2ktz+vw/86yRoES+l7VkL2gm8HjtLHT4WP48bOfnjiOZRuaKu0sJxVRWiihUdL2t7PK",
-	"6vweGX1v7D1qlVctytQTL1VFeZCGDXZ5rBt53Np6Nej6lUwTah0WRZHtT6FiQqH6WJ6RqFFoKkoTvHJF",
-	"vZPwoOPHcH4xvAhpO59BkF22O4NN49+brh6i8XUJaf/GbQoSDbyRGVd7i7UtHDCMr+tdmo7XP0ZTT1XP",
-	"SlZXgWPS4paQiY/7UHhz+rwB/uXXDxg8IoBM0ZFJK+JSYWXubLQFJV2InKC5n1z1LgCfnLYok9NOkZHJ",
-	"8eUcMlgSe2WDxy0PgsDWkUGnoITDWTE7hCwyjfjyZusOUQGbfKkmX7Fykqqck0wC+UmbMmcQazKGeHjR",
-	"cGm9jD4TG4wefPP6Jowp+Z5HrxdpC8jLyfA6K2uETESHznWqit3z3z5AfHqjPe+b8IvHELw+fkhOGTX6",
-	"VBQfAmAw44jgueCbtzbplJdZyNhdr6jo7mLdLIJeYTM3ej8vd0ZL6qzTYUNSFmTQczfsWJnnna2wa62X",
-	"8qg4KvKwNov13wAAAP//q1jm4VgHAAA=",
+	"H4sIAAAAAAAC/7RV32/bNhD+V4jbHjZAtpRlD4WAPeTH1mRYgaDJsAKZH2jpInGRSJV3NOoF+t+Ho2Rb",
+	"qt21GNYnW+SRd/d93318gcK1nbNomSB/gU573SKjj1/v3uL7gMS31zeoS/SyZizkUA+fCVjdIuTwbjFG",
+	"Lm6vIQGP74PxWELOPmACVNTYajn95HyrGXIIwZSQAG87OU/sja0ggQ+Lyi1M2znPQzlcQw6V4Tqsl4Vr",
+	"02ftNQXrnnVr0qLWvCD0G1Ngaiyjt7pJ5U6CfrxszBAXl/t+oO/7XV2x1Z+9d7G/zrsOPRuMy4UrUX6/",
+	"9fgEOXyTHuBKx9NpPHolgX0CJbI2TTw7761PoEUiXeGJvX6K2eM+MBnyr/oEDknyFyiRCm86Nk7IKJxl",
+	"bSypm4eHO4USqOQcKW1LRR0W5skUah3IWCRSjatMMYv7jmtUjSZWbSBWa1R/hiw7x5/UWZZl3y8hgdZY",
+	"04YW8h+zbE+bQF6hl95eI98YYue3I8YnsAyeBoyPkOl0hffm79hcqz8Mmc4k0z7v2Ym0/UeJqXOW8Dhz",
+	"qVl/jsU3A+Z0J8D3CeBOEJ+l/oi+mE5Ie3MgfF6QDlw7f1t+8UjMVPw7oY9ztt/6n0amT2Dtyu3Iwm9o",
+	"K7nrPJtQfuCs8KgZywueNVFqxgWbFuHEEfMfGx5x/Fo9G7psXPGM5USba+ca1DZWTW+xQLP59P79cPep",
+	"7Y+kERuOGE8BnOWY1jO9fCKoQaRHqhptI/43jC19oealibFu7b3efsqPCFbRNbEI3vD2Xm4Zsq1Re/QX",
+	"QWjYff2yo/nXPx5g9NoITdw98F4zd8MoG/vkIoaGG9m51PZZ3YdOaFZXtWZ11Ri0rC7ubiGBDXoaHHBz",
+	"Ji24Dq3uDORwvsyW55BEXcT60mrvEhE2N/jT3EdfIyuRiqqHSLE9gVfLvswq3Dnig9/EBIfn8vE01oeQ",
+	"9Og57VcDzkh8Oc6dmDnaWJ3uusYUMXv6F0mJL5OX9N94PTbjfk6pPMtxYXDMiNEPWfZVChhNOVYwB3yn",
+	"ZtUY4qVETOUVEZ0K63EleMkc7/CeX3eNG2xc14pChihIIPhm1Fiepo0rdFM74vxV9ipLRTar/p8AAAD/",
+	"/3ne81wDCQAA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

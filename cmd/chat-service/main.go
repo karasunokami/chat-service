@@ -11,9 +11,11 @@ import (
 
 	"github.com/karasunokami/chat-service/internal/config"
 	"github.com/karasunokami/chat-service/internal/logger"
+	messagesrepo "github.com/karasunokami/chat-service/internal/repositories/messages"
 	clientv1 "github.com/karasunokami/chat-service/internal/server-client/v1"
 	serverdebug "github.com/karasunokami/chat-service/internal/server-debug"
-
+	"github.com/karasunokami/chat-service/internal/store"
+	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -56,12 +58,37 @@ func run() (errReturned error) {
 		return fmt.Errorf("init debug server: %v", err)
 	}
 
+	lg := zap.L().Named(nameServerClient)
+
+	psqlClient, err := store.NewPSQLClient(store.NewPSQLOptions(
+		cfg.Clients.PSQLClient.Address,
+		cfg.Clients.PSQLClient.Username,
+		cfg.Clients.PSQLClient.Password,
+		cfg.Clients.PSQLClient.Database,
+		store.WithDebug(cfg.Clients.PSQLClient.DebugMode),
+	))
+	defer func() {
+		err := psqlClient.Close()
+		if err != nil {
+			lg.Error("stop psql client", zap.Error(err))
+		}
+	}()
+
+	// FIXME: 2) Миграция: https://entgo.io/docs/migrate/#auto-migration
+
+	repo, err := messagesrepo.New(messagesrepo.NewOptions(store.NewDatabase(psqlClient, lg)))
+	if err != nil {
+		return fmt.Errorf("init messagerepo, err=%v", err)
+	}
+
 	srvClient, err := initServerClient(
+		lg,
 		cfg.Servers.Client,
 		t,
 		cfg.Clients.KeycloakClient,
 		cfg.Servers.Client.RequiredAccess,
 		cfg.Global,
+		repo,
 	)
 	if err != nil {
 		return fmt.Errorf("init client server: %v", err)

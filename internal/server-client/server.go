@@ -35,6 +35,7 @@ type Options struct {
 	keycloakClient *keycloakclient.Client   `option:"mandatory" validate:"required"`
 	resource       string                   `option:"mandatory" validate:"required"`
 	role           string                   `option:"mandatory" validate:"required"`
+	errorHandler   echo.HTTPErrorHandler    `option:"mandatory" validate:"required"`
 }
 
 type Server struct {
@@ -89,6 +90,8 @@ func New(opts Options) (*Server, error) {
 		},
 	}))
 	clientv1.RegisterHandlers(v1, opts.v1Handlers)
+
+	e.HTTPErrorHandler = opts.errorHandler
 
 	return &s, nil
 }

@@ -27,8 +27,12 @@ func (Message) Fields() []ent.Field {
 		field.Time("checked_at").Optional(),
 		field.Bool("is_blocked").Default(false),
 		field.Bool("is_service").Default(false),
-		field.Time("created_at").Default(time.Now).Immutable(),
+		field.Time("created_at").Default(defaultTime).Immutable(),
 	}
+}
+
+func defaultTime() time.Time {
+	return time.Now().Truncate(time.Millisecond)
 }
 
 // Edges of the Message.

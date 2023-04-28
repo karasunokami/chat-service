@@ -26,3 +26,9 @@ realm = "Bank"
 client_id = "chat-service"
 client_secret = "63BYwNafWBXbH0tRCdIhQ5ZAj91uj0bd"
 debug_mode = true
+[clients.psql]
+address = "postgres:5432"
+username = "chat-service"
+password = "chat-service"
+database = "chat-service"
+debug_mode = true

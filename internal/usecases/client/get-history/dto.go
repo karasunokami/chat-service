@@ -1,6 +1,7 @@
 package gethistory
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -38,18 +39,26 @@ func (r Request) Validate() error {
 }
 
 type Response struct {
-	NextCursor string
-	Messages   []Message
+	NextCursor string    `json:"next"`
+	Messages   []Message `json:"messages"`
 }
 
 type Message struct {
-	ID         types.MessageID
-	AuthorID   types.UserID
-	Body       string
-	CreatedAt  time.Time
-	IsReceived bool
-	IsBlocked  bool
-	IsService  bool
+	ID         types.MessageID `json:"id"`
+	AuthorID   types.UserID    `json:"authorId,omitempty" `
+	Body       string          `json:"body"`
+	CreatedAt  time.Time       `json:"createdAt"`
+	IsReceived bool            `json:"isReceived"`
+	IsBlocked  bool            `json:"isBlocked"`
+	IsService  bool            `json:"isService"`
+}
+
+func (m *Message) MarshalJSON() ([]byte, error) {
+	if m.AuthorID.IsZero() {
+		m.AuthorID = types.UserIDNil
+	}
+
+	return json.Marshal(m)
 }
 
 func adoptMessages(messages []messagesrepo.Message) []Message {
