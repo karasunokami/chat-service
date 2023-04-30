@@ -53,5 +53,9 @@ func ProcessServerError(err error) (code int, msg string, details string) {
 		return echoHTTPError.Code, mes, echoHTTPError.Error()
 	}
 
-	return http.StatusInternalServerError, defaultInternalError, err.Error()
+	if err != nil {
+		details = err.Error()
+	}
+
+	return http.StatusInternalServerError, defaultInternalError, details
 }

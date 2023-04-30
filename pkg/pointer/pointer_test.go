@@ -3,9 +3,9 @@ package pointer_test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/karasunokami/chat-service/pkg/pointer"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestIndirect(t *testing.T) {

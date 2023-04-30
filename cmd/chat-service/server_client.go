@@ -17,8 +17,6 @@ import (
 
 const nameServerClient = "server-client"
 
-// FIXME: 3) "server-client" logger должен пронизывать все компоненты сервера
-
 func initServerClient(
 	lg *zap.Logger,
 	clientServerConfig config.ClientServerConfig,

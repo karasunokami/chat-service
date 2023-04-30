@@ -3,14 +3,12 @@ package middlewares
 import (
 	"net/http"
 
+	"github.com/karasunokami/chat-service/internal/errors"
+
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"go.uber.org/zap"
 )
-
-// FIXME: В мидлваре, логирующей запрос, необходимо заиспользовать internal/errors.GetServerErrorCode,
-// FIXME: чтобы при наличии ошибки менять status на соответствующий код.
-// FIXME: Иначе в логах мы всегда будем видеть 200 OK и пропускать ошибки :)
 
 func NewLoggerMiddleware(lg *zap.Logger) echo.MiddlewareFunc {
 	return middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
@@ -27,21 +25,24 @@ func NewLoggerMiddleware(lg *zap.Logger) echo.MiddlewareFunc {
 		LogStatus:    true,
 		HandleError:  true,
 		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
+			status := v.Status
+
+			if v.Error != nil {
+				lg.Error("middleware error", zap.Error(v.Error))
+				status = errors.GetServerErrorCode(v.Error)
+			}
+
 			lg.Info(
 				"request",
 				zap.Duration("latency", v.Latency),
 				zap.String("remote_ip", v.RemoteIP),
-				zap.String("Host", v.Host),
+				zap.String("host", v.Host),
 				zap.String("method", v.Method),
 				zap.String("uri_path", v.URIPath),
 				zap.String("request_id", v.RequestID),
 				zap.String("user_agent", v.UserAgent),
-				zap.Int("status", v.Status),
+				zap.Int("status", status),
 			)
-
-			if v.Error != nil {
-				lg.Error("middleware error", zap.Error(v.Error))
-			}
 
 			return nil
 		},

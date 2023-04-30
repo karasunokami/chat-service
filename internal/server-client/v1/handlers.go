@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	gethistory "github.com/karasunokami/chat-service/internal/usecases/client/get-history"
+
 	"go.uber.org/zap"
 )
 

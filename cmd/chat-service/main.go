@@ -15,6 +15,7 @@ import (
 	clientv1 "github.com/karasunokami/chat-service/internal/server-client/v1"
 	serverdebug "github.com/karasunokami/chat-service/internal/server-debug"
 	"github.com/karasunokami/chat-service/internal/store"
+
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 )
@@ -74,7 +75,17 @@ func run() (errReturned error) {
 		}
 	}()
 
-	// FIXME: 2) Миграция: https://entgo.io/docs/migrate/#auto-migration
+	if err != nil {
+		lg.Fatal("create new psql client", zap.Error(err))
+	}
+
+	if cfg.Clients.PSQLClient.DebugMode && cfg.Global.IsInProdEnv() {
+		lg.Warn("Attention! PSQL client is in debug mode and env is prod")
+	}
+
+	if err := psqlClient.Schema.Create(ctx); err != nil {
+		lg.Fatal("failed creating schema resources", zap.Error(err))
+	}
 
 	repo, err := messagesrepo.New(messagesrepo.NewOptions(store.NewDatabase(psqlClient, lg)))
 	if err != nil {

@@ -6,16 +6,16 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/golang/mock/gomock"
-	"github.com/labstack/echo/v4"
-	"github.com/stretchr/testify/suite"
-	"go.uber.org/zap"
-
 	"github.com/karasunokami/chat-service/internal/middlewares"
 	clientv1 "github.com/karasunokami/chat-service/internal/server-client/v1"
 	clientv1mocks "github.com/karasunokami/chat-service/internal/server-client/v1/mocks"
 	"github.com/karasunokami/chat-service/internal/testingh"
 	"github.com/karasunokami/chat-service/internal/types"
+
+	"github.com/golang/mock/gomock"
+	"github.com/labstack/echo/v4"
+	"github.com/stretchr/testify/suite"
+	"go.uber.org/zap"
 )
 
 type HandlersSuite struct {

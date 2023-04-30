@@ -7,6 +7,7 @@ import (
 	"github.com/karasunokami/chat-service/internal/middlewares"
 	gethistory "github.com/karasunokami/chat-service/internal/usecases/client/get-history"
 	"github.com/karasunokami/chat-service/pkg/pointer"
+
 	"github.com/labstack/echo/v4"
 )
 
@@ -35,7 +36,4 @@ func (h Handlers) PostGetHistory(eCtx echo.Context, params PostGetHistoryParams)
 	}
 
 	return eCtx.JSON(http.StatusOK, Response{Data: resp})
-
-	// FIXME: 3) Обработать gethistory.ErrInvalidRequest и gethistory.ErrInvalidCursor
-	// FIXME: 4) Сформировать ответ, обрабатывая возможное отсутствие автора у сообщения
 }
