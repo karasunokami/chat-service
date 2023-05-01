@@ -80,7 +80,6 @@ components:
           type: string
 
     GetHistoryResponse:
-      required: [ data ]
       properties:
         data:
           $ref: "#/components/schemas/MessagesPage"
@@ -88,12 +87,13 @@ components:
           $ref: "#/components/schemas/Error"
 
     MessagesPage:
-      required: [ messages ]
+      required: [ messages, next ]
       properties:
         messages:
           type: array
-          items:
-            $ref: '#/components/schemas/Message'
+          items: { $ref: "#/components/schemas/Message" }
+        next:
+          type: string
 
     Message:
       required: [ id, body, createdAt, isReceived, isBlocked, isService ]

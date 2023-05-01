@@ -17,6 +17,7 @@ RUN \
     go install entgo.io/ent/cmd/ent@v0.11.10 && \
     go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@latest && \
     go install github.com/golang/mock/mockgen@latest && \
+    go install github.com/onsi/ginkgo/v2/ginkgo@v2.9.1 && \
     mv /go/bin/* /usr/local/bin/
 
 workdir /app

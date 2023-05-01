@@ -49,6 +49,20 @@ func (mc *MessageCreate) SetNillableAuthorID(ti *types.UserID) *MessageCreate {
 	return mc
 }
 
+// SetInitialRequestID sets the "initial_request_id" field.
+func (mc *MessageCreate) SetInitialRequestID(ti types.RequestID) *MessageCreate {
+	mc.mutation.SetInitialRequestID(ti)
+	return mc
+}
+
+// SetNillableInitialRequestID sets the "initial_request_id" field if the given value is not nil.
+func (mc *MessageCreate) SetNillableInitialRequestID(ti *types.RequestID) *MessageCreate {
+	if ti != nil {
+		mc.SetInitialRequestID(*ti)
+	}
+	return mc
+}
+
 // SetIsVisibleForClient sets the "is_visible_for_client" field.
 func (mc *MessageCreate) SetIsVisibleForClient(b bool) *MessageCreate {
 	mc.mutation.SetIsVisibleForClient(b)
@@ -247,6 +261,11 @@ func (mc *MessageCreate) check() error {
 			return &ValidationError{Name: "author_id", err: fmt.Errorf(`store: validator failed for field "Message.author_id": %w`, err)}
 		}
 	}
+	if v, ok := mc.mutation.InitialRequestID(); ok {
+		if err := v.Validate(); err != nil {
+			return &ValidationError{Name: "initial_request_id", err: fmt.Errorf(`store: validator failed for field "Message.initial_request_id": %w`, err)}
+		}
+	}
 	if _, ok := mc.mutation.IsVisibleForClient(); !ok {
 		return &ValidationError{Name: "is_visible_for_client", err: errors.New(`store: missing required field "Message.is_visible_for_client"`)}
 	}
@@ -314,6 +333,10 @@ func (mc *MessageCreate) createSpec() (*Message, *sqlgraph.CreateSpec) {
 	if value, ok := mc.mutation.AuthorID(); ok {
 		_spec.SetField(message.FieldAuthorID, field.TypeUUID, value)
 		_node.AuthorID = value
+	}
+	if value, ok := mc.mutation.InitialRequestID(); ok {
+		_spec.SetField(message.FieldInitialRequestID, field.TypeUUID, value)
+		_node.InitialRequestID = value
 	}
 	if value, ok := mc.mutation.IsVisibleForClient(); ok {
 		_spec.SetField(message.FieldIsVisibleForClient, field.TypeBool, value)

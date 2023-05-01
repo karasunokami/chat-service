@@ -40,6 +40,11 @@ vars:
   CLIENT_V1_DST: ./internal/server-client/v1/server.gen.go
   CLIENT_V1_PKG: clientv1
 
+  ### E2E tests ###
+  E2E_CLIENT_V1_DST: ./tests/e2e/api/client/v1/client.gen.go
+  E2E_CLIENT_V1_PKG: apiclientv1
+  ###
+
 tasks:
   default:
     cmds:
@@ -89,6 +94,12 @@ tasks:
       - echo "- Integration tests"
       - go test -tags integration -count 1 -race ./...
 
+  tests:e2e:
+    cmds:
+      - echo "- End-to-end tests..."
+      # NOTE: It's important to run tests serial (without `-p` flag) – for correct `clientsPool` sharing.
+      - "{{.DOCKER_TOOLS_CMD}} ginkgo --fail-fast --timeout=1m --tags e2e {{.CLI_ARGS}} ./tests/e2e"
+
   build:
     cmds:
       - echo "- Build"
@@ -102,6 +113,7 @@ tasks:
       - task: gen:types
       - task: ent:gen
       - task: gen:api
+      - task: gen:e2e
 
   gen:types:
     cmds:
@@ -115,6 +127,11 @@ tasks:
 
   gen:api:
     - "{{.DOCKER_TOOLS_CMD}} oapi-codegen -generate server,spec,types -package {{.CLIENT_V1_PKG}} {{.CLIENT_V1_SRC}} > {{.CLIENT_V1_DST}}"
+
+  gen:e2e:
+    cmds:
+      - echo "[E2E] Generate client API..."
+      - "{{.DOCKER_TOOLS_CMD}} oapi-codegen --old-config-style -generate types,client -package {{.E2E_CLIENT_V1_PKG}} {{.CLIENT_V1_SRC}} > {{.E2E_CLIENT_V1_DST}}"
 
   ent:gen:
     cmds:

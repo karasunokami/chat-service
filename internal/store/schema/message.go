@@ -21,6 +21,7 @@ func (Message) Fields() []ent.Field {
 		field.UUID("chat_id", types.ChatID{}).Immutable(),
 		field.UUID("problem_id", types.ProblemID{}),
 		field.UUID("author_id", types.UserID{}).Optional(),
+		field.UUID("initial_request_id", types.RequestID{}).Optional(),
 		field.Bool("is_visible_for_client").Default(false),
 		field.Bool("is_visible_for_manager").Default(false),
 		field.Text("body").Immutable(),
