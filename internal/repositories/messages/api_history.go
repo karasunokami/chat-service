@@ -41,17 +41,19 @@ func (r *Repo) GetClientChatMessages(
 		limit = cursor.PageSize
 	}
 
-	query := r.makeMessagesQuery(ctx, limit, cursor, clientID)
+	query := r.buildMessagesQuery(ctx, limit, cursor, clientID)
 
 	msgs, err := query.All(ctx)
 	if err != nil {
 		return nil, nil, fmt.Errorf("query messages, err=%v", err)
 	}
 
-	messagesResult := resultToMsgs(msgs)
+	repoMessages := storeMessagesToRepoMessages(msgs)
 
+	// if count of selected messages lower than limit we know
+	// that there are no more messages in db
 	if len(msgs) < limit {
-		return resultToMsgs(msgs), nil, nil
+		return repoMessages, nil, nil
 	}
 
 	crs, err := r.createNextCursor(ctx, clientID, msgs[limit-1].CreatedAt, limit)
@@ -59,7 +61,7 @@ func (r *Repo) GetClientChatMessages(
 		return nil, nil, fmt.Errorf("create next cursor, err=%v", err)
 	}
 
-	return messagesResult, crs, nil
+	return repoMessages, crs, nil
 }
 
 func (r *Repo) createNextCursor(
@@ -73,21 +75,19 @@ func (r *Repo) createNextCursor(
 		PageSize:      limit,
 	}
 
-	exists, err := r.makeMessagesQuery(ctx, limit, nextCursor, clientID).Exist(ctx)
+	exists, err := r.buildMessagesQuery(ctx, limit, nextCursor, clientID).Exist(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("query messages exists, err=%v", err)
 	}
 
-	var crs *Cursor
-
-	if exists {
-		crs = nextCursor
+	if !exists {
+		return (*Cursor)(nil), nil
 	}
 
-	return crs, nil
+	return nextCursor, nil
 }
 
-func (r *Repo) makeMessagesQuery(ctx context.Context, limit int, cursor *Cursor, clientID types.UserID) *store.MessageQuery {
+func (r *Repo) buildMessagesQuery(ctx context.Context, limit int, cursor *Cursor, clientID types.UserID) *store.MessageQuery {
 	predicates := []predicate.Message{
 		message.HasChatWith(chat.ClientID(clientID)),
 		message.IsVisibleForClient(true),
@@ -98,19 +98,6 @@ func (r *Repo) makeMessagesQuery(ctx context.Context, limit int, cursor *Cursor,
 	}
 
 	return r.db.Message(ctx).Query().Where(predicates...).Order(store.Desc(message.FieldCreatedAt)).Limit(limit)
-}
-
-func resultToMsgs(result []*store.Message) []Message {
-	if len(result) == 0 {
-		return nil
-	}
-
-	msgs := make([]Message, len(result))
-	for i, m := range result {
-		msgs[i] = adaptStoreMessage(m)
-	}
-
-	return msgs
 }
 
 func validateParams(pageSize int, cursor *Cursor) error {

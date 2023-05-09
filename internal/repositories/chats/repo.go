@@ -19,5 +19,6 @@ func New(opts Options) (*Repo, error) {
 	if err := opts.Validate(); err != nil {
 		return nil, fmt.Errorf("validate options: %v", err)
 	}
+
 	return &Repo{Options: opts}, nil
 }

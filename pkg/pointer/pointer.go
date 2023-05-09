@@ -24,5 +24,6 @@ func PtrWithZeroAsNil[T comparable](v T) *T {
 	if v == zero {
 		return nil
 	}
+
 	return &v
 }

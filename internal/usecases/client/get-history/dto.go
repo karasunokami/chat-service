@@ -44,13 +44,13 @@ type Response struct {
 }
 
 type Message struct {
-	ID         types.MessageID `json:"id"`
-	AuthorID   types.UserID    `json:"authorId,omitempty" `
-	Body       string          `json:"body"`
-	CreatedAt  time.Time       `json:"createdAt"`
-	IsReceived bool            `json:"isReceived"`
-	IsBlocked  bool            `json:"isBlocked"`
-	IsService  bool            `json:"isService"`
+	ID         types.MessageID
+	AuthorID   types.UserID
+	Body       string
+	CreatedAt  time.Time
+	IsReceived bool
+	IsBlocked  bool
+	IsService  bool
 }
 
 func (m Message) MarshalJSON() ([]byte, error) {

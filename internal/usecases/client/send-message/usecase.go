@@ -66,14 +66,12 @@ func (u UseCase) Handle(ctx context.Context, req Request) (Response, error) {
 	var newMessage *messagesrepo.Message
 
 	err = u.txtor.RunInTx(ctx, func(ctx context.Context) error {
-		msg, err := u.msgRepo.GetMessageByRequestID(ctx, req.ID)
+		newMessage, err = u.msgRepo.GetMessageByRequestID(ctx, req.ID)
 		if err != nil && !errors.Is(err, messagesrepo.ErrMsgNotFound) {
 			return fmt.Errorf("msg repo get message by requeset id, err=%v", err)
 		}
 
-		if msg != nil {
-			newMessage = msg
-
+		if newMessage != nil {
 			return nil
 		}
 
@@ -87,12 +85,10 @@ func (u UseCase) Handle(ctx context.Context, req Request) (Response, error) {
 			return ErrProblemNotCreated
 		}
 
-		msg, err = u.msgRepo.CreateClientVisible(ctx, req.ID, problemID, chatID, req.ClientID, req.MessageBody)
+		newMessage, err = u.msgRepo.CreateClientVisible(ctx, req.ID, problemID, chatID, req.ClientID, req.MessageBody)
 		if err != nil {
 			return fmt.Errorf("msg repo crate client visible message, err=%v", err)
 		}
-
-		newMessage = msg
 
 		return nil
 	})

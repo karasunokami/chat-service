@@ -22,7 +22,7 @@ func (r *Repo) GetMessageByRequestID(ctx context.Context, reqID types.RequestID)
 		return nil, fmt.Errorf("db select message by request id, err=%v", err)
 	}
 
-	return convertMsg(mes), nil
+	return storeMessageToRepoMessage(mes), nil
 }
 
 // CreateClientVisible creates a message that is visible only to the client.
@@ -46,11 +46,5 @@ func (r *Repo) CreateClientVisible(
 		return nil, fmt.Errorf("db create new message, err=%v", err)
 	}
 
-	return convertMsg(mes), nil
-}
-
-func convertMsg(msg *store.Message) *Message {
-	m := adaptStoreMessage(msg)
-
-	return &m
+	return storeMessageToRepoMessage(mes), nil
 }

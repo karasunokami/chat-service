@@ -16,30 +16,30 @@ import (
 type OptOptionsSetter func(o *Options)
 
 func NewOptions(
-	logger *zap.Logger,
 	addr string,
 	allowOrigins []string,
-	v1Swagger *openapi3.T,
-	v1Handlers clientv1.ServerInterface,
-	keycloakClient *keycloakclient.Client,
 	resource string,
 	role string,
 	errorHandler echo.HTTPErrorHandler,
+	logger *zap.Logger,
+	v1Swagger *openapi3.T,
+	v1Handlers clientv1.ServerInterface,
+	keycloakClient *keycloakclient.Client,
 	options ...OptOptionsSetter,
 ) Options {
 	o := Options{}
 
 	// Setting defaults from field tag (if present)
 
-	o.logger = logger
 	o.addr = addr
 	o.allowOrigins = allowOrigins
-	o.v1Swagger = v1Swagger
-	o.v1Handlers = v1Handlers
-	o.keycloakClient = keycloakClient
 	o.resource = resource
 	o.role = role
 	o.errorHandler = errorHandler
+	o.logger = logger
+	o.v1Swagger = v1Swagger
+	o.v1Handlers = v1Handlers
+	o.keycloakClient = keycloakClient
 
 	for _, opt := range options {
 		opt(&o)
@@ -49,23 +49,16 @@ func NewOptions(
 
 func (o *Options) Validate() error {
 	errs := new(errors461e464ebed9.ValidationErrors)
-	errs.Add(errors461e464ebed9.NewValidationError("logger", _validate_Options_logger(o)))
 	errs.Add(errors461e464ebed9.NewValidationError("addr", _validate_Options_addr(o)))
 	errs.Add(errors461e464ebed9.NewValidationError("allowOrigins", _validate_Options_allowOrigins(o)))
-	errs.Add(errors461e464ebed9.NewValidationError("v1Swagger", _validate_Options_v1Swagger(o)))
-	errs.Add(errors461e464ebed9.NewValidationError("v1Handlers", _validate_Options_v1Handlers(o)))
-	errs.Add(errors461e464ebed9.NewValidationError("keycloakClient", _validate_Options_keycloakClient(o)))
 	errs.Add(errors461e464ebed9.NewValidationError("resource", _validate_Options_resource(o)))
 	errs.Add(errors461e464ebed9.NewValidationError("role", _validate_Options_role(o)))
 	errs.Add(errors461e464ebed9.NewValidationError("errorHandler", _validate_Options_errorHandler(o)))
+	errs.Add(errors461e464ebed9.NewValidationError("logger", _validate_Options_logger(o)))
+	errs.Add(errors461e464ebed9.NewValidationError("v1Swagger", _validate_Options_v1Swagger(o)))
+	errs.Add(errors461e464ebed9.NewValidationError("v1Handlers", _validate_Options_v1Handlers(o)))
+	errs.Add(errors461e464ebed9.NewValidationError("keycloakClient", _validate_Options_keycloakClient(o)))
 	return errs.AsError()
-}
-
-func _validate_Options_logger(o *Options) error {
-	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.logger, "required"); err != nil {
-		return fmt461e464ebed9.Errorf("field `logger` did not pass the test: %w", err)
-	}
-	return nil
 }
 
 func _validate_Options_addr(o *Options) error {
@@ -78,27 +71,6 @@ func _validate_Options_addr(o *Options) error {
 func _validate_Options_allowOrigins(o *Options) error {
 	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.allowOrigins, "min=1"); err != nil {
 		return fmt461e464ebed9.Errorf("field `allowOrigins` did not pass the test: %w", err)
-	}
-	return nil
-}
-
-func _validate_Options_v1Swagger(o *Options) error {
-	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.v1Swagger, "required"); err != nil {
-		return fmt461e464ebed9.Errorf("field `v1Swagger` did not pass the test: %w", err)
-	}
-	return nil
-}
-
-func _validate_Options_v1Handlers(o *Options) error {
-	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.v1Handlers, "required"); err != nil {
-		return fmt461e464ebed9.Errorf("field `v1Handlers` did not pass the test: %w", err)
-	}
-	return nil
-}
-
-func _validate_Options_keycloakClient(o *Options) error {
-	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.keycloakClient, "required"); err != nil {
-		return fmt461e464ebed9.Errorf("field `keycloakClient` did not pass the test: %w", err)
 	}
 	return nil
 }
@@ -120,6 +92,34 @@ func _validate_Options_role(o *Options) error {
 func _validate_Options_errorHandler(o *Options) error {
 	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.errorHandler, "required"); err != nil {
 		return fmt461e464ebed9.Errorf("field `errorHandler` did not pass the test: %w", err)
+	}
+	return nil
+}
+
+func _validate_Options_logger(o *Options) error {
+	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.logger, "required"); err != nil {
+		return fmt461e464ebed9.Errorf("field `logger` did not pass the test: %w", err)
+	}
+	return nil
+}
+
+func _validate_Options_v1Swagger(o *Options) error {
+	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.v1Swagger, "required"); err != nil {
+		return fmt461e464ebed9.Errorf("field `v1Swagger` did not pass the test: %w", err)
+	}
+	return nil
+}
+
+func _validate_Options_v1Handlers(o *Options) error {
+	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.v1Handlers, "required"); err != nil {
+		return fmt461e464ebed9.Errorf("field `v1Handlers` did not pass the test: %w", err)
+	}
+	return nil
+}
+
+func _validate_Options_keycloakClient(o *Options) error {
+	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.keycloakClient, "required"); err != nil {
+		return fmt461e464ebed9.Errorf("field `keycloakClient` did not pass the test: %w", err)
 	}
 	return nil
 }

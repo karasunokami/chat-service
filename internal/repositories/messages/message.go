@@ -22,8 +22,8 @@ type Message struct {
 	IsService           bool
 }
 
-func adaptStoreMessage(m *store.Message) Message {
-	return Message{
+func storeMessageToRepoMessage(m *store.Message) *Message {
+	return &Message{
 		ID:                  m.ID,
 		ChatID:              m.ChatID,
 		AuthorID:            m.AuthorID,
@@ -34,4 +34,13 @@ func adaptStoreMessage(m *store.Message) Message {
 		IsBlocked:           m.IsBlocked,
 		IsService:           m.IsService,
 	}
+}
+
+func storeMessagesToRepoMessages(result []*store.Message) []Message {
+	msgs := make([]Message, len(result))
+	for i, m := range result {
+		msgs[i] = *storeMessageToRepoMessage(m)
+	}
+
+	return msgs
 }
