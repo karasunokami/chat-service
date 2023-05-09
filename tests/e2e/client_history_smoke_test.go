@@ -1,10 +1,11 @@
-//go:build e2e || debug || tests
+//go:build e2e
 
 package e2e_test
 
 import (
 	"context"
 
+	"github.com/karasunokami/chat-service/internal/types"
 	clientchat "github.com/karasunokami/chat-service/tests/e2e/client-chat"
 
 	. "github.com/onsi/ginkgo/v2"

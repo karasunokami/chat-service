@@ -11,7 +11,9 @@ import (
 
 	"github.com/karasunokami/chat-service/internal/config"
 	"github.com/karasunokami/chat-service/internal/logger"
+	chatsrepo "github.com/karasunokami/chat-service/internal/repositories/chats"
 	messagesrepo "github.com/karasunokami/chat-service/internal/repositories/messages"
+	problemsrepo "github.com/karasunokami/chat-service/internal/repositories/problems"
 	clientv1 "github.com/karasunokami/chat-service/internal/server-client/v1"
 	serverdebug "github.com/karasunokami/chat-service/internal/server-debug"
 	"github.com/karasunokami/chat-service/internal/store"
@@ -87,9 +89,21 @@ func run() (errReturned error) {
 		lg.Fatal("failed creating schema resources", zap.Error(err))
 	}
 
-	repo, err := messagesrepo.New(messagesrepo.NewOptions(store.NewDatabase(psqlClient, lg)))
+	db := store.NewDatabase(psqlClient, lg)
+
+	msgRepo, err := messagesrepo.New(messagesrepo.NewOptions(db))
 	if err != nil {
 		return fmt.Errorf("init messagerepo, err=%v", err)
+	}
+
+	chatRepo, err := chatsrepo.New(chatsrepo.NewOptions(db))
+	if err != nil {
+		return fmt.Errorf("init chatsrepo, err=%v", err)
+	}
+
+	problemsRepo, err := problemsrepo.New(problemsrepo.NewOptions(db))
+	if err != nil {
+		return fmt.Errorf("init problems repo, err=%v", err)
 	}
 
 	srvClient, err := initServerClient(
@@ -99,7 +113,10 @@ func run() (errReturned error) {
 		cfg.Clients.KeycloakClient,
 		cfg.Servers.Client.RequiredAccess,
 		cfg.Global,
-		repo,
+		msgRepo,
+		chatRepo,
+		problemsRepo,
+		db,
 	)
 	if err != nil {
 		return fmt.Errorf("init client server: %v", err)

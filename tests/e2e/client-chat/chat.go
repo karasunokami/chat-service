@@ -163,50 +163,50 @@ type sendMessageOpts struct {
 	reqID types.RequestID
 }
 
-//func (c *Chat) SendMessage(ctx context.Context, body string, opts ...SendMessageOption) error {
-//	options := sendMessageOpts{
-//		reqID: types.NewRequestID(),
-//	}
-//	for _, o := range opts {
-//		o(&options)
-//	}
-//
-//	resp, err := c.api.PostSendMessageWithResponse(ctx,
-//		&apiclientv1.PostSendMessageParams{XRequestID: options.reqID},
-//		apiclientv1.PostSendMessageJSONRequestBody{MessageBody: body},
-//	)
-//	if err != nil {
-//		return fmt.Errorf("post request: %v", err)
-//	}
-//	if resp.JSON200 == nil {
-//		return errNoResponseBody
-//	}
-//	if err := resp.JSON200.Error; err != nil {
-//		return fmt.Errorf("%v: %v", err.Code, err.Message)
-//	}
-//
-//	data := resp.JSON200.Data
-//	if data == nil {
-//		return errNoDataInResponse
-//	}
-//
-//	msg := &Message{
-//		ID:         data.Id,
-//		AuthorID:   types.UserIDNil,
-//		Body:       body,
-//		IsService:  false,
-//		IsBlocked:  false,
-//		IsReceived: false,
-//		CreatedAt:  data.CreatedAt,
-//	}
-//	if uid := data.AuthorId; uid != nil {
-//		msg.AuthorID = *uid
-//	}
-//	c.addMessageToEnd(msg)
-//
-//	time.Sleep(10 * time.Millisecond)
-//	return nil
-//}
+func (c *Chat) SendMessage(ctx context.Context, body string, opts ...SendMessageOption) error {
+	options := sendMessageOpts{
+		reqID: types.NewRequestID(),
+	}
+	for _, o := range opts {
+		o(&options)
+	}
+
+	resp, err := c.api.PostSendMessageWithResponse(ctx,
+		&apiclientv1.PostSendMessageParams{XRequestID: options.reqID},
+		apiclientv1.PostSendMessageJSONRequestBody{MessageBody: body},
+	)
+	if err != nil {
+		return fmt.Errorf("post request: %v", err)
+	}
+	if resp.JSON200 == nil {
+		return errNoResponseBody
+	}
+	if err := resp.JSON200.Error; err != nil {
+		return fmt.Errorf("%v: %v", err.Code, err.Message)
+	}
+
+	data := resp.JSON200.Data
+	if data == nil {
+		return errNoDataInResponse
+	}
+
+	msg := &Message{
+		ID:         data.Id,
+		AuthorID:   types.UserIDNil,
+		Body:       body,
+		IsService:  false,
+		IsBlocked:  false,
+		IsReceived: false,
+		CreatedAt:  data.CreatedAt,
+	}
+	if uid := data.AuthorId; uid != nil {
+		msg.AuthorID = *uid
+	}
+	c.addMessageToEnd(msg)
+
+	time.Sleep(10 * time.Millisecond)
+	return nil
+}
 
 func (c *Chat) addMessageToStart(msg *Message) {
 	c.msgMu.Lock()

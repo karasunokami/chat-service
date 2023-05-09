@@ -10,8 +10,6 @@ import (
 	"go.uber.org/zap"
 )
 
-var _ echo.HTTPErrorHandler = Handler{}.Handle
-
 //go:generate options-gen -out-filename=errhandler_options.gen.go -from-struct=Options
 type Options struct {
 	logger          *zap.Logger                                    `option:"mandatory" validate:"required"`
@@ -40,6 +38,14 @@ func New(opts Options) (Handler, error) {
 
 func (h Handler) Handle(err error, eCtx echo.Context) {
 	if err == nil {
+		return
+	}
+
+	// I have no idea why but sometimes Handle function calls two times
+	// that leads to double writing to echo context response like
+	// {error}
+	// {error}
+	if eCtx.Response().Size != 0 {
 		return
 	}
 

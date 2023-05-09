@@ -1,10 +1,15 @@
-//go:build e2e || debug || tests
+//go:build e2e
 
 package e2e_test
 
 import (
 	"context"
 	"encoding/json"
+	"net/http"
+	"strings"
+
+	"github.com/karasunokami/chat-service/internal/types"
+	apiclientv1 "github.com/karasunokami/chat-service/tests/e2e/api/client/v1"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -13,7 +18,9 @@ import (
 var _ = Describe("Error Responses", Ordered, func() {
 	var (
 		ctx    context.Context
-		cancel context.CancelFunc // apiClientV1 *apiclientv1.ClientWithResponses
+		cancel context.CancelFunc
+
+		apiClientV1 *apiclientv1.ClientWithResponses
 	)
 
 	BeforeAll(func() {

@@ -95,6 +95,8 @@ tasks:
       - go test -tags integration -count 1 -race ./...
 
   tests:e2e:
+    dotenv:
+      - .env
     cmds:
       - echo "- End-to-end tests..."
       # NOTE: It's important to run tests serial (without `-p` flag) – for correct `clientsPool` sharing.

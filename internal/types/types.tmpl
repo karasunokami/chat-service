@@ -5,95 +5,46 @@ package {{.Package}}
 import (
 	"database/sql/driver"
 	"errors"
-	"fmt"
 
 	"github.com/google/uuid"
 )
 
 {{ range $i, $type := .Types -}}
+var {{ $type }}Nil = {{ $type }}(uuid.Nil)
 
-var {{$type}}Nil {{$type}}
-
-type {{$type}} struct {
-	ID uuid.NullUUID
-}
-
-func New{{$type}}() {{$type}} {
-	u, err := uuid.NewUUID()
-	if err != nil {
-		panic(err)
+type {{ $type }} uuid.UUID                             //
+func New{{ $type }}() {{ $type }}                           { return {{ $type }}(uuid.New()) }
+func (t {{ $type }}) String() string                   { return uuid.UUID(t).String() }
+func (t {{ $type }}) Value() (driver.Value, error)     { return t.String(), nil }
+func (t *{{ $type }}) Scan(src any) error              { return (*uuid.UUID)(t).Scan(src) }
+func (t {{ $type }}) MarshalText() ([]byte, error)     { return uuid.UUID(t).MarshalText() }
+func (t *{{ $type }}) UnmarshalText(data []byte) error { return (*uuid.UUID)(t).UnmarshalText(data) }
+func (t {{ $type }}) IsZero() bool                     { return t == {{ $type }}Nil }
+func (t {{ $type }}) Matches(x interface{}) bool {
+	v, ok := x.({{ $type }})
+	if !ok {
+		return false
 	}
-
-	return {{$type}}{
-		ID: uuid.NullUUID{
-			UUID: u,
-			Valid: true,
-		},
+	return t.String() == v.String()
+}
+func (t {{ $type }}) Validate() error {
+	if t.IsZero() {
+		return errors.New("zero {{ $type }}")
 	}
-}
-
-func (c *{{$type}}) MarshalText() (text []byte, err error) {
-	return c.ID.MarshalText()
-}
-
-func (c *{{$type}}) UnmarshalText(text []byte) error {
-	return c.ID.UnmarshalText(text)
-}
-
-func (c *{{$type}}) Matches(x interface{}) bool {
-	if xStr, ok := x.(string); ok {
-		return xStr == c.String()
-	}
-
-	return false
-}
-
-func (c {{$type}}) String() string {
-	return c.ID.UUID.String()
-}
-
-func (c {{$type}}) Value() (driver.Value, error) {
-	return c.ID.UUID.Value()
-}
-
-func (c *{{$type}}) Scan(src any) error {
-	return c.ID.Scan(src)
-}
-
-func (c {{$type}}) Validate() error {
-	if !c.ID.Valid {
-		return errors.New("{{$type}} is not valid")
-	}
-
 	return nil
-}
-
-func (c *{{$type}}) IsZero() bool {
-	return c.String() == {{$type}}Nil.String()
 }
 
 {{ end -}}
 
-func Parse[T {{StringsJoin .Types "|"}}](id string) (T, error) {
-	u, err := uuid.Parse(id)
-	if err != nil {
-		return T{}, fmt.Errorf("uuid parse, err=%w", err)
-	}
-
-	return T{ID: uuid.NullUUID{
-		UUID:  u,
-		Valid: true,
-	}}, nil
+type TypeSet = interface {
+	{{StringsJoin .Types "|"}}
 }
 
-func MustParse[T {{StringsJoin .Types "|"}}](id string) T {
-	u, err := uuid.Parse(id)
-	if err != nil {
-		panic(err)
-	}
+func Parse[T TypeSet](s string) (T, error) {
+	v, err := uuid.Parse(s)
+	return T(v), err
+}
 
-	return T{ID: uuid.NullUUID{
-		UUID:  u,
-		Valid: true,
-	}}
+func MustParse[T TypeSet](s string) T {
+	return T(uuid.MustParse(s))
 }

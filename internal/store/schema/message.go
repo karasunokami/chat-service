@@ -1,8 +1,6 @@
 package schema
 
 import (
-	"time"
-
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
@@ -21,7 +19,7 @@ func (Message) Fields() []ent.Field {
 		field.UUID("chat_id", types.ChatID{}).Immutable(),
 		field.UUID("problem_id", types.ProblemID{}),
 		field.UUID("author_id", types.UserID{}).Optional(),
-		field.UUID("initial_request_id", types.RequestID{}).Optional(),
+		field.UUID("initial_request_id", types.RequestID{}).Optional().Unique(),
 		field.Bool("is_visible_for_client").Default(false),
 		field.Bool("is_visible_for_manager").Default(false),
 		field.Text("body").Immutable(),
@@ -30,10 +28,6 @@ func (Message) Fields() []ent.Field {
 		field.Bool("is_service").Default(false),
 		field.Time("created_at").Default(defaultTime).Immutable(),
 	}
-}
-
-func defaultTime() time.Time {
-	return time.Now().Truncate(time.Millisecond)
 }
 
 // Edges of the Message.

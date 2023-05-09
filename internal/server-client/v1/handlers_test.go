@@ -23,6 +23,7 @@ type HandlersSuite struct {
 
 	ctrl              *gomock.Controller
 	getHistoryUseCase *clientv1mocks.MockgetHistoryUseCase
+	sendMsgUseCase    *clientv1mocks.MocksendMessageUseCase
 	handlers          clientv1.Handlers
 
 	clientID types.UserID
@@ -41,11 +42,13 @@ func (s *HandlersSuite) SetupTest() {
 
 	s.ctrl = gomock.NewController(s.T())
 	s.getHistoryUseCase = clientv1mocks.NewMockgetHistoryUseCase(s.ctrl)
+	s.sendMsgUseCase = clientv1mocks.NewMocksendMessageUseCase(s.ctrl)
 	{
 		var err error
 		s.handlers, err = clientv1.NewHandlers(clientv1.NewOptions(
 			lg,
 			s.getHistoryUseCase,
+			s.sendMsgUseCase,
 		))
 		s.Require().NoError(err)
 	}
@@ -62,7 +65,7 @@ func (s *HandlersSuite) TearDownTest() {
 
 func (s *HandlersSuite) newEchoCtx(
 	requestID types.RequestID,
-	path string, //nolint:unparam
+	path string,
 	body string,
 ) (*httptest.ResponseRecorder, echo.Context) {
 	req := httptest.NewRequest(http.MethodPost, path, bytes.NewBufferString(body))

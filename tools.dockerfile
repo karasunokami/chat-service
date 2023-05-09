@@ -15,7 +15,7 @@ RUN \
     go install github.com/daixiang0/gci@v0.8.0 && \
     go install github.com/kazhuravlev/options-gen/cmd/options-gen@latest && \
     go install entgo.io/ent/cmd/ent@v0.11.10 && \
-    go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@latest && \
+    go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@master && \
     go install github.com/golang/mock/mockgen@latest && \
     go install github.com/onsi/ginkgo/v2/ginkgo@v2.9.1 && \
     mv /go/bin/* /usr/local/bin/

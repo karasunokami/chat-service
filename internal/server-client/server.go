@@ -50,6 +50,7 @@ func New(opts Options) (*Server, error) {
 	}
 
 	e := echo.New()
+	e.HTTPErrorHandler = opts.errorHandler
 
 	s := Server{
 		lg: opts.logger,
@@ -79,6 +80,8 @@ func New(opts Options) (*Server, error) {
 			AllowMethods: []string{echo.POST},
 		}),
 		middlewares.NewKeyCloakTokenAuth(opts.keycloakClient, opts.resource, opts.role),
+
+		// max length of message is 3000 utf-8 symbols 3000. 4 bytes each = 12000 bytes / 1024 = 11.78 kB ~= 12 kB
 		middleware.BodyLimit("12K"),
 	)
 
@@ -90,8 +93,6 @@ func New(opts Options) (*Server, error) {
 		},
 	}))
 	clientv1.RegisterHandlers(v1, opts.v1Handlers)
-
-	e.HTTPErrorHandler = opts.errorHandler
 
 	return &s, nil
 }
