@@ -22,7 +22,7 @@ func (Message) Fields() []ent.Field {
 		field.UUID("initial_request_id", types.RequestID{}).Optional().Unique(),
 		field.Bool("is_visible_for_client").Default(false),
 		field.Bool("is_visible_for_manager").Default(false),
-		field.Text("body").Immutable(),
+		field.Text("body").Immutable().MaxLen(3000).MinLen(1),
 		field.Time("checked_at").Optional(),
 		field.Bool("is_blocked").Default(false),
 		field.Bool("is_service").Default(false),

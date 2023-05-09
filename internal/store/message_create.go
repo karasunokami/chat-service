@@ -275,6 +275,11 @@ func (mc *MessageCreate) check() error {
 	if _, ok := mc.mutation.Body(); !ok {
 		return &ValidationError{Name: "body", err: errors.New(`store: missing required field "Message.body"`)}
 	}
+	if v, ok := mc.mutation.Body(); ok {
+		if err := message.BodyValidator(v); err != nil {
+			return &ValidationError{Name: "body", err: fmt.Errorf(`store: validator failed for field "Message.body": %w`, err)}
+		}
+	}
 	if _, ok := mc.mutation.IsBlocked(); !ok {
 		return &ValidationError{Name: "is_blocked", err: errors.New(`store: missing required field "Message.is_blocked"`)}
 	}
