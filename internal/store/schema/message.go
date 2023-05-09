@@ -4,6 +4,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
+	"entgo.io/ent/schema/index"
 	"github.com/karasunokami/chat-service/internal/types"
 )
 
@@ -45,5 +46,11 @@ func (Message) Edges() []ent.Edge {
 			Required().
 			Ref("messages").
 			Unique(),
+	}
+}
+
+func (Message) Indexes() []ent.Index {
+	return []ent.Index{
+		index.Fields("created_at", "chat_id"),
 	}
 }
