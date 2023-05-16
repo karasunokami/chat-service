@@ -22,6 +22,7 @@ require (
 	github.com/onsi/gomega v1.27.4
 	github.com/pelletier/go-toml v1.9.5
 	github.com/stretchr/testify v1.8.2
+	go.uber.org/goleak v1.1.11
 	go.uber.org/zap v1.24.0
 	golang.org/x/sync v0.1.0
 )

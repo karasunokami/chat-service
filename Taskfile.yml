@@ -28,6 +28,8 @@ vars:
     ProblemID
     UserID
     RequestID
+    JobID
+    FailedJobID
 
   TYPES_PKG: types
   TYPES_DST: ./internal/types/types.gen.go
@@ -136,8 +138,9 @@ tasks:
       - "{{.DOCKER_TOOLS_CMD}} oapi-codegen --old-config-style -generate types,client -package {{.E2E_CLIENT_V1_PKG}} {{.CLIENT_V1_SRC}} > {{.E2E_CLIENT_V1_DST}}"
 
   ent:gen:
+    aliases: [ gen:ent ]
     cmds:
-      - docker run --rm -v "$(pwd):/app" -w /app chat-service-tools ent generate --template {{.ENT_DATABASE_TEMPLATE}} {{.ENT_SCHEMA}}
+      - docker run --rm -v "$(pwd):/app" -w /app chat-service-tools ent generate --template {{.ENT_DATABASE_TEMPLATE}} {{.ENT_SCHEMA}} --feature sql/lock
       - task: tidy
 
   ent:new:
