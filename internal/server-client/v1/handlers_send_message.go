@@ -2,6 +2,7 @@ package clientv1
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	internalerrors "github.com/karasunokami/chat-service/internal/errors"
@@ -18,7 +19,7 @@ func (h Handlers) PostSendMessage(eCtx echo.Context, params PostSendMessageParam
 	req := SendMessageRequest{}
 	err := eCtx.Bind(&req)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest)
+		return fmt.Errorf("bind request, err=%w", err)
 	}
 
 	resp, err := h.sendMessage.Handle(ctx, sendmessage.Request{
@@ -27,7 +28,7 @@ func (h Handlers) PostSendMessage(eCtx echo.Context, params PostSendMessageParam
 		MessageBody: req.MessageBody,
 	})
 	if err != nil {
-		return internalerrors.NewServerError(getErrorCode(err), err.Error(), err)
+		return internalerrors.NewServerError(getErrorCode(err), "cannot handle something", err)
 	}
 
 	return eCtx.JSON(http.StatusOK, Response{Data: resp})
