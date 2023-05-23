@@ -21,10 +21,16 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.16
 	github.com/onsi/gomega v1.27.4
 	github.com/pelletier/go-toml v1.9.5
+	github.com/segmentio/kafka-go v0.4.40
 	github.com/stretchr/testify v1.8.2
 	go.uber.org/goleak v1.1.11
 	go.uber.org/zap v1.24.0
 	golang.org/x/sync v0.1.0
+)
+
+require (
+	github.com/klauspost/compress v1.16.0 // indirect
+	github.com/pierrec/lz4/v4 v4.1.15 // indirect
 )
 
 require (
