@@ -28,11 +28,10 @@ func New() *Service {
 }
 
 func (s *Service) Close() error {
-
 	return nil
 }
 
-func (s *Service) Get(ctx context.Context) (types.UserID, error) {
+func (s *Service) Get(_ context.Context) (types.UserID, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -48,7 +47,7 @@ func (s *Service) Get(ctx context.Context) (types.UserID, error) {
 	return m, nil
 }
 
-func (s *Service) Put(ctx context.Context, managerID types.UserID) error {
+func (s *Service) Put(_ context.Context, managerID types.UserID) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -63,7 +62,7 @@ func (s *Service) Put(ctx context.Context, managerID types.UserID) error {
 	return nil
 }
 
-func (s *Service) Contains(ctx context.Context, managerID types.UserID) (bool, error) {
+func (s *Service) Contains(_ context.Context, managerID types.UserID) (bool, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 

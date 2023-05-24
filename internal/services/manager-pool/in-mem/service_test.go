@@ -7,13 +7,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/suite"
-	"golang.org/x/sync/errgroup"
-
 	managerpool "github.com/karasunokami/chat-service/internal/services/manager-pool"
 	inmemmanagerpool "github.com/karasunokami/chat-service/internal/services/manager-pool/in-mem"
 	"github.com/karasunokami/chat-service/internal/testingh"
 	"github.com/karasunokami/chat-service/internal/types"
+
+	"github.com/stretchr/testify/suite"
+	"golang.org/x/sync/errgroup"
 )
 
 type ServiceSuite struct {
