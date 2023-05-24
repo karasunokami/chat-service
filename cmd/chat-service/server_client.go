@@ -47,7 +47,13 @@ func initServerHandlers(deps serverDeps) (clientv1.Handlers, error) {
 		return clientv1.Handlers{}, fmt.Errorf("init get history usecase: %v", err)
 	}
 
-	sendMessageUseCase, err := sendmessage.New(sendmessage.NewOptions(deps.chatRepo, deps.msgRepo, deps.problemsRepo, deps.db))
+	sendMessageUseCase, err := sendmessage.New(sendmessage.NewOptions(
+		deps.chatRepo,
+		deps.msgRepo,
+		deps.outboxService,
+		deps.problemsRepo,
+		deps.db,
+	))
 	if err != nil {
 		return clientv1.Handlers{}, fmt.Errorf("init send message usecase: %v", err)
 	}

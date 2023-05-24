@@ -43,15 +43,12 @@ func (k *KafkaAdapted) ForErrors() *KafkaAdapted {
 func (k *KafkaAdapted) init() {
 	k.atom = zap.NewAtomicLevel()
 
-	// To keep the example deterministic, disable timestamps in the output.
-	encoderCfg := zap.NewProductionEncoderConfig()
-	encoderCfg.TimeKey = ""
+	encoder := createEncoder(false)
+	cores := []zapcore.Core{
+		zapcore.NewCore(encoder, zapcore.AddSync(os.Stdout), k.atom),
+	}
 
-	k.logger = zap.New(zapcore.NewCore(
-		zapcore.NewJSONEncoder(encoderCfg),
-		zapcore.Lock(os.Stdout),
-		k.atom,
-	))
+	k.logger = zap.New(zapcore.NewTee(cores...))
 
 	err := k.logger.Sync()
 	if err != nil {

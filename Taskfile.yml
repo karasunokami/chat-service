@@ -20,7 +20,8 @@ vars:
     ./deploy/local/docker-compose.swagger-ui.yml
 
   DOCKER_COMPOSE_CMD: docker compose -f {{.DOCKER_COMPOSE_PATHS | trim | splitLines | join " -f "}}
-  DOCKER_TOOLS_CMD: docker run --user $(id -u):$(id -g) --rm -v "$(pwd):/app" -w /app chat-service-tools
+  DOCKER_TOOLS_CMD_TPL: docker run --user $(id -u):$(id -g) --rm -v "$(pwd):/app" -w /app
+  DOCKER_TOOLS_CMD: "{{.DOCKER_TOOLS_CMD_TPL}} chat-service-tools"
 
   TYPES: |
     ChatID
@@ -97,12 +98,10 @@ tasks:
       - go test -tags integration -count 1 -race ./...
 
   tests:e2e:
-    dotenv:
-      - .env
     cmds:
       - echo "- End-to-end tests..."
       # NOTE: It's important to run tests serial (without `-p` flag) – for correct `clientsPool` sharing.
-      - "{{.DOCKER_TOOLS_CMD}} ginkgo --fail-fast --timeout=1m --tags e2e {{.CLI_ARGS}} ./tests/e2e"
+      - "{{.DOCKER_TOOLS_CMD_TPL}} --env-file .env --network host chat-service-tools ginkgo --fail-fast --timeout=1m --tags e2e {{.CLI_ARGS}} ./tests/e2e"
 
   build:
     cmds:
@@ -113,11 +112,16 @@ tasks:
     aliases: [gen]
     cmds:
       - echo "- Run go generate..."
-      - docker run --rm -v "$(pwd):/app" -w /app chat-service-tools go generate ./...
+      - task: gen:utils
       - task: gen:types
       - task: ent:gen
       - task: gen:api
       - task: gen:e2e
+
+  gen:utils:
+    cmds:
+      - echo "- Generate utils structs..."
+      - docker run --rm -v "$(pwd):/app" -w /app chat-service-tools go generate ./...
 
   gen:types:
     cmds:

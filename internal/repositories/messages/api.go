@@ -25,6 +25,19 @@ func (r *Repo) GetMessageByRequestID(ctx context.Context, reqID types.RequestID)
 	return storeMessageToRepoMessage(mes), nil
 }
 
+func (r *Repo) GetMessageByID(ctx context.Context, id types.MessageID) (*Message, error) {
+	mes, err := r.db.Message(ctx).Get(ctx, id)
+	if err != nil {
+		if store.IsNotFound(err) {
+			return nil, ErrMsgNotFound
+		}
+
+		return nil, fmt.Errorf("db select message by id, err=%v", err)
+	}
+
+	return storeMessageToRepoMessage(mes), nil
+}
+
 // CreateClientVisible creates a message that is visible only to the client.
 func (r *Repo) CreateClientVisible(
 	ctx context.Context,

@@ -42,10 +42,12 @@ func Init(opts Options) error {
 
 	Al = al
 
-	err = configureLogger(al, opts)
+	l, err := configureLogger(al, opts)
 	if err != nil {
 		return fmt.Errorf("create logger, err=%w", err)
 	}
+
+	zap.ReplaceGlobals(l)
 
 	return nil
 }
@@ -56,19 +58,8 @@ func Sync() {
 	}
 }
 
-func configureLogger(al zap.AtomicLevel, opts Options) error {
-	cfg := zap.NewProductionEncoderConfig()
-	cfg.EncodeTime = zapcore.ISO8601TimeEncoder
-	cfg.TimeKey = "T"
-	cfg.NameKey = "component"
-	cfg.EncodeLevel = zapcore.CapitalLevelEncoder
-
-	encoder := zapcore.NewJSONEncoder(cfg)
-
-	if opts.env != config.GlobalEnvProd {
-		cfg.EncodeLevel = zapcore.CapitalColorLevelEncoder
-		encoder = zapcore.NewConsoleEncoder(cfg)
-	}
+func configureLogger(al zap.AtomicLevel, opts Options) (*zap.Logger, error) {
+	encoder := createEncoder(opts.env != config.GlobalEnvProd)
 
 	cores := []zapcore.Core{
 		zapcore.NewCore(encoder, zapcore.AddSync(os.Stdout), al),
@@ -77,16 +68,32 @@ func configureLogger(al zap.AtomicLevel, opts Options) error {
 	if opts.sentryDSN != "" {
 		sentryCore, err := createSentryCore(opts.sentryDSN, opts.env)
 		if err != nil {
-			return fmt.Errorf("create sentry zap core, err=%w", err)
+			return nil, fmt.Errorf("create sentry zap core, err=%w", err)
 		}
 
 		cores = append(cores, sentryCore)
 	}
 
 	l := zap.New(zapcore.NewTee(cores...))
-	zap.ReplaceGlobals(l)
 
-	return nil
+	return l, nil
+}
+
+func createEncoder(forConsole bool) zapcore.Encoder {
+	cfg := zap.NewProductionEncoderConfig()
+	cfg.EncodeTime = zapcore.ISO8601TimeEncoder
+	cfg.TimeKey = "T"
+	cfg.NameKey = "component"
+	cfg.EncodeLevel = zapcore.CapitalLevelEncoder
+
+	encoder := zapcore.NewJSONEncoder(cfg)
+
+	if forConsole {
+		cfg.EncodeLevel = zapcore.CapitalColorLevelEncoder
+		encoder = zapcore.NewConsoleEncoder(cfg)
+	}
+
+	return encoder
 }
 
 func createSentryCore(dsn, env string) (zapcore.Core, error) {
