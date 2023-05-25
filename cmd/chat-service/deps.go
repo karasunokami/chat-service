@@ -14,6 +14,8 @@ import (
 	clientv1 "github.com/karasunokami/chat-service/internal/server-client/v1"
 	managerv1 "github.com/karasunokami/chat-service/internal/server-manager/v1"
 	errhandler2 "github.com/karasunokami/chat-service/internal/server/errhandler"
+	managerload "github.com/karasunokami/chat-service/internal/services/manager-load"
+	inmemmanagerpool "github.com/karasunokami/chat-service/internal/services/manager-pool/in-mem"
 	msgproducer "github.com/karasunokami/chat-service/internal/services/msg-producer"
 	"github.com/karasunokami/chat-service/internal/services/outbox"
 	sendclientmessagejob "github.com/karasunokami/chat-service/internal/services/outbox/jobs/send-client-message"
@@ -43,6 +45,8 @@ type serverDeps struct {
 	msgProducerService *msgproducer.Service
 	outboxService      *outbox.Service
 	managerLogger      *zap.Logger
+	managerLoad        *managerload.Service
+	managerPool        *inmemmanagerpool.Service
 }
 
 func startNewDeps(ctx context.Context, cfg config.Config) (serverDeps, error) {
@@ -143,6 +147,16 @@ func startNewDeps(ctx context.Context, cfg config.Config) (serverDeps, error) {
 	if err != nil {
 		return serverDeps{}, fmt.Errorf("init outbox service, err=%v", err)
 	}
+
+	d.managerLoad, err = managerload.New(managerload.NewOptions(
+		cfg.Services.ManagerLoad.MaxProblemsAtSameTime,
+		d.problemsRepo,
+	))
+	if err != nil {
+		return serverDeps{}, fmt.Errorf("init manager load service, err=%v", err)
+	}
+
+	d.managerPool = inmemmanagerpool.New()
 
 	// register service jobs
 	sendClientMessageJob, err := sendclientmessagejob.New(sendclientmessagejob.NewOptions(

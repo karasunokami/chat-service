@@ -8,6 +8,18 @@ servers:
     description: Development server
 
 paths:
+  /getFreeHandsBtnAvailability:
+    post:
+      description: Check if manager can get new clients.
+      parameters:
+        - $ref: "#/components/parameters/XRequestIDHeader"
+      responses:
+        '200':
+          description: Manager availability.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetFreeHandsBtnAvailabilityResponse"
 
 security:
   - bearerAuth: [ ]
@@ -18,6 +30,18 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+
+  parameters:
+    XRequestIDHeader:
+      in: header
+      name: X-Request-ID
+      schema:
+        type: string
+        format: uuid
+        x-go-type: types.RequestID
+        x-go-import:
+          path: "github.com/karasunokami/chat-service/internal/types"
+      required: true
 
   schemas:
     # Common.
@@ -36,3 +60,17 @@ components:
       type: integer
       description: contains HTTP error codes and specific business logic error codes (the last must be >= 1000).
       minimum: 400
+
+    GetFreeHandsBtnAvailabilityResponse:
+      properties:
+        data:
+          $ref: "#/components/schemas/ManagerAvailability"
+        error:
+          $ref: "#/components/schemas/Error"
+
+    ManagerAvailability:
+      required: [ available ]
+      properties:
+        available:
+          type: boolean
+

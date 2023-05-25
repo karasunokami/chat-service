@@ -65,7 +65,7 @@ func run() (errReturned error) {
 
 	srvManager, err := initServerManager(deps, cfg.Servers.Manager)
 	if err != nil {
-		return fmt.Errorf("init client server: %v", err)
+		return fmt.Errorf("init manager server: %v", err)
 	}
 
 	eg, ctx := errgroup.WithContext(ctx)

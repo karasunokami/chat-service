@@ -2,6 +2,7 @@ package clientv1
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/karasunokami/chat-service/internal/middlewares"
@@ -32,7 +33,7 @@ func (h Handlers) PostGetHistory(eCtx echo.Context, params PostGetHistoryParams)
 			return echo.NewHTTPError(http.StatusBadRequest)
 		}
 
-		return err
+		return fmt.Errorf("get history handle, err=%v", err)
 	}
 
 	page := make([]Message, 0, len(resp.Messages))

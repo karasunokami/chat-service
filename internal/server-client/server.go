@@ -54,7 +54,7 @@ func New(opts Options) (*Server, error) {
 		innerServer: innerServer,
 	}
 
-	s.innerServer.RegisterHandlers(clientv1.RegisterHandlers, opts.v1Handlers)
+	s.innerServer.RegisterClientHandlers(clientv1.RegisterHandlers, opts.v1Handlers)
 
 	return s, nil
 }

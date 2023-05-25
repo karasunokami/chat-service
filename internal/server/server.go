@@ -10,6 +10,7 @@ import (
 	keycloakclient "github.com/karasunokami/chat-service/internal/clients/keycloak"
 	"github.com/karasunokami/chat-service/internal/middlewares"
 	clientv1 "github.com/karasunokami/chat-service/internal/server-client/v1"
+	managerv1 "github.com/karasunokami/chat-service/internal/server-manager/v1"
 
 	oapimdlwr "github.com/deepmap/oapi-codegen/pkg/middleware"
 	"github.com/getkin/kin-openapi/openapi3"
@@ -93,9 +94,16 @@ func New(opts Options) (*Server, error) {
 	return &s, nil
 }
 
-func (s *Server) RegisterHandlers(
+func (s *Server) RegisterClientHandlers(
 	f func(router clientv1.EchoRouter, si clientv1.ServerInterface),
 	handlers clientv1.ServerInterface,
+) {
+	f(s.serverGroup, handlers)
+}
+
+func (s *Server) RegisterManagerHandlers(
+	f func(router managerv1.EchoRouter, si managerv1.ServerInterface),
+	handlers managerv1.ServerInterface,
 ) {
 	f(s.serverGroup, handlers)
 }

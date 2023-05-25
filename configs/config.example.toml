@@ -62,3 +62,6 @@ encrypt_key = "24432646294A404E635266546A576E5A" # Leave it blank to disable enc
 workers = 2
 idle_time = "1s"
 reserve_for = "5m"
+
+[services.manager_load]
+max_problems_at_same_time = 5

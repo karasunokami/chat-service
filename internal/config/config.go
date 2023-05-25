@@ -26,9 +26,9 @@ type LogConfig struct {
 }
 
 type ServersConfig struct {
-	Debug   DebugServerConfig  `toml:"debug"`
-	Client  ClientServerConfig `toml:"client"`
-	Manager ClientServerConfig `toml:"manager"`
+	Debug   DebugServerConfig   `toml:"debug"`
+	Client  ClientServerConfig  `toml:"client"`
+	Manager ManagerServerConfig `toml:"manager"`
 }
 
 type DebugServerConfig struct {
@@ -80,6 +80,7 @@ type PSQLClientConfig struct {
 type ServicesConfig struct {
 	MessageProducerService MessageProducerServiceConfig `toml:"msg_producer" validate:"required"`
 	OutboxService          OutboxServiceConfig          `toml:"outbox" validate:"required"`
+	ManagerLoad            ManagerLoadConfig            `toml:"manager_load" validate:"required"`
 }
 
 type MessageProducerServiceConfig struct {
@@ -93,4 +94,8 @@ type OutboxServiceConfig struct {
 	Workers    int           `toml:"workers" validate:"required"`
 	IdleTime   time.Duration `toml:"idle_time" validate:"required"`
 	ReserveFor time.Duration `toml:"reserve_for" validate:"required"`
+}
+
+type ManagerLoadConfig struct {
+	MaxProblemsAtSameTime int `toml:"max_problems_at_same_time" validate:"required,gte=1"`
 }
