@@ -35,5 +35,22 @@ func (h Handlers) PostGetHistory(eCtx echo.Context, params PostGetHistoryParams)
 		return err
 	}
 
-	return eCtx.JSON(http.StatusOK, Response{Data: resp})
+	page := make([]Message, 0, len(resp.Messages))
+	for _, m := range resp.Messages {
+		mm := Message{
+			AuthorId:   m.AuthorID.AsPointer(),
+			Body:       m.Body,
+			CreatedAt:  m.CreatedAt,
+			Id:         m.ID,
+			IsBlocked:  m.IsBlocked,
+			IsReceived: m.IsReceived,
+			IsService:  m.IsService,
+		}
+		page = append(page, mm)
+	}
+
+	return eCtx.JSON(http.StatusOK, GetHistoryResponse{Data: &MessagesPage{
+		Messages: page,
+		Next:     resp.NextCursor,
+	}})
 }

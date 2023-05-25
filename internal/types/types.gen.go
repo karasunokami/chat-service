@@ -32,7 +32,12 @@ func (t ChatID) Validate() error {
 	}
 	return nil
 }
-
+func (t ChatID) AsPointer() *ChatID {
+	if t.IsZero() {
+		return nil
+	}
+	return &t
+}
 var MessageIDNil = MessageID(uuid.Nil)
 
 type MessageID uuid.UUID                             //
@@ -56,7 +61,12 @@ func (t MessageID) Validate() error {
 	}
 	return nil
 }
-
+func (t MessageID) AsPointer() *MessageID {
+	if t.IsZero() {
+		return nil
+	}
+	return &t
+}
 var ProblemIDNil = ProblemID(uuid.Nil)
 
 type ProblemID uuid.UUID                             //
@@ -80,7 +90,12 @@ func (t ProblemID) Validate() error {
 	}
 	return nil
 }
-
+func (t ProblemID) AsPointer() *ProblemID {
+	if t.IsZero() {
+		return nil
+	}
+	return &t
+}
 var UserIDNil = UserID(uuid.Nil)
 
 type UserID uuid.UUID                             //
@@ -104,7 +119,12 @@ func (t UserID) Validate() error {
 	}
 	return nil
 }
-
+func (t UserID) AsPointer() *UserID {
+	if t.IsZero() {
+		return nil
+	}
+	return &t
+}
 var RequestIDNil = RequestID(uuid.Nil)
 
 type RequestID uuid.UUID                             //
@@ -128,7 +148,12 @@ func (t RequestID) Validate() error {
 	}
 	return nil
 }
-
+func (t RequestID) AsPointer() *RequestID {
+	if t.IsZero() {
+		return nil
+	}
+	return &t
+}
 var JobIDNil = JobID(uuid.Nil)
 
 type JobID uuid.UUID                             //
@@ -152,7 +177,12 @@ func (t JobID) Validate() error {
 	}
 	return nil
 }
-
+func (t JobID) AsPointer() *JobID {
+	if t.IsZero() {
+		return nil
+	}
+	return &t
+}
 var FailedJobIDNil = FailedJobID(uuid.Nil)
 
 type FailedJobID uuid.UUID                             //
@@ -176,7 +206,12 @@ func (t FailedJobID) Validate() error {
 	}
 	return nil
 }
-
+func (t FailedJobID) AsPointer() *FailedJobID {
+	if t.IsZero() {
+		return nil
+	}
+	return &t
+}
 type TypeSet = interface {
 	ChatID|MessageID|ProblemID|UserID|RequestID|JobID|FailedJobID
 }

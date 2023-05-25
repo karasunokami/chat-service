@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"time"
 
+	"entgo.io/ent/dialect"
+	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/karasunokami/chat-service/internal/store/failedjob"
@@ -19,6 +21,7 @@ type FailedJobCreate struct {
 	config
 	mutation *FailedJobMutation
 	hooks    []Hook
+	conflict []sql.ConflictOption
 }
 
 // SetName sets the "name" field.
@@ -177,6 +180,7 @@ func (fjc *FailedJobCreate) createSpec() (*FailedJob, *sqlgraph.CreateSpec) {
 		_node = &FailedJob{config: fjc.config}
 		_spec = sqlgraph.NewCreateSpec(failedjob.Table, sqlgraph.NewFieldSpec(failedjob.FieldID, field.TypeUUID))
 	)
+	_spec.OnConflict = fjc.conflict
 	if id, ok := fjc.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
@@ -200,10 +204,158 @@ func (fjc *FailedJobCreate) createSpec() (*FailedJob, *sqlgraph.CreateSpec) {
 	return _node, _spec
 }
 
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.FailedJob.Create().
+//		SetName(v).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.FailedJobUpsert) {
+//			SetName(v+v).
+//		}).
+//		Exec(ctx)
+func (fjc *FailedJobCreate) OnConflict(opts ...sql.ConflictOption) *FailedJobUpsertOne {
+	fjc.conflict = opts
+	return &FailedJobUpsertOne{
+		create: fjc,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.FailedJob.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (fjc *FailedJobCreate) OnConflictColumns(columns ...string) *FailedJobUpsertOne {
+	fjc.conflict = append(fjc.conflict, sql.ConflictColumns(columns...))
+	return &FailedJobUpsertOne{
+		create: fjc,
+	}
+}
+
+type (
+	// FailedJobUpsertOne is the builder for "upsert"-ing
+	//  one FailedJob node.
+	FailedJobUpsertOne struct {
+		create *FailedJobCreate
+	}
+
+	// FailedJobUpsert is the "OnConflict" setter.
+	FailedJobUpsert struct {
+		*sql.UpdateSet
+	}
+)
+
+// UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
+// Using this option is equivalent to using:
+//
+//	client.FailedJob.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(failedjob.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *FailedJobUpsertOne) UpdateNewValues() *FailedJobUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.ID(); exists {
+			s.SetIgnore(failedjob.FieldID)
+		}
+		if _, exists := u.create.mutation.Name(); exists {
+			s.SetIgnore(failedjob.FieldName)
+		}
+		if _, exists := u.create.mutation.Payload(); exists {
+			s.SetIgnore(failedjob.FieldPayload)
+		}
+		if _, exists := u.create.mutation.Reason(); exists {
+			s.SetIgnore(failedjob.FieldReason)
+		}
+		if _, exists := u.create.mutation.CreatedAt(); exists {
+			s.SetIgnore(failedjob.FieldCreatedAt)
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.FailedJob.Create().
+//	    OnConflict(sql.ResolveWithIgnore()).
+//	    Exec(ctx)
+func (u *FailedJobUpsertOne) Ignore() *FailedJobUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *FailedJobUpsertOne) DoNothing() *FailedJobUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the FailedJobCreate.OnConflict
+// documentation for more info.
+func (u *FailedJobUpsertOne) Update(set func(*FailedJobUpsert)) *FailedJobUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&FailedJobUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// Exec executes the query.
+func (u *FailedJobUpsertOne) Exec(ctx context.Context) error {
+	if len(u.create.conflict) == 0 {
+		return errors.New("store: missing options for FailedJobCreate.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *FailedJobUpsertOne) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// Exec executes the UPSERT query and returns the inserted/updated ID.
+func (u *FailedJobUpsertOne) ID(ctx context.Context) (id types.FailedJobID, err error) {
+	if u.create.driver.Dialect() == dialect.MySQL {
+		// In case of "ON CONFLICT", there is no way to get back non-numeric ID
+		// fields from the database since MySQL does not support the RETURNING clause.
+		return id, errors.New("store: FailedJobUpsertOne.ID is not supported by MySQL driver. Use FailedJobUpsertOne.Exec instead")
+	}
+	node, err := u.create.Save(ctx)
+	if err != nil {
+		return id, err
+	}
+	return node.ID, nil
+}
+
+// IDX is like ID, but panics if an error occurs.
+func (u *FailedJobUpsertOne) IDX(ctx context.Context) types.FailedJobID {
+	id, err := u.ID(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
 // FailedJobCreateBulk is the builder for creating many FailedJob entities in bulk.
 type FailedJobCreateBulk struct {
 	config
 	builders []*FailedJobCreate
+	conflict []sql.ConflictOption
 }
 
 // Save creates the FailedJob entities in the database.
@@ -230,6 +382,7 @@ func (fjcb *FailedJobCreateBulk) Save(ctx context.Context) ([]*FailedJob, error)
 					_, err = mutators[i+1].Mutate(root, fjcb.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
+					spec.OnConflict = fjcb.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
 					if err = sqlgraph.BatchCreate(ctx, fjcb.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
@@ -276,6 +429,129 @@ func (fjcb *FailedJobCreateBulk) Exec(ctx context.Context) error {
 // ExecX is like Exec, but panics if an error occurs.
 func (fjcb *FailedJobCreateBulk) ExecX(ctx context.Context) {
 	if err := fjcb.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.FailedJob.CreateBulk(builders...).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.FailedJobUpsert) {
+//			SetName(v+v).
+//		}).
+//		Exec(ctx)
+func (fjcb *FailedJobCreateBulk) OnConflict(opts ...sql.ConflictOption) *FailedJobUpsertBulk {
+	fjcb.conflict = opts
+	return &FailedJobUpsertBulk{
+		create: fjcb,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.FailedJob.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (fjcb *FailedJobCreateBulk) OnConflictColumns(columns ...string) *FailedJobUpsertBulk {
+	fjcb.conflict = append(fjcb.conflict, sql.ConflictColumns(columns...))
+	return &FailedJobUpsertBulk{
+		create: fjcb,
+	}
+}
+
+// FailedJobUpsertBulk is the builder for "upsert"-ing
+// a bulk of FailedJob nodes.
+type FailedJobUpsertBulk struct {
+	create *FailedJobCreateBulk
+}
+
+// UpdateNewValues updates the mutable fields using the new values that
+// were set on create. Using this option is equivalent to using:
+//
+//	client.FailedJob.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(failedjob.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *FailedJobUpsertBulk) UpdateNewValues() *FailedJobUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		for _, b := range u.create.builders {
+			if _, exists := b.mutation.ID(); exists {
+				s.SetIgnore(failedjob.FieldID)
+			}
+			if _, exists := b.mutation.Name(); exists {
+				s.SetIgnore(failedjob.FieldName)
+			}
+			if _, exists := b.mutation.Payload(); exists {
+				s.SetIgnore(failedjob.FieldPayload)
+			}
+			if _, exists := b.mutation.Reason(); exists {
+				s.SetIgnore(failedjob.FieldReason)
+			}
+			if _, exists := b.mutation.CreatedAt(); exists {
+				s.SetIgnore(failedjob.FieldCreatedAt)
+			}
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.FailedJob.Create().
+//		OnConflict(sql.ResolveWithIgnore()).
+//		Exec(ctx)
+func (u *FailedJobUpsertBulk) Ignore() *FailedJobUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *FailedJobUpsertBulk) DoNothing() *FailedJobUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the FailedJobCreateBulk.OnConflict
+// documentation for more info.
+func (u *FailedJobUpsertBulk) Update(set func(*FailedJobUpsert)) *FailedJobUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&FailedJobUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// Exec executes the query.
+func (u *FailedJobUpsertBulk) Exec(ctx context.Context) error {
+	for i, b := range u.create.builders {
+		if len(b.conflict) != 0 {
+			return fmt.Errorf("store: OnConflict was set for builder %d. Set it on the FailedJobCreateBulk instead", i)
+		}
+	}
+	if len(u.create.conflict) == 0 {
+		return errors.New("store: missing options for FailedJobCreateBulk.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *FailedJobUpsertBulk) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

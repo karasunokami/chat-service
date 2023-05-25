@@ -33,7 +33,12 @@ func (t {{ $type }}) Validate() error {
 	}
 	return nil
 }
-
+func (t {{ $type }}) AsPointer() *{{ $type }} {
+	if t.IsZero() {
+		return nil
+	}
+	return &t
+}
 {{ end -}}
 
 type TypeSet = interface {

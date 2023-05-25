@@ -8,6 +8,7 @@ import (
 	internalerrors "github.com/karasunokami/chat-service/internal/errors"
 	"github.com/karasunokami/chat-service/internal/middlewares"
 	sendmessage "github.com/karasunokami/chat-service/internal/usecases/client/send-message"
+	"github.com/karasunokami/chat-service/pkg/pointer"
 
 	"github.com/labstack/echo/v4"
 )
@@ -31,7 +32,13 @@ func (h Handlers) PostSendMessage(eCtx echo.Context, params PostSendMessageParam
 		return internalerrors.NewServerError(getErrorCode(err), "cannot handle something", err)
 	}
 
-	return eCtx.JSON(http.StatusOK, Response{Data: resp})
+	return eCtx.JSON(http.StatusOK, SendMessageResponse{
+		Data: &MessageHeader{
+			AuthorId:  pointer.PtrWithZeroAsNil(resp.AuthorID),
+			CreatedAt: resp.CreatedAt,
+			Id:        resp.MessageID,
+		},
+	})
 }
 
 func getErrorCode(err error) int {

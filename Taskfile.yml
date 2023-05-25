@@ -48,6 +48,10 @@ vars:
   E2E_CLIENT_V1_PKG: apiclientv1
   ###
 
+  ENT_FEATURES: |
+    sql/lock
+    sql/upsert
+
 tasks:
   default:
     cmds:
@@ -144,7 +148,7 @@ tasks:
   ent:gen:
     aliases: [ gen:ent ]
     cmds:
-      - docker run --rm -v "$(pwd):/app" -w /app chat-service-tools ent generate --template {{.ENT_DATABASE_TEMPLATE}} {{.ENT_SCHEMA}} --feature sql/lock
+      - docker run --rm -v "$(pwd):/app" -w /app chat-service-tools ent generate --template {{.ENT_DATABASE_TEMPLATE}} {{.ENT_SCHEMA}} --feature {{ .ENT_FEATURES | trim | splitLines | join "," }}
       - task: tidy
 
   ent:new:
