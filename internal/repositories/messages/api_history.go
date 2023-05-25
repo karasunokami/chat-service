@@ -48,43 +48,14 @@ func (r *Repo) GetClientChatMessages(
 		return nil, nil, fmt.Errorf("query messages, err=%v", err)
 	}
 
-	repoMessages := storeMessagesToRepoMessages(msgs)
-
-	// if count of selected messages lower than limit we know
-	// that there are no more messages in db
-	if len(msgs) < limit {
-		return repoMessages, nil, nil
+	if len(msgs) <= limit {
+		return storeMessagesToRepoMessages(msgs), nil, nil
 	}
 
-	crs, err := r.createNextCursor(ctx, clientID, msgs[limit-1].CreatedAt, limit)
-	if err != nil {
-		return nil, nil, fmt.Errorf("create next cursor, err=%v", err)
-	}
-
-	return repoMessages, crs, nil
-}
-
-func (r *Repo) createNextCursor(
-	ctx context.Context,
-	clientID types.UserID,
-	lastMessageCreatedAt time.Time,
-	limit int,
-) (*Cursor, error) {
-	nextCursor := &Cursor{
-		LastCreatedAt: lastMessageCreatedAt,
+	return storeMessagesToRepoMessages(msgs[:limit]), &Cursor{
+		LastCreatedAt: msgs[limit-1].CreatedAt,
 		PageSize:      limit,
-	}
-
-	exists, err := r.buildMessagesQuery(ctx, limit, nextCursor, clientID).Exist(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("query messages exists, err=%v", err)
-	}
-
-	if !exists {
-		return (*Cursor)(nil), nil
-	}
-
-	return nextCursor, nil
+	}, nil
 }
 
 func (r *Repo) buildMessagesQuery(ctx context.Context, limit int, cursor *Cursor, clientID types.UserID) *store.MessageQuery {
@@ -97,7 +68,7 @@ func (r *Repo) buildMessagesQuery(ctx context.Context, limit int, cursor *Cursor
 		predicates = append(predicates, message.CreatedAtLT(cursor.LastCreatedAt))
 	}
 
-	return r.db.Message(ctx).Query().Where(predicates...).Order(store.Desc(message.FieldCreatedAt)).Limit(limit)
+	return r.db.Message(ctx).Query().Where(predicates...).Order(store.Desc(message.FieldCreatedAt)).Limit(limit + 1)
 }
 
 func validateParams(pageSize int, cursor *Cursor) error {

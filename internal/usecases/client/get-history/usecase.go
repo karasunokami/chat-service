@@ -52,7 +52,7 @@ func (u UseCase) Handle(ctx context.Context, req Request) (Response, error) {
 
 	crs, err := decodeCursor(req.Cursor)
 	if err != nil {
-		if err != errEmptyCursor {
+		if !errors.Is(err, errEmptyCursor) {
 			return Response{}, fmt.Errorf("codecode cursor, err=%w", err)
 		}
 	}

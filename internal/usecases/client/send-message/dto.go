@@ -1,7 +1,6 @@
 package sendmessage
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/karasunokami/chat-service/internal/types"
@@ -15,14 +14,6 @@ type Request struct {
 }
 
 func (r Request) Validate() error {
-	if err := r.ID.Validate(); err != nil {
-		return fmt.Errorf("request id is invalid, err=%v", err)
-	}
-
-	if err := r.ClientID.Validate(); err != nil {
-		return fmt.Errorf("client id is invalid, err=%v", err)
-	}
-
 	return validator.Validator.Struct(r)
 }
 

@@ -37,7 +37,7 @@ vars:
   TYPES_TEMPLATE: ./internal/types/types.tmpl
 
   ENT_SCHEMA: ./internal/store/schema
-  ENT_DATABASE_TEMPLATE: ./internal/store/templates/database.tmpl
+  ENT_DATABASE_TEMPLATE: ./internal/store/templates
 
   CLIENT_V1_SRC: ./api/client.v1.swagger.yml
   CLIENT_V1_DST: ./internal/server-client/v1/server.gen.go

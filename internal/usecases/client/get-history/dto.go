@@ -3,7 +3,6 @@ package gethistory
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"time"
 
 	messagesrepo "github.com/karasunokami/chat-service/internal/repositories/messages"
@@ -27,14 +26,6 @@ func (r Request) Validate() error {
 		return errors.New("page size or cursor must be provided")
 	}
 
-	if err := r.ID.Validate(); err != nil {
-		return fmt.Errorf("request id is invalid, err=%v", err)
-	}
-
-	if err := r.ClientID.Validate(); err != nil {
-		return fmt.Errorf("client id is invalid, err=%v", err)
-	}
-
 	return validator.Validator.Struct(r)
 }
 
@@ -55,15 +46,15 @@ type Message struct {
 
 func (m Message) MarshalJSON() ([]byte, error) {
 	t := struct {
-		ID         *types.MessageID `json:"id"`
-		AuthorID   *types.UserID    `json:"authorId,omitempty" `
-		Body       string           `json:"body"`
-		CreatedAt  time.Time        `json:"createdAt"`
-		IsReceived bool             `json:"isReceived"`
-		IsBlocked  bool             `json:"isBlocked"`
-		IsService  bool             `json:"isService"`
+		ID         types.MessageID `json:"id"`
+		AuthorID   *types.UserID   `json:"authorId,omitempty" `
+		Body       string          `json:"body"`
+		CreatedAt  time.Time       `json:"createdAt"`
+		IsReceived bool            `json:"isReceived"`
+		IsBlocked  bool            `json:"isBlocked"`
+		IsService  bool            `json:"isService"`
 	}{
-		ID:         &m.ID,
+		ID:         m.ID,
 		Body:       m.Body,
 		CreatedAt:  m.CreatedAt,
 		IsReceived: m.IsReceived,

@@ -37,18 +37,6 @@ func New(opts Options) (Handler, error) {
 }
 
 func (h Handler) Handle(err error, eCtx echo.Context) {
-	if err == nil {
-		return
-	}
-
-	// I have no idea why but sometimes Handle function calls two times
-	// that leads to double writing to echo context response like
-	// {error}
-	// {error}
-	if eCtx.Response().Size != 0 {
-		return
-	}
-
 	code, msg, details := errors.ProcessServerError(err)
 
 	if h.productionMode {
