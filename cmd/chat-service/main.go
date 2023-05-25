@@ -49,7 +49,11 @@ func run() (errReturned error) {
 	defer deps.stop()
 
 	// init servers
-	srvDebug, err := serverdebug.New(serverdebug.NewOptions(cfg.Servers.Debug.Addr, deps.swagger))
+	srvDebug, err := serverdebug.New(serverdebug.NewOptions(
+		cfg.Servers.Debug.Addr,
+		deps.clientSwagger,
+		deps.managerSwagger,
+	))
 	if err != nil {
 		return fmt.Errorf("init debug server: %v", err)
 	}
@@ -59,11 +63,17 @@ func run() (errReturned error) {
 		return fmt.Errorf("init client server: %v", err)
 	}
 
+	srvManager, err := initServerManager(deps, cfg.Servers.Manager)
+	if err != nil {
+		return fmt.Errorf("init client server: %v", err)
+	}
+
 	eg, ctx := errgroup.WithContext(ctx)
 
 	// run servers
 	eg.Go(func() error { return srvDebug.Run(ctx) })
 	eg.Go(func() error { return srvClient.Run(ctx) })
+	eg.Go(func() error { return srvManager.Run(ctx) })
 
 	// wait for command line signal
 	if err = eg.Wait(); err != nil && !errors.Is(err, context.Canceled) {

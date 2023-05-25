@@ -26,8 +26,9 @@ type LogConfig struct {
 }
 
 type ServersConfig struct {
-	Debug  DebugServerConfig  `toml:"debug"`
-	Client ClientServerConfig `toml:"client"`
+	Debug   DebugServerConfig  `toml:"debug"`
+	Client  ClientServerConfig `toml:"client"`
+	Manager ClientServerConfig `toml:"manager"`
 }
 
 type DebugServerConfig struct {
@@ -35,6 +36,12 @@ type DebugServerConfig struct {
 }
 
 type ClientServerConfig struct {
+	Addr           string               `toml:"addr" validate:"required,hostname_port"`
+	AllowOrigins   []string             `toml:"allow_origins" validate:"required"`
+	RequiredAccess RequiredAccessConfig `toml:"required_access" validate:"required"`
+}
+
+type ManagerServerConfig struct {
 	Addr           string               `toml:"addr" validate:"required,hostname_port"`
 	AllowOrigins   []string             `toml:"allow_origins" validate:"required"`
 	RequiredAccess RequiredAccessConfig `toml:"required_access" validate:"required"`

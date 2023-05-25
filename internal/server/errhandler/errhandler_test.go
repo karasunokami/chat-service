@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	internalerrors "github.com/karasunokami/chat-service/internal/errors"
-	"github.com/karasunokami/chat-service/internal/server-client/errhandler"
+	"github.com/karasunokami/chat-service/internal/server/errhandler"
 
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"

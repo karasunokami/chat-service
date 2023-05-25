@@ -3,8 +3,8 @@ package errhandler_test
 import (
 	"testing"
 
-	"github.com/karasunokami/chat-service/internal/server-client/errhandler"
 	clientv1 "github.com/karasunokami/chat-service/internal/server-client/v1"
+	"github.com/karasunokami/chat-service/internal/server/errhandler"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

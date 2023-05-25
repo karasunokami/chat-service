@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/karasunokami/chat-service/internal/config"
-	serverclient "github.com/karasunokami/chat-service/internal/server-client"
+	server "github.com/karasunokami/chat-service/internal/server-client"
 	clientv1 "github.com/karasunokami/chat-service/internal/server-client/v1"
 	gethistory "github.com/karasunokami/chat-service/internal/usecases/client/get-history"
 	sendmessage "github.com/karasunokami/chat-service/internal/usecases/client/send-message"
@@ -15,23 +15,23 @@ const nameServerClient = "server-client"
 func initServerClient(
 	deps serverDeps,
 	clientServerConfig config.ClientServerConfig,
-) (*serverclient.Server, error) {
+) (*server.Server, error) {
 	serverHandlers, err := initServerHandlers(deps)
 	if err != nil {
 		return nil, fmt.Errorf("init server hanlders, err=%v", err)
 	}
 
 	// build server client
-	srv, err := serverclient.New(serverclient.NewOptions(
+	srv, err := server.New(server.NewOptions(
 		clientServerConfig.Addr,
 		clientServerConfig.AllowOrigins,
 		clientServerConfig.RequiredAccess.Resource,
 		clientServerConfig.RequiredAccess.Role,
 		deps.errHandler.Handle,
-		deps.logger,
-		deps.swagger,
-		serverHandlers,
+		deps.clientLogger,
+		deps.clientSwagger,
 		deps.kcClient,
+		serverHandlers,
 	))
 	if err != nil {
 		return nil, fmt.Errorf("build server: %v", err)
@@ -59,7 +59,7 @@ func initServerHandlers(deps serverDeps) (clientv1.Handlers, error) {
 	}
 
 	// create client handlers
-	serverV1Handlers, err := clientv1.NewHandlers(clientv1.NewOptions(deps.logger, getHistoryUseCase, sendMessageUseCase))
+	serverV1Handlers, err := clientv1.NewHandlers(clientv1.NewOptions(deps.clientLogger, getHistoryUseCase, sendMessageUseCase))
 	if err != nil {
 		return clientv1.Handlers{}, fmt.Errorf("create v1 handlers: %v", err)
 	}

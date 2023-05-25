@@ -11,8 +11,9 @@ import (
 	jobsrepo "github.com/karasunokami/chat-service/internal/repositories/jobs"
 	messagesrepo "github.com/karasunokami/chat-service/internal/repositories/messages"
 	problemsrepo "github.com/karasunokami/chat-service/internal/repositories/problems"
-	"github.com/karasunokami/chat-service/internal/server-client/errhandler"
 	clientv1 "github.com/karasunokami/chat-service/internal/server-client/v1"
+	managerv1 "github.com/karasunokami/chat-service/internal/server-manager/v1"
+	errhandler2 "github.com/karasunokami/chat-service/internal/server/errhandler"
 	msgproducer "github.com/karasunokami/chat-service/internal/services/msg-producer"
 	"github.com/karasunokami/chat-service/internal/services/outbox"
 	sendclientmessagejob "github.com/karasunokami/chat-service/internal/services/outbox/jobs/send-client-message"
@@ -23,8 +24,9 @@ import (
 )
 
 type serverDeps struct {
-	swagger *openapi3.T
-	logger  *zap.Logger
+	clientSwagger  *openapi3.T
+	managerSwagger *openapi3.T
+	clientLogger   *zap.Logger
 
 	psqlClient *store.Client
 	db         *store.Database
@@ -36,10 +38,11 @@ type serverDeps struct {
 
 	kcClient *keycloakclient.Client
 
-	errHandler errhandler.Handler
+	errHandler errhandler2.Handler
 
 	msgProducerService *msgproducer.Service
 	outboxService      *outbox.Service
+	managerLogger      *zap.Logger
 }
 
 func startNewDeps(ctx context.Context, cfg config.Config) (serverDeps, error) {
@@ -48,14 +51,20 @@ func startNewDeps(ctx context.Context, cfg config.Config) (serverDeps, error) {
 		d   serverDeps
 	)
 
-	// init swagger client
-	d.swagger, err = clientv1.GetSwagger()
+	// init swaggers
+	d.clientSwagger, err = clientv1.GetSwagger()
 	if err != nil {
 		return serverDeps{}, fmt.Errorf("client v1 get swagger, err=%v", err)
 	}
 
+	d.managerSwagger, err = managerv1.GetSwagger()
+	if err != nil {
+		return serverDeps{}, fmt.Errorf("manager v1 get swagger, err=%v", err)
+	}
+
 	// init logger
-	d.logger = zap.L().Named(nameServerClient)
+	d.clientLogger = zap.L().Named(nameServerClient)
+	d.managerLogger = zap.L().Named(nameServerManager)
 
 	// init psql client
 	d.psqlClient, err = store.NewPSQLClient(store.NewPSQLOptions(
@@ -70,7 +79,7 @@ func startNewDeps(ctx context.Context, cfg config.Config) (serverDeps, error) {
 	}
 
 	if cfg.Clients.PSQLClient.DebugMode && cfg.Global.IsInProdEnv() {
-		d.logger.Warn("Attention! PSQL client is in debug mode and env is prod")
+		d.clientLogger.Warn("Attention! PSQL client is in debug mode and env is prod")
 	}
 
 	if err = d.psqlClient.Schema.Create(ctx); err != nil {
@@ -78,7 +87,7 @@ func startNewDeps(ctx context.Context, cfg config.Config) (serverDeps, error) {
 	}
 
 	// init database client
-	d.db = store.NewDatabase(d.psqlClient, d.logger)
+	d.db = store.NewDatabase(d.psqlClient, d.clientLogger)
 
 	// init repositories
 	d.msgRepo, err = messagesrepo.New(messagesrepo.NewOptions(d.db))
@@ -102,13 +111,13 @@ func startNewDeps(ctx context.Context, cfg config.Config) (serverDeps, error) {
 	}
 
 	// init keycloak client
-	d.kcClient, err = initKeyCloakClient(d.logger, cfg.Clients.KeycloakClient, cfg.Global.IsInProdEnv())
+	d.kcClient, err = initKeyCloakClient(d.clientLogger, cfg.Clients.KeycloakClient, cfg.Global.IsInProdEnv())
 	if err != nil {
 		return serverDeps{}, fmt.Errorf("init init keycloak client, err=%v", err)
 	}
 
 	// init server resp errors handler
-	errHandler, err := errhandler.New(errhandler.NewOptions(d.logger, cfg.Global.IsInProdEnv(), errhandler.ResponseBuilder))
+	errHandler, err := errhandler2.New(errhandler2.NewOptions(d.clientLogger, cfg.Global.IsInProdEnv(), errhandler2.ResponseBuilder))
 	if err != nil {
 		return serverDeps{}, fmt.Errorf("init error handler, err=%v", err)
 	}
@@ -161,7 +170,7 @@ func (d serverDeps) stop() {
 	if d.psqlClient != nil {
 		err := d.psqlClient.Close()
 		if err != nil {
-			d.logger.Error("stop psql client", zap.Error(err))
+			d.clientLogger.Error("stop psql client", zap.Error(err))
 		}
 	}
 }
