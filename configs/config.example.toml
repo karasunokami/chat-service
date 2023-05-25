@@ -1,5 +1,5 @@
 [global]
-env = "dev"
+env = "prod"
 
 [log]
 level = "info"
@@ -25,4 +25,10 @@ base_path = "http://localhost:3010"
 realm = "Bank"
 client_id = "chat-service"
 client_secret = "63BYwNafWBXbH0tRCdIhQ5ZAj91uj0bd"
+debug_mode = true
+[clients.psql]
+address = "127.0.0.1:5432"
+username = "chat-service"
+password = "chat-service"
+database = "chat-service"
 debug_mode = true

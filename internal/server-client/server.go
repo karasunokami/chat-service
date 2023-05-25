@@ -27,14 +27,15 @@ const (
 
 //go:generate options-gen -out-filename=server_options.gen.go -from-struct=Options
 type Options struct {
-	logger         *zap.Logger              `option:"mandatory" validate:"required"`
 	addr           string                   `option:"mandatory" validate:"required,hostname_port"`
 	allowOrigins   []string                 `option:"mandatory" validate:"min=1"`
+	resource       string                   `option:"mandatory" validate:"required"`
+	role           string                   `option:"mandatory" validate:"required"`
+	errorHandler   echo.HTTPErrorHandler    `option:"mandatory" validate:"required"`
+	logger         *zap.Logger              `option:"mandatory" validate:"required"`
 	v1Swagger      *openapi3.T              `option:"mandatory" validate:"required"`
 	v1Handlers     clientv1.ServerInterface `option:"mandatory" validate:"required"`
 	keycloakClient *keycloakclient.Client   `option:"mandatory" validate:"required"`
-	resource       string                   `option:"mandatory" validate:"required"`
-	role           string                   `option:"mandatory" validate:"required"`
 }
 
 type Server struct {
@@ -48,18 +49,19 @@ func New(opts Options) (*Server, error) {
 		return nil, fmt.Errorf("validate server options, err=%v", err)
 	}
 
-	e := echo.New()
+	echoServer := echo.New()
+	echoServer.HTTPErrorHandler = opts.errorHandler
 
 	s := Server{
 		lg: opts.logger,
 		srv: &http.Server{
 			Addr:              opts.addr,
-			Handler:           e,
+			Handler:           echoServer,
 			ReadHeaderTimeout: readHeaderTimeout,
 		},
 	}
 
-	e.Use(
+	echoServer.Use(
 		middlewares.NewLoggerMiddleware(s.lg),
 		middleware.RecoverWithConfig(middleware.RecoverConfig{
 			Skipper:           nil,
@@ -78,10 +80,12 @@ func New(opts Options) (*Server, error) {
 			AllowMethods: []string{echo.POST},
 		}),
 		middlewares.NewKeyCloakTokenAuth(opts.keycloakClient, opts.resource, opts.role),
+
+		// max length of message is 3000 utf-8 symbols 3000. 4 bytes each = 12000 bytes / 1024 = 11.78 kB ~= 12 kB
 		middleware.BodyLimit("12K"),
 	)
 
-	v1 := e.Group("v1", oapimdlwr.OapiRequestValidatorWithOptions(opts.v1Swagger, &oapimdlwr.Options{
+	v1 := echoServer.Group("v1", oapimdlwr.OapiRequestValidatorWithOptions(opts.v1Swagger, &oapimdlwr.Options{
 		Options: openapi3filter.Options{
 			ExcludeRequestBody:  false,
 			ExcludeResponseBody: true,

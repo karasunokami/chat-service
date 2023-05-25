@@ -1,29 +1,39 @@
 package clientv1
 
 import (
+	"errors"
 	"net/http"
-	"time"
 
-	"github.com/karasunokami/chat-service/internal/types"
+	"github.com/karasunokami/chat-service/internal/middlewares"
+	gethistory "github.com/karasunokami/chat-service/internal/usecases/client/get-history"
+	"github.com/karasunokami/chat-service/pkg/pointer"
 
 	"github.com/labstack/echo/v4"
 )
 
-var stub = MessagesPage{Messages: []Message{
-	{
-		AuthorId:  types.NewUserID(),
-		Body:      "Здравствуйте! Разберёмся.",
-		CreatedAt: time.Now(),
-		Id:        types.NewMessageID(),
-	},
-	{
-		AuthorId:  types.MustParse[types.UserID]("187f5e1b-69cd-423d-9f06-b653cfcba290"),
-		Body:      "Привет! Не могу снять денег с карты,\nпишет 'карта заблокирована'",
-		CreatedAt: time.Now().Add(-time.Minute),
-		Id:        types.NewMessageID(),
-	},
-}}
+func (h Handlers) PostGetHistory(eCtx echo.Context, params PostGetHistoryParams) error {
+	ctx := eCtx.Request().Context()
+	clientID := middlewares.MustUserID(eCtx)
 
-func (h Handlers) PostGetHistory(eCtx echo.Context, _ PostGetHistoryParams) error {
-	return eCtx.JSON(http.StatusOK, GetHistoryResponse{Data: stub})
+	req := GetHistoryRequest{}
+	err := eCtx.Bind(&req)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest)
+	}
+
+	resp, err := h.getHistory.Handle(ctx, gethistory.Request{
+		ID:       params.XRequestID,
+		ClientID: clientID,
+		PageSize: pointer.Indirect(req.PageSize),
+		Cursor:   pointer.Indirect(req.Cursor),
+	})
+	if err != nil {
+		if errors.Is(err, gethistory.ErrInvalidRequest) || errors.Is(err, gethistory.ErrInvalidCursor) {
+			return echo.NewHTTPError(http.StatusBadRequest)
+		}
+
+		return err
+	}
+
+	return eCtx.JSON(http.StatusOK, Response{Data: resp})
 }

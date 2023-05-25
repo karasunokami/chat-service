@@ -3,59 +3,60 @@ package main
 import (
 	"fmt"
 
-	keycloakclient "github.com/karasunokami/chat-service/internal/clients/keycloak"
 	"github.com/karasunokami/chat-service/internal/config"
 	serverclient "github.com/karasunokami/chat-service/internal/server-client"
 	clientv1 "github.com/karasunokami/chat-service/internal/server-client/v1"
-
-	"github.com/getkin/kin-openapi/openapi3"
-	"go.uber.org/zap"
+	gethistory "github.com/karasunokami/chat-service/internal/usecases/client/get-history"
+	sendmessage "github.com/karasunokami/chat-service/internal/usecases/client/send-message"
 )
 
 const nameServerClient = "server-client"
 
 func initServerClient(
+	deps serverDeps,
 	clientServerConfig config.ClientServerConfig,
-	v1Swagger *openapi3.T,
-	kcClientConfig config.KeycloakClientConfig,
-	reqAccConfig config.RequiredAccessConfig,
-	globalConfig config.GlobalConfig,
 ) (*serverclient.Server, error) {
-	lg := zap.L().Named(nameServerClient)
-
-	v1Handlers, err := clientv1.NewHandlers(clientv1.NewOptions(lg))
+	serverHandlers, err := initServerHandlers(deps)
 	if err != nil {
-		return nil, fmt.Errorf("create v1 handlers: %v", err)
+		return nil, fmt.Errorf("init server hanlders, err=%v", err)
 	}
 
-	kcClient, err := keycloakclient.New(keycloakclient.NewOptions(
-		kcClientConfig.BasePath,
-		kcClientConfig.Realm,
-		kcClientConfig.ClientID,
-		kcClientConfig.ClientSecret,
-		keycloakclient.WithDebugMode(kcClientConfig.DebugMode),
-	))
-	if err != nil {
-		return nil, fmt.Errorf("cretae new keycloak client, err=%v", err)
-	}
-
-	if kcClientConfig.DebugMode && globalConfig.IsInProdEnv() {
-		lg.Warn("Attention! Keycloak client is in debug mode and env is prod")
-	}
-
+	// build server client
 	srv, err := serverclient.New(serverclient.NewOptions(
-		lg,
 		clientServerConfig.Addr,
 		clientServerConfig.AllowOrigins,
-		v1Swagger,
-		v1Handlers,
-		kcClient,
-		reqAccConfig.Resource,
-		reqAccConfig.Role,
+		clientServerConfig.RequiredAccess.Resource,
+		clientServerConfig.RequiredAccess.Role,
+		deps.errHandler.Handle,
+		deps.logger,
+		deps.swagger,
+		serverHandlers,
+		deps.kcClient,
 	))
 	if err != nil {
 		return nil, fmt.Errorf("build server: %v", err)
 	}
 
 	return srv, nil
+}
+
+func initServerHandlers(deps serverDeps) (clientv1.Handlers, error) {
+	// create use cases
+	getHistoryUseCase, err := gethistory.New(gethistory.NewOptions(deps.msgRepo))
+	if err != nil {
+		return clientv1.Handlers{}, fmt.Errorf("init get history usecase: %v", err)
+	}
+
+	sendMessageUseCase, err := sendmessage.New(sendmessage.NewOptions(deps.chatRepo, deps.msgRepo, deps.problemsRepo, deps.db))
+	if err != nil {
+		return clientv1.Handlers{}, fmt.Errorf("init send message usecase: %v", err)
+	}
+
+	// create client handlers
+	serverV1Handlers, err := clientv1.NewHandlers(clientv1.NewOptions(deps.logger, getHistoryUseCase, sendMessageUseCase))
+	if err != nil {
+		return clientv1.Handlers{}, fmt.Errorf("create v1 handlers: %v", err)
+	}
+
+	return serverV1Handlers, nil
 }

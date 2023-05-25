@@ -1,8 +1,6 @@
 package schema
 
 import (
-	"time"
-
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
@@ -21,7 +19,7 @@ func (Problem) Fields() []ent.Field {
 		field.UUID("chat_id", types.ChatID{}).Immutable(),
 		field.UUID("manager_id", types.UserID{}).Optional(),
 		field.Time("resolved_at").Optional(),
-		field.Time("created_at").Default(time.Now).Immutable(),
+		field.Time("created_at").Default(defaultTime).Immutable(),
 	}
 }
 

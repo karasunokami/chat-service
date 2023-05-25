@@ -601,6 +601,7 @@ type MessageMutation struct {
 	typ                    string
 	id                     *types.MessageID
 	author_id              *types.UserID
+	initial_request_id     *types.RequestID
 	is_visible_for_client  *bool
 	is_visible_for_manager *bool
 	body                   *string
@@ -843,6 +844,55 @@ func (m *MessageMutation) ResetAuthorID() {
 	delete(m.clearedFields, message.FieldAuthorID)
 }
 
+// SetInitialRequestID sets the "initial_request_id" field.
+func (m *MessageMutation) SetInitialRequestID(ti types.RequestID) {
+	m.initial_request_id = &ti
+}
+
+// InitialRequestID returns the value of the "initial_request_id" field in the mutation.
+func (m *MessageMutation) InitialRequestID() (r types.RequestID, exists bool) {
+	v := m.initial_request_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldInitialRequestID returns the old "initial_request_id" field's value of the Message entity.
+// If the Message object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MessageMutation) OldInitialRequestID(ctx context.Context) (v types.RequestID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldInitialRequestID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldInitialRequestID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldInitialRequestID: %w", err)
+	}
+	return oldValue.InitialRequestID, nil
+}
+
+// ClearInitialRequestID clears the value of the "initial_request_id" field.
+func (m *MessageMutation) ClearInitialRequestID() {
+	m.initial_request_id = nil
+	m.clearedFields[message.FieldInitialRequestID] = struct{}{}
+}
+
+// InitialRequestIDCleared returns if the "initial_request_id" field was cleared in this mutation.
+func (m *MessageMutation) InitialRequestIDCleared() bool {
+	_, ok := m.clearedFields[message.FieldInitialRequestID]
+	return ok
+}
+
+// ResetInitialRequestID resets all changes to the "initial_request_id" field.
+func (m *MessageMutation) ResetInitialRequestID() {
+	m.initial_request_id = nil
+	delete(m.clearedFields, message.FieldInitialRequestID)
+}
+
 // SetIsVisibleForClient sets the "is_visible_for_client" field.
 func (m *MessageMutation) SetIsVisibleForClient(b bool) {
 	m.is_visible_for_client = &b
@@ -982,9 +1032,22 @@ func (m *MessageMutation) OldCheckedAt(ctx context.Context) (v time.Time, err er
 	return oldValue.CheckedAt, nil
 }
 
+// ClearCheckedAt clears the value of the "checked_at" field.
+func (m *MessageMutation) ClearCheckedAt() {
+	m.checked_at = nil
+	m.clearedFields[message.FieldCheckedAt] = struct{}{}
+}
+
+// CheckedAtCleared returns if the "checked_at" field was cleared in this mutation.
+func (m *MessageMutation) CheckedAtCleared() bool {
+	_, ok := m.clearedFields[message.FieldCheckedAt]
+	return ok
+}
+
 // ResetCheckedAt resets all changes to the "checked_at" field.
 func (m *MessageMutation) ResetCheckedAt() {
 	m.checked_at = nil
+	delete(m.clearedFields, message.FieldCheckedAt)
 }
 
 // SetIsBlocked sets the "is_blocked" field.
@@ -1181,7 +1244,7 @@ func (m *MessageMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *MessageMutation) Fields() []string {
-	fields := make([]string, 0, 10)
+	fields := make([]string, 0, 11)
 	if m.chat != nil {
 		fields = append(fields, message.FieldChatID)
 	}
@@ -1190,6 +1253,9 @@ func (m *MessageMutation) Fields() []string {
 	}
 	if m.author_id != nil {
 		fields = append(fields, message.FieldAuthorID)
+	}
+	if m.initial_request_id != nil {
+		fields = append(fields, message.FieldInitialRequestID)
 	}
 	if m.is_visible_for_client != nil {
 		fields = append(fields, message.FieldIsVisibleForClient)
@@ -1226,6 +1292,8 @@ func (m *MessageMutation) Field(name string) (ent.Value, bool) {
 		return m.ProblemID()
 	case message.FieldAuthorID:
 		return m.AuthorID()
+	case message.FieldInitialRequestID:
+		return m.InitialRequestID()
 	case message.FieldIsVisibleForClient:
 		return m.IsVisibleForClient()
 	case message.FieldIsVisibleForManager:
@@ -1255,6 +1323,8 @@ func (m *MessageMutation) OldField(ctx context.Context, name string) (ent.Value,
 		return m.OldProblemID(ctx)
 	case message.FieldAuthorID:
 		return m.OldAuthorID(ctx)
+	case message.FieldInitialRequestID:
+		return m.OldInitialRequestID(ctx)
 	case message.FieldIsVisibleForClient:
 		return m.OldIsVisibleForClient(ctx)
 	case message.FieldIsVisibleForManager:
@@ -1298,6 +1368,13 @@ func (m *MessageMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetAuthorID(v)
+		return nil
+	case message.FieldInitialRequestID:
+		v, ok := value.(types.RequestID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetInitialRequestID(v)
 		return nil
 	case message.FieldIsVisibleForClient:
 		v, ok := value.(bool)
@@ -1381,6 +1458,12 @@ func (m *MessageMutation) ClearedFields() []string {
 	if m.FieldCleared(message.FieldAuthorID) {
 		fields = append(fields, message.FieldAuthorID)
 	}
+	if m.FieldCleared(message.FieldInitialRequestID) {
+		fields = append(fields, message.FieldInitialRequestID)
+	}
+	if m.FieldCleared(message.FieldCheckedAt) {
+		fields = append(fields, message.FieldCheckedAt)
+	}
 	return fields
 }
 
@@ -1398,6 +1481,12 @@ func (m *MessageMutation) ClearField(name string) error {
 	case message.FieldAuthorID:
 		m.ClearAuthorID()
 		return nil
+	case message.FieldInitialRequestID:
+		m.ClearInitialRequestID()
+		return nil
+	case message.FieldCheckedAt:
+		m.ClearCheckedAt()
+		return nil
 	}
 	return fmt.Errorf("unknown Message nullable field %s", name)
 }
@@ -1414,6 +1503,9 @@ func (m *MessageMutation) ResetField(name string) error {
 		return nil
 	case message.FieldAuthorID:
 		m.ResetAuthorID()
+		return nil
+	case message.FieldInitialRequestID:
+		m.ResetInitialRequestID()
 		return nil
 	case message.FieldIsVisibleForClient:
 		m.ResetIsVisibleForClient()

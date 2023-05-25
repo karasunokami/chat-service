@@ -19,6 +19,8 @@ const (
 	FieldProblemID = "problem_id"
 	// FieldAuthorID holds the string denoting the author_id field in the database.
 	FieldAuthorID = "author_id"
+	// FieldInitialRequestID holds the string denoting the initial_request_id field in the database.
+	FieldInitialRequestID = "initial_request_id"
 	// FieldIsVisibleForClient holds the string denoting the is_visible_for_client field in the database.
 	FieldIsVisibleForClient = "is_visible_for_client"
 	// FieldIsVisibleForManager holds the string denoting the is_visible_for_manager field in the database.
@@ -61,6 +63,7 @@ var Columns = []string{
 	FieldChatID,
 	FieldProblemID,
 	FieldAuthorID,
+	FieldInitialRequestID,
 	FieldIsVisibleForClient,
 	FieldIsVisibleForManager,
 	FieldBody,
@@ -85,8 +88,8 @@ var (
 	DefaultIsVisibleForClient bool
 	// DefaultIsVisibleForManager holds the default value on creation for the "is_visible_for_manager" field.
 	DefaultIsVisibleForManager bool
-	// DefaultCheckedAt holds the default value on creation for the "checked_at" field.
-	DefaultCheckedAt func() time.Time
+	// BodyValidator is a validator for the "body" field. It is called by the builders before save.
+	BodyValidator func(string) error
 	// DefaultIsBlocked holds the default value on creation for the "is_blocked" field.
 	DefaultIsBlocked bool
 	// DefaultIsService holds the default value on creation for the "is_service" field.
