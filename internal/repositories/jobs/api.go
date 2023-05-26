@@ -62,8 +62,7 @@ func (r *Repo) FindAndReserveJob(ctx context.Context, until time.Time) (Job, err
 }
 
 func (r *Repo) CreateJob(ctx context.Context, name, payload string, availableAt time.Time) (types.JobID, error) {
-	j, err := r.db.Job(ctx).
-		Create().
+	j, err := r.db.Job(ctx).Create().
 		SetName(name).
 		SetPayload(payload).
 		SetAvailableAt(availableAt).
@@ -77,7 +76,11 @@ func (r *Repo) CreateJob(ctx context.Context, name, payload string, availableAt 
 }
 
 func (r *Repo) CreateFailedJob(ctx context.Context, name, payload, reason string) error {
-	_, err := r.db.FailedJob(ctx).Create().SetName(name).SetPayload(payload).SetReason(reason).Save(ctx)
+	_, err := r.db.FailedJob(ctx).Create().
+		SetName(name).
+		SetPayload(payload).
+		SetReason(reason).
+		Save(ctx)
 	if err != nil {
 		return fmt.Errorf("save in db, err=%v", err)
 	}

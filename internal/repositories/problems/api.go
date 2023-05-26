@@ -36,7 +36,7 @@ func (r *Repo) GetManagerOpenProblemsCount(ctx context.Context, managerID types.
 		problem.ResolvedAtIsNil(),
 	).Count(ctx)
 	if err != nil {
-		return 0, fmt.Errorf("get problems count by manager id, err=%v", err)
+		return 0, fmt.Errorf("get active problems count by manager id, err=%v", err)
 	}
 
 	return count, nil

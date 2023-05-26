@@ -4,12 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/segmentio/kafka-go"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
-
-var _ kafka.Logger = (*KafkaAdapted)(nil)
 
 type KafkaAdapted struct {
 	atom   zap.AtomicLevel

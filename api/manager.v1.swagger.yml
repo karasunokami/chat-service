@@ -34,7 +34,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/FreeHandsResponse"
 
-
 security:
   - bearerAuth: [ ]
 

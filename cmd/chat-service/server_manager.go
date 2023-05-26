@@ -21,7 +21,7 @@ func initServerManager(
 		return nil, fmt.Errorf("init server hanlders, err=%v", err)
 	}
 
-	// build server client
+	// build manager server client
 	srv, err := server.New(server.NewOptions(
 		managerServerConfig.Addr,
 		managerServerConfig.AllowOrigins,
