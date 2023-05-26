@@ -36,8 +36,7 @@ type UseCase struct {
 }
 
 func New(opts Options) (UseCase, error) {
-	err := opts.Validate()
-	if err != nil {
+	if err := opts.Validate(); err != nil {
 		return UseCase{}, fmt.Errorf("validate options, err=%v", err)
 	}
 

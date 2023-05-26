@@ -60,8 +60,7 @@ func (o *PgxOptions) connString() string {
 }
 
 func NewPgxDB(opts PgxOptions) (*sql.DB, error) {
-	err := opts.Validate()
-	if err != nil {
+	if err := opts.Validate(); err != nil {
 		return nil, fmt.Errorf("validate options, err=%v", err)
 	}
 

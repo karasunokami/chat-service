@@ -31,8 +31,7 @@ type Service struct {
 }
 
 func New(opts Options) (*Service, error) {
-	err := opts.Validate()
-	if err != nil {
+	if err := opts.Validate(); err != nil {
 		return nil, fmt.Errorf("validate options, err=%v", err)
 	}
 
@@ -46,10 +45,12 @@ func New(opts Options) (*Service, error) {
 	}
 
 	if opts.encryptKey != "" {
-		s.cipher, err = initializeCipher(opts.encryptKey)
+		c, err := initializeCipher(opts.encryptKey)
 		if err != nil {
 			return nil, fmt.Errorf("initialize aead cipher, err=%v", err)
 		}
+
+		s.cipher = c
 	}
 
 	return s, nil

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 
 	keycloakclient "github.com/karasunokami/chat-service/internal/clients/keycloak"
 	"github.com/karasunokami/chat-service/internal/config"
@@ -181,11 +182,14 @@ func startNewDeps(ctx context.Context, cfg config.Config) (serverDeps, error) {
 }
 
 func (d serverDeps) stop() {
-	if d.psqlClient != nil {
-		err := d.psqlClient.Close()
-		if err != nil {
-			d.clientLogger.Error("stop psql client", zap.Error(err))
-		}
+	err := closeIfNotNil(d.psqlClient)
+	if err != nil {
+		d.clientLogger.Error("stop psql client", zap.Error(err))
+	}
+
+	err = closeIfNotNil(d.managerPool)
+	if err != nil {
+		d.clientLogger.Error("stop manager pool", zap.Error(err))
 	}
 }
 
@@ -215,4 +219,12 @@ func configureZap(logLevel, env, dsn string) {
 		logger.WithSentryDSN(dsn),
 	))
 	logger.Sync()
+}
+
+func closeIfNotNil(c io.Closer) error {
+	if c != nil {
+		return c.Close()
+	}
+
+	return nil
 }

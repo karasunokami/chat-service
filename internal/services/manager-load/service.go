@@ -24,8 +24,7 @@ type Service struct {
 }
 
 func New(opts Options) (*Service, error) {
-	err := opts.Validate()
-	if err != nil {
+	if err := opts.Validate(); err != nil {
 		return nil, fmt.Errorf("validate options, err=%v", err)
 	}
 

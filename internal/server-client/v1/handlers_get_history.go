@@ -1,8 +1,6 @@
 package clientv1
 
 import (
-	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/karasunokami/chat-service/internal/middlewares"
@@ -29,11 +27,7 @@ func (h Handlers) PostGetHistory(eCtx echo.Context, params PostGetHistoryParams)
 		Cursor:   pointer.Indirect(req.Cursor),
 	})
 	if err != nil {
-		if errors.Is(err, gethistory.ErrInvalidRequest) || errors.Is(err, gethistory.ErrInvalidCursor) {
-			return echo.NewHTTPError(http.StatusBadRequest)
-		}
-
-		return fmt.Errorf("get history handle, err=%v", err)
+		return newHandleError(err, getErrorCode(err))
 	}
 
 	page := make([]Message, 0, len(resp.Messages))

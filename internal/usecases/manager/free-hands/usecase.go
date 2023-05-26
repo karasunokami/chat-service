@@ -1,4 +1,4 @@
-package canreceiveproblems
+package freehands
 
 import (
 	"context"
@@ -10,14 +10,17 @@ import (
 
 //go:generate mockgen -source=$GOFILE -destination=mocks/usecase_mock.gen.go -package=mocks
 
-var ErrInvalidRequest = errors.New("invalid request")
+var (
+	ErrInvalidRequest  = errors.New("invalid request")
+	ErrManagerOverload = errors.New("manager overload")
+)
 
 type managerLoadService interface {
 	CanManagerTakeProblem(ctx context.Context, managerID types.UserID) (bool, error)
 }
 
 type managerPool interface {
-	Contains(ctx context.Context, managerID types.UserID) (bool, error)
+	Put(ctx context.Context, managerID types.UserID) error
 }
 
 //go:generate options-gen -out-filename=usecase_options.gen.go -from-struct=Options
@@ -38,28 +41,25 @@ func New(opts Options) (UseCase, error) {
 	return UseCase{opts}, nil
 }
 
-func (u UseCase) Handle(ctx context.Context, req Request) (Response, error) {
+func (u UseCase) Handle(ctx context.Context, req Request) error {
 	err := req.Validate()
 	if err != nil {
-		return Response{}, fmt.Errorf("validate request, err=%w", ErrInvalidRequest)
+		return fmt.Errorf("validate request, err=%w", ErrInvalidRequest)
 	}
 
-	ex, err := u.managerPool.Contains(ctx, req.ManagerID)
+	can, err := u.managerLoadSvc.CanManagerTakeProblem(ctx, req.ManagerID)
 	if err != nil {
-		return Response{}, fmt.Errorf("manager pool contains, err=%v", err)
+		return fmt.Errorf("managers load service can manager take problem, err=%v", err)
 	}
 
-	// manager already in pool
-	if ex {
-		return Response{
-			Result: false,
-		}, nil
+	if !can {
+		return ErrManagerOverload
 	}
 
-	res, err := u.managerLoadSvc.CanManagerTakeProblem(ctx, req.ManagerID)
+	err = u.managerPool.Put(ctx, req.ManagerID)
 	if err != nil {
-		return Response{}, fmt.Errorf("managers load service can manager take problem, err=%v", err)
+		return fmt.Errorf("put manager in managers pool, err=%v", err)
 	}
 
-	return Response{Result: res}, nil
+	return nil
 }

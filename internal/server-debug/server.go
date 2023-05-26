@@ -40,8 +40,7 @@ type Server struct {
 }
 
 func New(opts Options) (*Server, error) {
-	err := opts.Validate()
-	if err != nil {
+	if err := opts.Validate(); err != nil {
 		return nil, fmt.Errorf("opts validate, err=%w", err)
 	}
 

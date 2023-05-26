@@ -16,8 +16,7 @@ type Repo struct {
 }
 
 func New(opts Options) (*Repo, error) {
-	err := opts.Validate()
-	if err != nil {
+	if err := opts.Validate(); err != nil {
 		return nil, fmt.Errorf("validate options err=%v", err)
 	}
 

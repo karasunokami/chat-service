@@ -1,11 +1,11 @@
 package managerv1
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/karasunokami/chat-service/internal/middlewares"
 	canreceiveproblems "github.com/karasunokami/chat-service/internal/usecases/manager/can-receive-problems"
+	freehands "github.com/karasunokami/chat-service/internal/usecases/manager/free-hands"
 
 	"github.com/labstack/echo/v4"
 )
@@ -21,7 +21,7 @@ func (h Handlers) PostGetFreeHandsBtnAvailability(eCtx echo.Context, params Post
 
 	resp, err := h.canReceiveProblems.Handle(ctx, r)
 	if err != nil {
-		return fmt.Errorf("can receive problems handle, err=%v", err)
+		return newHandleError(err, getErrorCode(err))
 	}
 
 	return eCtx.JSON(http.StatusOK, GetFreeHandsBtnAvailabilityResponse{
@@ -29,4 +29,21 @@ func (h Handlers) PostGetFreeHandsBtnAvailability(eCtx echo.Context, params Post
 			Available: resp.Result,
 		},
 	})
+}
+
+func (h Handlers) PostFreeHands(eCtx echo.Context, params PostFreeHandsParams) error {
+	ctx := eCtx.Request().Context()
+	clientID := middlewares.MustUserID(eCtx)
+
+	r := freehands.Request{
+		ID:        params.XRequestID,
+		ManagerID: clientID,
+	}
+
+	err := h.freeHands.Handle(ctx, r)
+	if err != nil {
+		return newHandleError(err, getErrorCode(err))
+	}
+
+	return eCtx.JSON(http.StatusOK, FreeHandsResponse{})
 }

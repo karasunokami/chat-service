@@ -7,6 +7,7 @@ import (
 	server "github.com/karasunokami/chat-service/internal/server-manager"
 	managerv1 "github.com/karasunokami/chat-service/internal/server-manager/v1"
 	canreceiveproblems "github.com/karasunokami/chat-service/internal/usecases/manager/can-receive-problems"
+	freehands "github.com/karasunokami/chat-service/internal/usecases/manager/free-hands"
 )
 
 const nameServerManager = "server-manager"
@@ -46,11 +47,22 @@ func initManagerServerHandlers(deps serverDeps) (managerv1.Handlers, error) {
 		deps.managerPool,
 	))
 	if err != nil {
-		return managerv1.Handlers{}, fmt.Errorf("init get history usecase: %v", err)
+		return managerv1.Handlers{}, fmt.Errorf("init can receive problems usecase: %v", err)
+	}
+
+	freeHandsUseCase, err := freehands.New(freehands.NewOptions(
+		deps.managerLoad,
+		deps.managerPool,
+	))
+	if err != nil {
+		return managerv1.Handlers{}, fmt.Errorf("init free hands usecase: %v", err)
 	}
 
 	// create manager handlers
-	serverV1Handlers, err := managerv1.NewHandlers(managerv1.NewOptions(canReceiveProblemsUseCase))
+	serverV1Handlers, err := managerv1.NewHandlers(managerv1.NewOptions(
+		canReceiveProblemsUseCase,
+		freeHandsUseCase,
+	))
 	if err != nil {
 		return managerv1.Handlers{}, fmt.Errorf("create v1 handlers: %v", err)
 	}

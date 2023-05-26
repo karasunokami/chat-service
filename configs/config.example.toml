@@ -64,4 +64,4 @@ idle_time = "1s"
 reserve_for = "5m"
 
 [services.manager_load]
-max_problems_at_same_time = 5
+max_problems_at_same_time = 1
