@@ -25,6 +25,7 @@ func initServerManager(
 	srv, err := server.New(server.NewOptions(
 		managerServerConfig.Addr,
 		managerServerConfig.AllowOrigins,
+		managerServerConfig.SecWsProtocol,
 		managerServerConfig.RequiredAccess.Resource,
 		managerServerConfig.RequiredAccess.Role,
 		deps.errHandler.Handle,

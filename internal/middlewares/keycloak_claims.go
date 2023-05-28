@@ -2,7 +2,6 @@ package middlewares
 
 import (
 	"errors"
-	"fmt"
 
 	keycloakclient "github.com/karasunokami/chat-service/internal/clients/keycloak"
 	"github.com/karasunokami/chat-service/internal/types"
@@ -17,10 +16,9 @@ var (
 
 type claims struct {
 	jwt.StandardClaims
-
-	Subject        types.UserID                                 `json:"sub,omitempty"`
-	ResourceAccess resourceAccess                               `json:"resource_access,omitempty"`
-	Audience       keycloakclient.StringsSliceFromStringOrSlice `json:"aud,omitempty"`
+	Audience        keycloakclient.StringsSliceFromStringOrSlice `json:"aud,omitempty"`
+	Subject         types.UserID                                 `json:"sub,omitempty"`
+	ResourcesAccess resourceAccess                               `json:"resource_access"`
 }
 
 // Valid returns errors:
@@ -29,14 +27,14 @@ type claims struct {
 // - ErrSubjectNotDefined, if claims doesn't contain `sub` field or subject is zero UUID.
 func (c claims) Valid() error {
 	if err := c.StandardClaims.Valid(); err != nil {
-		return fmt.Errorf("start claims validation, err=%w", err)
+		return err
 	}
 
-	if c.ResourceAccess == nil || len(c.ResourceAccess) == 0 {
+	if len(c.ResourcesAccess) == 0 {
 		return ErrNoAllowedResources
 	}
 
-	if c.Subject.String() == types.UserIDNil.String() {
+	if c.Subject.IsZero() {
 		return ErrSubjectNotDefined
 	}
 

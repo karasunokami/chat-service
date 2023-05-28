@@ -11,6 +11,9 @@ import (
 	"github.com/karasunokami/chat-service/internal/middlewares"
 	clientv1 "github.com/karasunokami/chat-service/internal/server-client/v1"
 	managerv1 "github.com/karasunokami/chat-service/internal/server-manager/v1"
+	eventstream "github.com/karasunokami/chat-service/internal/services/event-stream"
+	"github.com/karasunokami/chat-service/internal/types"
+	websocketstream "github.com/karasunokami/chat-service/internal/websocket-stream"
 
 	oapimdlwr "github.com/deepmap/oapi-codegen/pkg/middleware"
 	"github.com/getkin/kin-openapi/openapi3"
@@ -30,6 +33,7 @@ const (
 type Options struct {
 	addr           string                 `option:"mandatory" validate:"required,hostname_port"`
 	allowOrigins   []string               `option:"mandatory" validate:"min=1"`
+	wsSecProtocol  string                 `option:"mandatory" validate:"required"`
 	resource       string                 `option:"mandatory" validate:"required"`
 	role           string                 `option:"mandatory" validate:"required"`
 	errorHandler   echo.HTTPErrorHandler  `option:"mandatory" validate:"required"`
@@ -90,6 +94,25 @@ func New(opts Options) (*Server, error) {
 		},
 	}))
 
+	shutdownCh := make(chan struct{})
+	s.srv.RegisterOnShutdown(func() {
+		close(shutdownCh)
+	})
+
+	wsHandler, err := websocketstream.NewHTTPHandler(websocketstream.NewOptions(
+		s.lg,
+		dummyEventStream{},
+		dummyAdapter{},
+		websocketstream.JSONEventWriter{},
+		websocketstream.NewUpgrader(opts.allowOrigins, opts.wsSecProtocol),
+		shutdownCh,
+	))
+	if err != nil {
+		return nil, fmt.Errorf("create ws handler, err=%v", err)
+	}
+
+	echoServer.GET("/ws", wsHandler.Serve)
+
 	return &s, nil
 }
 
@@ -129,4 +152,21 @@ func (s *Server) Run(ctx context.Context) error {
 	})
 
 	return eg.Wait()
+}
+
+type dummyEventStream struct{}
+
+func (dummyEventStream) Subscribe(ctx context.Context, _ types.UserID) (<-chan eventstream.Event, error) {
+	events := make(chan eventstream.Event)
+	go func() {
+		defer close(events)
+		<-ctx.Done()
+	}()
+	return events, nil
+}
+
+type dummyAdapter struct{}
+
+func (dummyAdapter) Adapt(event eventstream.Event) (any, error) {
+	return event, nil
 }

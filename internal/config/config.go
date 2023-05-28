@@ -39,12 +39,14 @@ type ClientServerConfig struct {
 	Addr           string               `toml:"addr" validate:"required,hostname_port"`
 	AllowOrigins   []string             `toml:"allow_origins" validate:"required"`
 	RequiredAccess RequiredAccessConfig `toml:"required_access" validate:"required"`
+	SecWsProtocol  string               `toml:"sec_ws_protocol" validate:"required"`
 }
 
 type ManagerServerConfig struct {
 	Addr           string               `toml:"addr" validate:"required,hostname_port"`
 	AllowOrigins   []string             `toml:"allow_origins" validate:"required"`
 	RequiredAccess RequiredAccessConfig `toml:"required_access" validate:"required"`
+	SecWsProtocol  string               `toml:"sec_ws_protocol" validate:"required"`
 }
 
 type RequiredAccessConfig struct {

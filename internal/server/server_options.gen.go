@@ -17,6 +17,7 @@ type OptOptionsSetter func(o *Options)
 func NewOptions(
 	addr string,
 	allowOrigins []string,
+	wsSecProtocol string,
 	resource string,
 	role string,
 	errorHandler echo.HTTPErrorHandler,
@@ -31,6 +32,7 @@ func NewOptions(
 
 	o.addr = addr
 	o.allowOrigins = allowOrigins
+	o.wsSecProtocol = wsSecProtocol
 	o.resource = resource
 	o.role = role
 	o.errorHandler = errorHandler
@@ -48,6 +50,7 @@ func (o *Options) Validate() error {
 	errs := new(errors461e464ebed9.ValidationErrors)
 	errs.Add(errors461e464ebed9.NewValidationError("addr", _validate_Options_addr(o)))
 	errs.Add(errors461e464ebed9.NewValidationError("allowOrigins", _validate_Options_allowOrigins(o)))
+	errs.Add(errors461e464ebed9.NewValidationError("wsSecProtocol", _validate_Options_wsSecProtocol(o)))
 	errs.Add(errors461e464ebed9.NewValidationError("resource", _validate_Options_resource(o)))
 	errs.Add(errors461e464ebed9.NewValidationError("role", _validate_Options_role(o)))
 	errs.Add(errors461e464ebed9.NewValidationError("errorHandler", _validate_Options_errorHandler(o)))
@@ -67,6 +70,13 @@ func _validate_Options_addr(o *Options) error {
 func _validate_Options_allowOrigins(o *Options) error {
 	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.allowOrigins, "min=1"); err != nil {
 		return fmt461e464ebed9.Errorf("field `allowOrigins` did not pass the test: %w", err)
+	}
+	return nil
+}
+
+func _validate_Options_wsSecProtocol(o *Options) error {
+	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.wsSecProtocol, "required"); err != nil {
+		return fmt461e464ebed9.Errorf("field `wsSecProtocol` did not pass the test: %w", err)
 	}
 	return nil
 }

@@ -25,6 +25,7 @@ func initServerClient(
 	srv, err := server.New(server.NewOptions(
 		clientServerConfig.Addr,
 		clientServerConfig.AllowOrigins,
+		clientServerConfig.SecWsProtocol,
 		clientServerConfig.RequiredAccess.Resource,
 		clientServerConfig.RequiredAccess.Role,
 		deps.errHandler.Handle,

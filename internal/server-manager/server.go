@@ -21,6 +21,7 @@ type Server struct {
 type Options struct {
 	addr           string                    `option:"mandatory" validate:"required,hostname_port"`
 	allowOrigins   []string                  `option:"mandatory" validate:"min=1"`
+	secWsProtocol  string                    `option:"mandatory" validate:"required"`
 	resource       string                    `option:"mandatory" validate:"required"`
 	role           string                    `option:"mandatory" validate:"required"`
 	errorHandler   echo.HTTPErrorHandler     `option:"mandatory" validate:"required"`
@@ -38,6 +39,7 @@ func New(opts Options) (*Server, error) {
 	innerServer, err := server.New(server.NewOptions(
 		opts.addr,
 		opts.allowOrigins,
+		opts.secWsProtocol,
 		opts.resource,
 		opts.role,
 		opts.errorHandler,
