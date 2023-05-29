@@ -31,6 +31,7 @@ vars:
     RequestID
     JobID
     FailedJobID
+    EventID
 
   TYPES_PKG: types
   TYPES_DST: ./internal/types/types.gen.go
@@ -46,6 +47,10 @@ vars:
   MANAGER_V1_SRC: ./api/manager.v1.swagger.yml
   MANAGER_V1_DST: ./internal/server-manager/v1/server.gen.go
   MANAGER_V1_PKG: managerv1
+
+  EVENTS_V1_SRC: ./api/client.events.swagger.yml
+  EVENTS_V1_DST: ./internal/server-client/events/events.gen.go
+  EVENTS_V1_PKG: clientevents
 
   ### E2E tests ###
   E2E_CLIENT_V1_DST: ./tests/e2e/api/client/v1/client.gen.go
@@ -145,6 +150,7 @@ tasks:
     - echo "Generate servers..."
     - "{{.DOCKER_TOOLS_CMD}} oapi-codegen -generate server,spec,types -package {{.CLIENT_V1_PKG}} {{.CLIENT_V1_SRC}} > {{.CLIENT_V1_DST}}"
     - "{{.DOCKER_TOOLS_CMD}} oapi-codegen -generate server,spec,types -package {{.MANAGER_V1_PKG}} {{.MANAGER_V1_SRC}} > {{.MANAGER_V1_DST}}"
+    - "{{.DOCKER_TOOLS_CMD}} oapi-codegen -generate spec,types -package {{.EVENTS_V1_PKG}} {{.EVENTS_V1_SRC}} > {{.EVENTS_V1_DST}}"
     - task: tidy
 
 

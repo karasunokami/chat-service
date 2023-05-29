@@ -12,9 +12,11 @@ import (
 	jobsrepo "github.com/karasunokami/chat-service/internal/repositories/jobs"
 	messagesrepo "github.com/karasunokami/chat-service/internal/repositories/messages"
 	problemsrepo "github.com/karasunokami/chat-service/internal/repositories/problems"
+	clientevents "github.com/karasunokami/chat-service/internal/server-client/events"
 	clientv1 "github.com/karasunokami/chat-service/internal/server-client/v1"
 	managerv1 "github.com/karasunokami/chat-service/internal/server-manager/v1"
 	errhandler2 "github.com/karasunokami/chat-service/internal/server/errhandler"
+	inmemeventstream "github.com/karasunokami/chat-service/internal/services/event-stream/in-mem"
 	managerload "github.com/karasunokami/chat-service/internal/services/manager-load"
 	inmemmanagerpool "github.com/karasunokami/chat-service/internal/services/manager-pool/in-mem"
 	msgproducer "github.com/karasunokami/chat-service/internal/services/msg-producer"
@@ -27,9 +29,10 @@ import (
 )
 
 type serverDeps struct {
-	clientSwagger  *openapi3.T
-	managerSwagger *openapi3.T
-	clientLogger   *zap.Logger
+	clientSwagger       *openapi3.T
+	clientEventsSwagger *openapi3.T
+	managerSwagger      *openapi3.T
+	clientLogger        *zap.Logger
 
 	psqlClient *store.Client
 	db         *store.Database
@@ -48,6 +51,7 @@ type serverDeps struct {
 	managerLogger      *zap.Logger
 	managerLoad        *managerload.Service
 	managerPool        *inmemmanagerpool.Service
+	eventsStream       *inmemeventstream.Service
 }
 
 func startNewDeps(ctx context.Context, cfg config.Config) (serverDeps, error) {
@@ -60,6 +64,11 @@ func startNewDeps(ctx context.Context, cfg config.Config) (serverDeps, error) {
 	d.clientSwagger, err = clientv1.GetSwagger()
 	if err != nil {
 		return serverDeps{}, fmt.Errorf("client v1 get swagger, err=%v", err)
+	}
+
+	d.clientEventsSwagger, err = clientevents.GetSwagger()
+	if err != nil {
+		return serverDeps{}, fmt.Errorf("client events get swagger, err=%v", err)
 	}
 
 	d.managerSwagger, err = managerv1.GetSwagger()
@@ -159,10 +168,13 @@ func startNewDeps(ctx context.Context, cfg config.Config) (serverDeps, error) {
 
 	d.managerPool = inmemmanagerpool.New()
 
+	d.eventsStream = inmemeventstream.New()
+
 	// register service jobs
 	sendClientMessageJob, err := sendclientmessagejob.New(sendclientmessagejob.NewOptions(
 		d.msgProducerService,
 		d.msgRepo,
+		d.eventsStream,
 	))
 	if err != nil {
 		return serverDeps{}, fmt.Errorf("create send client message job, err=%v", err)

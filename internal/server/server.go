@@ -9,10 +9,10 @@ import (
 
 	keycloakclient "github.com/karasunokami/chat-service/internal/clients/keycloak"
 	"github.com/karasunokami/chat-service/internal/middlewares"
+	clientevents "github.com/karasunokami/chat-service/internal/server-client/events"
 	clientv1 "github.com/karasunokami/chat-service/internal/server-client/v1"
 	managerv1 "github.com/karasunokami/chat-service/internal/server-manager/v1"
-	eventstream "github.com/karasunokami/chat-service/internal/services/event-stream"
-	"github.com/karasunokami/chat-service/internal/types"
+	inmemeventstream "github.com/karasunokami/chat-service/internal/services/event-stream/in-mem"
 	websocketstream "github.com/karasunokami/chat-service/internal/websocket-stream"
 
 	oapimdlwr "github.com/deepmap/oapi-codegen/pkg/middleware"
@@ -31,15 +31,16 @@ const (
 
 //go:generate options-gen -out-filename=server_options.gen.go -from-struct=Options
 type Options struct {
-	addr           string                 `option:"mandatory" validate:"required,hostname_port"`
-	allowOrigins   []string               `option:"mandatory" validate:"min=1"`
-	wsSecProtocol  string                 `option:"mandatory" validate:"required"`
-	resource       string                 `option:"mandatory" validate:"required"`
-	role           string                 `option:"mandatory" validate:"required"`
-	errorHandler   echo.HTTPErrorHandler  `option:"mandatory" validate:"required"`
-	logger         *zap.Logger            `option:"mandatory" validate:"required"`
-	swagger        *openapi3.T            `option:"mandatory" validate:"required"`
-	keycloakClient *keycloakclient.Client `option:"mandatory" validate:"required"`
+	addr           string                    `option:"mandatory" validate:"required,hostname_port"`
+	allowOrigins   []string                  `option:"mandatory" validate:"min=1"`
+	wsSecProtocol  string                    `option:"mandatory" validate:"required"`
+	resource       string                    `option:"mandatory" validate:"required"`
+	role           string                    `option:"mandatory" validate:"required"`
+	errorHandler   echo.HTTPErrorHandler     `option:"mandatory" validate:"required"`
+	logger         *zap.Logger               `option:"mandatory" validate:"required"`
+	swagger        *openapi3.T               `option:"mandatory" validate:"required"`
+	keycloakClient *keycloakclient.Client    `option:"mandatory" validate:"required"`
+	eventsStream   *inmemeventstream.Service `option:"mandatory" validate:"required"`
 }
 
 type Server struct {
@@ -101,8 +102,8 @@ func New(opts Options) (*Server, error) {
 
 	wsHandler, err := websocketstream.NewHTTPHandler(websocketstream.NewOptions(
 		s.lg,
-		dummyEventStream{},
-		dummyAdapter{},
+		opts.eventsStream,
+		clientevents.Adapter{},
 		websocketstream.JSONEventWriter{},
 		websocketstream.NewUpgrader(opts.allowOrigins, opts.wsSecProtocol),
 		shutdownCh,
@@ -152,21 +153,4 @@ func (s *Server) Run(ctx context.Context) error {
 	})
 
 	return eg.Wait()
-}
-
-type dummyEventStream struct{}
-
-func (dummyEventStream) Subscribe(ctx context.Context, _ types.UserID) (<-chan eventstream.Event, error) {
-	events := make(chan eventstream.Event)
-	go func() {
-		defer close(events)
-		<-ctx.Done()
-	}()
-	return events, nil
-}
-
-type dummyAdapter struct{}
-
-func (dummyAdapter) Adapt(event eventstream.Event) (any, error) {
-	return event, nil
 }

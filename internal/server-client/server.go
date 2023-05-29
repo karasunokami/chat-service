@@ -7,6 +7,7 @@ import (
 	keycloakclient "github.com/karasunokami/chat-service/internal/clients/keycloak"
 	"github.com/karasunokami/chat-service/internal/server"
 	clientv1 "github.com/karasunokami/chat-service/internal/server-client/v1"
+	inmemeventstream "github.com/karasunokami/chat-service/internal/services/event-stream/in-mem"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/labstack/echo/v4"
@@ -19,16 +20,17 @@ type Server struct {
 
 //go:generate options-gen -out-filename=server_options.gen.go -from-struct=Options
 type Options struct {
-	addr           string                   `option:"mandatory" validate:"required,hostname_port"`
-	allowOrigins   []string                 `option:"mandatory" validate:"min=1"`
-	secWsProtocol  string                   `option:"mandatory" validate:"required"`
-	resource       string                   `option:"mandatory" validate:"required"`
-	role           string                   `option:"mandatory" validate:"required"`
-	errorHandler   echo.HTTPErrorHandler    `option:"mandatory" validate:"required"`
-	logger         *zap.Logger              `option:"mandatory" validate:"required"`
-	swagger        *openapi3.T              `option:"mandatory" validate:"required"`
-	keycloakClient *keycloakclient.Client   `option:"mandatory" validate:"required"`
-	v1Handlers     clientv1.ServerInterface `option:"mandatory" validate:"required"`
+	addr           string                    `option:"mandatory" validate:"required,hostname_port"`
+	allowOrigins   []string                  `option:"mandatory" validate:"min=1"`
+	secWsProtocol  string                    `option:"mandatory" validate:"required"`
+	resource       string                    `option:"mandatory" validate:"required"`
+	role           string                    `option:"mandatory" validate:"required"`
+	errorHandler   echo.HTTPErrorHandler     `option:"mandatory" validate:"required"`
+	logger         *zap.Logger               `option:"mandatory" validate:"required"`
+	swagger        *openapi3.T               `option:"mandatory" validate:"required"`
+	keycloakClient *keycloakclient.Client    `option:"mandatory" validate:"required"`
+	v1Handlers     clientv1.ServerInterface  `option:"mandatory" validate:"required"`
+	eventsStream   *inmemeventstream.Service `option:"mandatory" validate:"required"`
 }
 
 func New(opts Options) (*Server, error) {
@@ -46,6 +48,7 @@ func New(opts Options) (*Server, error) {
 		opts.logger,
 		opts.swagger,
 		opts.keycloakClient,
+		opts.eventsStream,
 	))
 	if err != nil {
 		return nil, fmt.Errorf("init inner server, err=%v", err)

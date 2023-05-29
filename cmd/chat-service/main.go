@@ -53,6 +53,7 @@ func run() (errReturned error) {
 		cfg.Servers.Debug.Addr,
 		deps.clientSwagger,
 		deps.managerSwagger,
+		deps.clientEventsSwagger,
 	))
 	if err != nil {
 		return fmt.Errorf("init debug server: %v", err)

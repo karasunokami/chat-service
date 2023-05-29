@@ -33,6 +33,7 @@ func initServerManager(
 		deps.managerSwagger,
 		deps.kcClient,
 		serverHandlers,
+		deps.eventsStream,
 	))
 	if err != nil {
 		return nil, fmt.Errorf("build server: %v", err)

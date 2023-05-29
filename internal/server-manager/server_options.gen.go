@@ -7,6 +7,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	keycloakclient "github.com/karasunokami/chat-service/internal/clients/keycloak"
 	managerv1 "github.com/karasunokami/chat-service/internal/server-manager/v1"
+	inmemeventstream "github.com/karasunokami/chat-service/internal/services/event-stream/in-mem"
 	errors461e464ebed9 "github.com/kazhuravlev/options-gen/pkg/errors"
 	validator461e464ebed9 "github.com/kazhuravlev/options-gen/pkg/validator"
 	"github.com/labstack/echo/v4"
@@ -26,6 +27,7 @@ func NewOptions(
 	swagger *openapi3.T,
 	keycloakClient *keycloakclient.Client,
 	v1Handlers managerv1.ServerInterface,
+	eventsStream *inmemeventstream.Service,
 	options ...OptOptionsSetter,
 ) Options {
 	o := Options{}
@@ -42,6 +44,7 @@ func NewOptions(
 	o.swagger = swagger
 	o.keycloakClient = keycloakClient
 	o.v1Handlers = v1Handlers
+	o.eventsStream = eventsStream
 
 	for _, opt := range options {
 		opt(&o)
@@ -60,6 +63,8 @@ func (o *Options) Validate() error {
 	errs.Add(errors461e464ebed9.NewValidationError("logger", _validate_Options_logger(o)))
 	errs.Add(errors461e464ebed9.NewValidationError("swagger", _validate_Options_swagger(o)))
 	errs.Add(errors461e464ebed9.NewValidationError("keycloakClient", _validate_Options_keycloakClient(o)))
+	errs.Add(errors461e464ebed9.NewValidationError("v1Handlers", _validate_Options_v1Handlers(o)))
+	errs.Add(errors461e464ebed9.NewValidationError("eventsStream", _validate_Options_eventsStream(o)))
 	return errs.AsError()
 }
 
@@ -122,6 +127,20 @@ func _validate_Options_swagger(o *Options) error {
 func _validate_Options_keycloakClient(o *Options) error {
 	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.keycloakClient, "required"); err != nil {
 		return fmt461e464ebed9.Errorf("field `keycloakClient` did not pass the test: %w", err)
+	}
+	return nil
+}
+
+func _validate_Options_v1Handlers(o *Options) error {
+	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.v1Handlers, "required"); err != nil {
+		return fmt461e464ebed9.Errorf("field `v1Handlers` did not pass the test: %w", err)
+	}
+	return nil
+}
+
+func _validate_Options_eventsStream(o *Options) error {
+	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.eventsStream, "required"); err != nil {
+		return fmt461e464ebed9.Errorf("field `eventsStream` did not pass the test: %w", err)
 	}
 	return nil
 }

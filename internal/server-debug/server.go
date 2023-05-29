@@ -27,16 +27,18 @@ const (
 
 //go:generate options-gen -out-filename=server_options.gen.go -from-struct=Options
 type Options struct {
-	addr             string      `option:"mandatory" validate:"required,hostname_port"`
-	clientV1Swagger  *openapi3.T `option:"mandatory" validate:"required"`
-	managerV1Swagger *openapi3.T `option:"mandatory" validate:"required"`
+	addr                string      `option:"mandatory" validate:"required,hostname_port"`
+	clientV1Swagger     *openapi3.T `option:"mandatory" validate:"required"`
+	managerV1Swagger    *openapi3.T `option:"mandatory" validate:"required"`
+	clientEventsSwagger *openapi3.T `option:"mandatory" validate:"required"`
 }
 
 type Server struct {
-	lg               *zap.Logger
-	srv              *http.Server
-	clientV1Swagger  *openapi3.T
-	managerV1Swagger *openapi3.T
+	lg                  *zap.Logger
+	srv                 *http.Server
+	clientV1Swagger     *openapi3.T
+	managerV1Swagger    *openapi3.T
+	clientEventsSwagger *openapi3.T
 }
 
 func New(opts Options) (*Server, error) {
@@ -64,9 +66,10 @@ func New(opts Options) (*Server, error) {
 	)
 
 	s := &Server{
-		lg:               lg,
-		clientV1Swagger:  opts.clientV1Swagger,
-		managerV1Swagger: opts.managerV1Swagger,
+		lg:                  lg,
+		clientV1Swagger:     opts.clientV1Swagger,
+		managerV1Swagger:    opts.managerV1Swagger,
+		clientEventsSwagger: opts.clientEventsSwagger,
 		srv: &http.Server{
 			Addr:              opts.addr,
 			Handler:           e,
@@ -79,6 +82,7 @@ func New(opts Options) (*Server, error) {
 	e.GET("/debug/error", s.DebugError)
 	e.GET("/schema/client", s.SchemaClient)
 	e.GET("/schema/manager", s.SchemaManager)
+	e.GET("/schema/client_events", s.SchemaClientEvents)
 
 	e.PUT("/log/level", s.LogLevel)
 
@@ -161,7 +165,16 @@ func (s *Server) SchemaClient(c echo.Context) error {
 }
 
 func (s *Server) SchemaManager(c echo.Context) error {
-	err := c.JSON(http.StatusOK, s.clientV1Swagger)
+	err := c.JSON(http.StatusOK, s.managerV1Swagger)
+	if err != nil {
+		return fmt.Errorf("echo context json, err=%v", err)
+	}
+
+	return nil
+}
+
+func (s *Server) SchemaClientEvents(c echo.Context) error {
+	err := c.JSON(http.StatusOK, s.clientEventsSwagger)
 	if err != nil {
 		return fmt.Errorf("echo context json, err=%v", err)
 	}

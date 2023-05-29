@@ -16,6 +16,7 @@ func NewOptions(
 	addr string,
 	clientV1Swagger *openapi3.T,
 	managerV1Swagger *openapi3.T,
+	clientEventsSwagger *openapi3.T,
 	options ...OptOptionsSetter,
 ) Options {
 	o := Options{}
@@ -25,6 +26,7 @@ func NewOptions(
 	o.addr = addr
 	o.clientV1Swagger = clientV1Swagger
 	o.managerV1Swagger = managerV1Swagger
+	o.clientEventsSwagger = clientEventsSwagger
 
 	for _, opt := range options {
 		opt(&o)
@@ -37,6 +39,7 @@ func (o *Options) Validate() error {
 	errs.Add(errors461e464ebed9.NewValidationError("addr", _validate_Options_addr(o)))
 	errs.Add(errors461e464ebed9.NewValidationError("clientV1Swagger", _validate_Options_clientV1Swagger(o)))
 	errs.Add(errors461e464ebed9.NewValidationError("managerV1Swagger", _validate_Options_managerV1Swagger(o)))
+	errs.Add(errors461e464ebed9.NewValidationError("clientEventsSwagger", _validate_Options_clientEventsSwagger(o)))
 	return errs.AsError()
 }
 
@@ -57,6 +60,13 @@ func _validate_Options_clientV1Swagger(o *Options) error {
 func _validate_Options_managerV1Swagger(o *Options) error {
 	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.managerV1Swagger, "required"); err != nil {
 		return fmt461e464ebed9.Errorf("field `managerV1Swagger` did not pass the test: %w", err)
+	}
+	return nil
+}
+
+func _validate_Options_clientEventsSwagger(o *Options) error {
+	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.clientEventsSwagger, "required"); err != nil {
+		return fmt461e464ebed9.Errorf("field `clientEventsSwagger` did not pass the test: %w", err)
 	}
 	return nil
 }

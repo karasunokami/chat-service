@@ -6,6 +6,7 @@ import (
 	"time"
 
 	messagesrepo "github.com/karasunokami/chat-service/internal/repositories/messages"
+	eventstream "github.com/karasunokami/chat-service/internal/services/event-stream"
 	msgproducer "github.com/karasunokami/chat-service/internal/services/msg-producer"
 	"github.com/karasunokami/chat-service/internal/types"
 )
@@ -27,15 +28,21 @@ type messageRepository interface {
 	GetMessageByID(ctx context.Context, msgID types.MessageID) (*messagesrepo.Message, error)
 }
 
+type eventStream interface {
+	Publish(ctx context.Context, userID types.UserID, event eventstream.Event) error
+}
+
 //go:generate options-gen -out-filename=job_options.gen.go -from-struct=Options
 type Options struct {
 	msgProducer messageProducer   `option:"mandatory" validate:"required"`
 	msgRepo     messageRepository `option:"mandatory" validate:"required"`
+	eventStream eventStream       `option:"mandatory" validate:"required"`
 }
 
 type Job struct {
 	msgProducer messageProducer
 	msgRepo     messageRepository
+	eventStream eventStream
 }
 
 func New(opts Options) (*Job, error) {
@@ -46,6 +53,7 @@ func New(opts Options) (*Job, error) {
 	return &Job{
 		msgProducer: opts.msgProducer,
 		msgRepo:     opts.msgRepo,
+		eventStream: opts.eventStream,
 	}, nil
 }
 
@@ -67,6 +75,20 @@ func (j *Job) Handle(ctx context.Context, payload string) error {
 	err = j.msgProducer.ProduceMessage(ctx, repoMsgToProducerMsg(msg))
 	if err != nil {
 		return fmt.Errorf("send message to producer, err=%v", err)
+	}
+
+	err = j.eventStream.Publish(ctx, msg.AuthorID, eventstream.NewNewMessageEvent(
+		types.NewEventID(),
+		msg.InitialRequestID,
+		msg.ChatID,
+		msg.ID,
+		msg.AuthorID,
+		msg.CreatedAt,
+		msg.Body,
+		msg.IsService,
+	))
+	if err != nil {
+		return fmt.Errorf("publish message to event stream, err=%v", err)
 	}
 
 	return nil

@@ -7,6 +7,7 @@ import (
 	keycloakclient "github.com/karasunokami/chat-service/internal/clients/keycloak"
 	"github.com/karasunokami/chat-service/internal/server"
 	managerv1 "github.com/karasunokami/chat-service/internal/server-manager/v1"
+	inmemeventstream "github.com/karasunokami/chat-service/internal/services/event-stream/in-mem"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/labstack/echo/v4"
@@ -28,7 +29,8 @@ type Options struct {
 	logger         *zap.Logger               `option:"mandatory" validate:"required"`
 	swagger        *openapi3.T               `option:"mandatory" validate:"required"`
 	keycloakClient *keycloakclient.Client    `option:"mandatory" validate:"required"`
-	v1Handlers     managerv1.ServerInterface `option:"mandatory"`
+	v1Handlers     managerv1.ServerInterface `option:"mandatory" validate:"required"`
+	eventsStream   *inmemeventstream.Service `option:"mandatory" validate:"required"`
 }
 
 func New(opts Options) (*Server, error) {
@@ -46,6 +48,7 @@ func New(opts Options) (*Server, error) {
 		opts.logger,
 		opts.swagger,
 		opts.keycloakClient,
+		opts.eventsStream,
 	))
 	if err != nil {
 		return nil, fmt.Errorf("init inner server, err=%v", err)
