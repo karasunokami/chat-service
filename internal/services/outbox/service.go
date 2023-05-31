@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sync"
 	"time"
 
 	jobsrepo "github.com/karasunokami/chat-service/internal/repositories/jobs"
 	"github.com/karasunokami/chat-service/internal/types"
 
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 )
 
 const serviceName = "outbox"
@@ -40,7 +40,6 @@ type Service struct {
 
 	lg *zap.Logger
 
-	mu            sync.RWMutex
 	executeJobsCh chan jobsrepo.Job
 
 	jobs map[string]Job
@@ -71,28 +70,36 @@ func (s *Service) MustRegisterJob(job Job) {
 }
 
 func (s *Service) Run(ctx context.Context) error {
+	eg, ctx := errgroup.WithContext(ctx)
+
 	for i := 0; i < s.workers; i++ {
-		go s.runWorker(ctx)
+		eg.Go(func() error {
+			s.runWorker(ctx)
+
+			return nil
+		})
 	}
 
-	go s.findAndReserveJobs(ctx)
+	eg.Go(func() error {
+		s.findAndReserveJobs(ctx)
 
-	return nil
+		return nil
+	})
+
+	return eg.Wait()
 }
 
 func (s *Service) findAndReserveJobs(ctx context.Context) {
-	timer := time.NewTimer(0)
-
 	for {
 		select {
 		case <-ctx.Done():
 			return
 
-		case <-timer.C:
+		default:
 			j, err := s.jobsRepo.FindAndReserveJob(ctx, time.Now().Add(s.reserveFor))
 			if err != nil {
 				if errors.Is(err, jobsrepo.ErrNoJobs) {
-					timer.Reset(s.idleTime)
+					time.Sleep(s.idleTime)
 
 					continue
 				}
@@ -103,8 +110,6 @@ func (s *Service) findAndReserveJobs(ctx context.Context) {
 			}
 
 			s.pushJob(ctx, j)
-
-			timer.Reset(0)
 		}
 	}
 }
@@ -121,7 +126,6 @@ func (s *Service) runWorker(ctx context.Context) {
 	for {
 		select {
 		case j := <-s.executeJobsCh:
-
 			err := s.handleJob(ctx, j)
 			if err != nil {
 				var jobFailedErr *jobFailedError
@@ -146,7 +150,7 @@ func (s *Service) handleJob(ctx context.Context, j jobsrepo.Job) error {
 		return newJobFailedError(fmt.Sprintf("job with name %s not registered", j.Name))
 	}
 
-	err := s.executeJob(ctx, serviceJob, j)
+	err := s.executeJob(ctx, serviceJob, j.Payload)
 	if err != nil {
 		if serviceJob.MaxAttempts() <= j.Attempts {
 			return newJobFailedError(
@@ -165,11 +169,11 @@ func (s *Service) handleJob(ctx context.Context, j jobsrepo.Job) error {
 	return nil
 }
 
-func (s *Service) executeJob(ctx context.Context, serviceJob Job, j jobsrepo.Job) error {
+func (s *Service) executeJob(ctx context.Context, serviceJob Job, payload string) error {
 	ctx, cancel := context.WithTimeout(ctx, serviceJob.ExecutionTimeout())
 	defer cancel()
 
-	return serviceJob.Handle(ctx, j.Payload)
+	return serviceJob.Handle(ctx, payload)
 }
 
 func (s *Service) moveJobToDLQ(ctx context.Context, j jobsrepo.Job, reason string) {
@@ -192,9 +196,6 @@ func (s *Service) moveJobToDLQ(ctx context.Context, j jobsrepo.Job, reason strin
 }
 
 func (s *Service) registerJobInService(job Job) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
 	if _, ex := s.jobs[job.Name()]; ex {
 		return ErrJobAlreadyExists
 	}
@@ -205,9 +206,6 @@ func (s *Service) registerJobInService(job Job) error {
 }
 
 func (s *Service) getServiceJob(name string) (Job, bool) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
 	j, ex := s.jobs[name]
 	jobCopy := j
 

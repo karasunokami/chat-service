@@ -11,10 +11,10 @@ import (
 )
 
 type Message struct {
-	ID         types.MessageID `json:"id"`
-	ChatID     types.ChatID    `json:"chatId"`
-	Body       string          `json:"body,omitempty"`
-	FromClient bool            `json:"fromClient,omitempty"`
+	ID         types.MessageID
+	ChatID     types.ChatID
+	Body       string
+	FromClient bool
 }
 
 func (s *Service) ProduceMessage(ctx context.Context, msg Message) error {
@@ -47,9 +47,7 @@ func (s *Service) encryptData(data []byte) ([]byte, error) {
 		return nil, fmt.Errorf("generage nonce, err=%v", err)
 	}
 
-	encrypted := s.cipher.Seal(nil, nonce, data, nil)
-
-	return append(nonce, encrypted...), nil
+	return s.cipher.Seal(nonce, nonce, data, nil), nil
 }
 
 func msgToJSON(msg Message) ([]byte, error) {

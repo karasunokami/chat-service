@@ -40,8 +40,8 @@ var (
 		{Name: "name", Type: field.TypeString},
 		{Name: "payload", Type: field.TypeString, Size: 2147483647},
 		{Name: "attempts", Type: field.TypeInt, Default: 0},
-		{Name: "available_at", Type: field.TypeTime, Nullable: true},
-		{Name: "reserved_until", Type: field.TypeTime, Nullable: true},
+		{Name: "available_at", Type: field.TypeTime},
+		{Name: "reserved_until", Type: field.TypeTime},
 		{Name: "created_at", Type: field.TypeTime},
 	}
 	// JobsTable holds the schema information for the "jobs" table.
@@ -49,6 +49,13 @@ var (
 		Name:       "jobs",
 		Columns:    JobsColumns,
 		PrimaryKey: []*schema.Column{JobsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "job_available_at_reserved_until",
+				Unique:  false,
+				Columns: []*schema.Column{JobsColumns[4], JobsColumns[5]},
+			},
+		},
 	}
 	// MessagesColumns holds the columns for the "messages" table.
 	MessagesColumns = []*schema.Column{

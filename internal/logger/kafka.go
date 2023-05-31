@@ -1,54 +1,34 @@
 package logger
 
 import (
-	"fmt"
-	"os"
-
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
 
 type KafkaAdapted struct {
-	atom   zap.AtomicLevel
-	logger *zap.Logger
+	forErrors bool
+	z         *zap.Logger
 }
 
 func NewKafkaAdapted() *KafkaAdapted {
-	k := &KafkaAdapted{}
-
-	k.init()
-
-	return k
-}
-
-func (k *KafkaAdapted) Printf(tpl string, args ...interface{}) {
-	k.logger.Info(fmt.Sprintf(tpl, args...))
-}
-
-func (k *KafkaAdapted) WithServiceName(serviceName string) *KafkaAdapted {
-	k.logger = k.logger.Named(serviceName)
-
-	return k
+	return &KafkaAdapted{
+		z: zap.L(),
+	}
 }
 
 func (k *KafkaAdapted) ForErrors() *KafkaAdapted {
-	k.atom.SetLevel(zapcore.ErrorLevel)
-
+	k.forErrors = true
 	return k
 }
 
-func (k *KafkaAdapted) init() {
-	k.atom = zap.NewAtomicLevel()
+func (k *KafkaAdapted) WithServiceName(n string) *KafkaAdapted {
+	k.z = k.z.Named(n)
+	return k
+}
 
-	encoder := createEncoder(false)
-	cores := []zapcore.Core{
-		zapcore.NewCore(encoder, zapcore.AddSync(os.Stdout), k.atom),
-	}
-
-	k.logger = zap.New(zapcore.NewTee(cores...))
-
-	err := k.logger.Sync()
-	if err != nil {
-		zap.L().Error("sync kafka logger", zap.Error(err))
+func (k *KafkaAdapted) Printf(s string, args ...interface{}) {
+	if k.forErrors {
+		k.z.Sugar().Errorf(s, args...)
+	} else {
+		k.z.Sugar().Debugf(s, args...)
 	}
 }

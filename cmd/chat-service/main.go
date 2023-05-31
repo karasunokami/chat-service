@@ -10,6 +10,7 @@ import (
 	"syscall"
 
 	"github.com/karasunokami/chat-service/internal/config"
+	"github.com/karasunokami/chat-service/internal/logger"
 	serverdebug "github.com/karasunokami/chat-service/internal/server-debug"
 
 	"golang.org/x/sync/errgroup"
@@ -39,6 +40,7 @@ func run() (errReturned error) {
 
 	// configure logger
 	configureZap(cfg.Log.Level, cfg.Global.Env, cfg.Sentry.Dsn)
+	defer logger.Sync()
 
 	// init deps
 	deps, err := startNewDeps(ctx, cfg)
@@ -74,6 +76,9 @@ func run() (errReturned error) {
 	eg.Go(func() error { return srvDebug.Run(ctx) })
 	eg.Go(func() error { return srvClient.Run(ctx) })
 	eg.Go(func() error { return srvManager.Run(ctx) })
+
+	// run services
+	eg.Go(func() error { return deps.outboxService.Run(ctx) })
 
 	// wait for command line signal
 	if err = eg.Wait(); err != nil && !errors.Is(err, context.Canceled) {

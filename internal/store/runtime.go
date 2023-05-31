@@ -80,6 +80,10 @@ func init() {
 			return nil
 		}
 	}()
+	// jobDescReservedUntil is the schema descriptor for reserved_until field.
+	jobDescReservedUntil := jobFields[5].Descriptor()
+	// job.DefaultReservedUntil holds the default value on creation for the reserved_until field.
+	job.DefaultReservedUntil = jobDescReservedUntil.Default.(time.Time)
 	// jobDescCreatedAt is the schema descriptor for created_at field.
 	jobDescCreatedAt := jobFields[6].Descriptor()
 	// job.DefaultCreatedAt holds the default value on creation for the created_at field.
