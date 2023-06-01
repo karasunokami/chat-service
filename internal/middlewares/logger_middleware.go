@@ -23,7 +23,7 @@ func NewLoggerMiddleware(lg *zap.Logger) echo.MiddlewareFunc {
 		LogRequestID: true,
 		LogUserAgent: true,
 		LogStatus:    true,
-		HandleError:  true,
+		LogError:     true,
 		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
 			status := v.Status
 

@@ -36,8 +36,7 @@ type UseCase struct {
 }
 
 func New(opts Options) (UseCase, error) {
-	err := opts.Validate()
-	if err != nil {
+	if err := opts.Validate(); err != nil {
 		return UseCase{}, fmt.Errorf("validate options, err=%v", err)
 	}
 
@@ -50,10 +49,10 @@ func (u UseCase) Handle(ctx context.Context, req Request) (Response, error) {
 		return Response{}, fmt.Errorf("request validate, err=%w", ErrInvalidRequest)
 	}
 
-	crs, err := decodeCursor(req.Cursor)
-	if err != nil {
-		if !errors.Is(err, errEmptyCursor) {
-			return Response{}, fmt.Errorf("codecode cursor, err=%w", err)
+	var crs *messagesrepo.Cursor
+	if req.Cursor != "" {
+		if err := cursor.Decode(req.Cursor, &crs); err != nil {
+			return Response{}, fmt.Errorf("decode cursor: %w: %v", ErrInvalidCursor, err)
 		}
 	}
 
@@ -84,21 +83,4 @@ func formatResp(msgs []messagesrepo.Message, nextCrs *messagesrepo.Cursor) (Resp
 	}
 
 	return resp, nil
-}
-
-var errEmptyCursor = errors.New("empty cursor")
-
-func decodeCursor(cursorString string) (*messagesrepo.Cursor, error) {
-	if cursorString == "" {
-		return nil, errEmptyCursor
-	}
-
-	crs := &messagesrepo.Cursor{}
-
-	err := cursor.Decode(cursorString, crs)
-	if err != nil {
-		return nil, fmt.Errorf("decode cursor, err=%w", ErrInvalidCursor)
-	}
-
-	return crs, nil
 }

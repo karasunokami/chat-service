@@ -32,8 +32,7 @@ type Handlers struct {
 }
 
 func NewHandlers(opts Options) (Handlers, error) {
-	err := opts.Validate()
-	if err != nil {
+	if err := opts.Validate(); err != nil {
 		return Handlers{}, fmt.Errorf("validate options, err=%v", err)
 	}
 

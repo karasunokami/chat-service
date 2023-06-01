@@ -1,7 +1,6 @@
 package gethistory
 
 import (
-	"encoding/json"
 	"errors"
 	"time"
 
@@ -42,31 +41,6 @@ type Message struct {
 	IsReceived bool
 	IsBlocked  bool
 	IsService  bool
-}
-
-func (m Message) MarshalJSON() ([]byte, error) {
-	t := struct {
-		ID         types.MessageID `json:"id"`
-		AuthorID   *types.UserID   `json:"authorId,omitempty" `
-		Body       string          `json:"body"`
-		CreatedAt  time.Time       `json:"createdAt"`
-		IsReceived bool            `json:"isReceived"`
-		IsBlocked  bool            `json:"isBlocked"`
-		IsService  bool            `json:"isService"`
-	}{
-		ID:         m.ID,
-		Body:       m.Body,
-		CreatedAt:  m.CreatedAt,
-		IsReceived: m.IsReceived,
-		IsBlocked:  m.IsBlocked,
-		IsService:  m.IsService,
-	}
-
-	if !m.AuthorID.IsZero() {
-		t.AuthorID = &m.AuthorID
-	}
-
-	return json.Marshal(t)
 }
 
 func adoptMessages(messages []messagesrepo.Message) []Message {

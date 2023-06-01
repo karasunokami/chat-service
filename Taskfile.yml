@@ -20,7 +20,8 @@ vars:
     ./deploy/local/docker-compose.swagger-ui.yml
 
   DOCKER_COMPOSE_CMD: docker compose -f {{.DOCKER_COMPOSE_PATHS | trim | splitLines | join " -f "}}
-  DOCKER_TOOLS_CMD: docker run --user $(id -u):$(id -g) --rm -v "$(pwd):/app" -w /app chat-service-tools
+  DOCKER_TOOLS_CMD_TPL: docker run --user $(id -u):$(id -g) --rm -v "$(pwd):/app" -w /app
+  DOCKER_TOOLS_CMD: "{{.DOCKER_TOOLS_CMD_TPL}} chat-service-tools"
 
   TYPES: |
     ChatID
@@ -28,6 +29,8 @@ vars:
     ProblemID
     UserID
     RequestID
+    JobID
+    FailedJobID
 
   TYPES_PKG: types
   TYPES_DST: ./internal/types/types.gen.go
@@ -40,10 +43,19 @@ vars:
   CLIENT_V1_DST: ./internal/server-client/v1/server.gen.go
   CLIENT_V1_PKG: clientv1
 
+  MANAGER_V1_SRC: ./api/manager.v1.swagger.yml
+  MANAGER_V1_DST: ./internal/server-manager/v1/server.gen.go
+  MANAGER_V1_PKG: managerv1
+
   ### E2E tests ###
   E2E_CLIENT_V1_DST: ./tests/e2e/api/client/v1/client.gen.go
   E2E_CLIENT_V1_PKG: apiclientv1
   ###
+
+  ENT_FEATURES: |
+    sql/lock
+    sql/upsert
+    sql/execquery
 
 tasks:
   default:
@@ -95,12 +107,10 @@ tasks:
       - go test -tags integration -count 1 -race ./...
 
   tests:e2e:
-    dotenv:
-      - .env
     cmds:
       - echo "- End-to-end tests..."
       # NOTE: It's important to run tests serial (without `-p` flag) – for correct `clientsPool` sharing.
-      - "{{.DOCKER_TOOLS_CMD}} ginkgo --fail-fast --timeout=1m --tags e2e {{.CLI_ARGS}} ./tests/e2e"
+      - "{{.DOCKER_TOOLS_CMD_TPL}} --env-file .env --network host chat-service-tools ginkgo --fail-fast --timeout=1m --tags e2e {{.CLI_ARGS}} ./tests/e2e"
 
   build:
     cmds:
@@ -111,11 +121,16 @@ tasks:
     aliases: [gen]
     cmds:
       - echo "- Run go generate..."
-      - docker run --rm -v "$(pwd):/app" -w /app chat-service-tools go generate ./...
+      - task: gen:utils
       - task: gen:types
       - task: ent:gen
       - task: gen:api
       - task: gen:e2e
+
+  gen:utils:
+    cmds:
+      - echo "- Generate utils structs..."
+      - docker run --rm -v "$(pwd):/app" -w /app chat-service-tools go generate ./...
 
   gen:types:
     cmds:
@@ -128,7 +143,11 @@ tasks:
          {{.TYPES_TEMPLATE}}
 
   gen:api:
+    - echo "Generate servers..."
     - "{{.DOCKER_TOOLS_CMD}} oapi-codegen -generate server,spec,types -package {{.CLIENT_V1_PKG}} {{.CLIENT_V1_SRC}} > {{.CLIENT_V1_DST}}"
+    - "{{.DOCKER_TOOLS_CMD}} oapi-codegen -generate server,spec,types -package {{.MANAGER_V1_PKG}} {{.MANAGER_V1_SRC}} > {{.MANAGER_V1_DST}}"
+    - task: tidy
+
 
   gen:e2e:
     cmds:
@@ -136,8 +155,9 @@ tasks:
       - "{{.DOCKER_TOOLS_CMD}} oapi-codegen --old-config-style -generate types,client -package {{.E2E_CLIENT_V1_PKG}} {{.CLIENT_V1_SRC}} > {{.E2E_CLIENT_V1_DST}}"
 
   ent:gen:
+    aliases: [ gen:ent ]
     cmds:
-      - docker run --rm -v "$(pwd):/app" -w /app chat-service-tools ent generate --template {{.ENT_DATABASE_TEMPLATE}} {{.ENT_SCHEMA}}
+      - docker run --rm -v "$(pwd):/app" -w /app chat-service-tools ent generate --template {{.ENT_DATABASE_TEMPLATE}} {{.ENT_SCHEMA}} --feature {{ .ENT_FEATURES | trim | splitLines | join "," }}
       - task: tidy
 
   ent:new:

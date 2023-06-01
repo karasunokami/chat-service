@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	messagesrepo "github.com/karasunokami/chat-service/internal/repositories/messages"
+	sendclientmessagejob "github.com/karasunokami/chat-service/internal/services/outbox/jobs/send-client-message"
 	"github.com/karasunokami/chat-service/internal/types"
 )
 
@@ -33,6 +35,10 @@ type messagesRepository interface {
 	) (*messagesrepo.Message, error)
 }
 
+type outboxService interface {
+	Put(ctx context.Context, name, payload string, availableAt time.Time) (types.JobID, error)
+}
+
 type problemsRepository interface {
 	CreateIfNotExists(ctx context.Context, chatID types.ChatID) (types.ProblemID, error)
 }
@@ -45,6 +51,7 @@ type transactor interface {
 type Options struct {
 	chatRepo     chatsRepository    `option:"mandatory" validate:"required"`
 	msgRepo      messagesRepository `option:"mandatory" validate:"required"`
+	outboxSvc    outboxService      `option:"mandatory" validate:"required"`
 	problemsRepo problemsRepository `option:"mandatory" validate:"required"`
 	txtor        transactor         `option:"mandatory" validate:"required"`
 }
@@ -88,6 +95,21 @@ func (u UseCase) Handle(ctx context.Context, req Request) (Response, error) {
 		newMessage, err = u.msgRepo.CreateClientVisible(ctx, req.ID, problemID, chatID, req.ClientID, req.MessageBody)
 		if err != nil {
 			return fmt.Errorf("msg repo crate client visible message, err=%v", err)
+		}
+
+		payload, err := sendclientmessagejob.MarshalPayload(newMessage.ID)
+		if err != nil {
+			return fmt.Errorf("marhal send client message job payload, err=%v", err)
+		}
+
+		_, err = u.outboxSvc.Put(
+			ctx,
+			sendclientmessagejob.Name,
+			payload,
+			time.Now(),
+		)
+		if err != nil {
+			return fmt.Errorf("outbox service put message, err=%v", err)
 		}
 
 		return nil

@@ -1,8 +1,12 @@
 [global]
 env = "prod"
 
+# Logger
+
 [log]
 level = "info"
+
+# Servers
 
 [servers]
 [servers.debug]
@@ -16,8 +20,20 @@ allow_origins = ["http://localhost:3011", "http://localhost:3000"]
 resource = "chat-ui-client"
 role = "support-chat-client"
 
+[servers.manager]
+addr = ":8081"
+allow_origins = ["http://localhost:3011", "http://localhost:3001"]
+
+[servers.manager.required_access]
+resource = "chat-ui-manager"
+role = "support-chat-manager"
+
+# Deps
+
 [sentry]
 dsn = "http://8386679e9758470f9bb586ce1132dd4e@localhost:9000/2"
+
+# Deps clients
 
 [clients]
 [clients.keycloak]
@@ -25,10 +41,27 @@ base_path = "http://localhost:3010"
 realm = "Bank"
 client_id = "chat-service"
 client_secret = "63BYwNafWBXbH0tRCdIhQ5ZAj91uj0bd"
-debug_mode = true
+debug_mode = false
 [clients.psql]
 address = "127.0.0.1:5432"
 username = "chat-service"
 password = "chat-service"
 database = "chat-service"
-debug_mode = true
+debug_mode = false
+
+# Services
+
+[services]
+[services.msg_producer]
+brokers = ["localhost:9092"]
+topic = "chat.messages"
+batch_size = 1
+encrypt_key = "24432646294A404E635266546A576E5A" # Leave it blank to disable encryption.
+
+[services.outbox]
+workers = 2
+idle_time = "1s"
+reserve_for = "5m"
+
+[services.manager_load]
+max_problems_at_same_time = 1

@@ -3,6 +3,7 @@ package store
 import (
 	"database/sql"
 	"fmt"
+	"net/url"
 
 	entsql "entgo.io/ent/dialect/sql"
 	"github.com/jackc/pgx/v5"
@@ -50,12 +51,16 @@ type PgxOptions struct {
 }
 
 func (o *PgxOptions) connString() string {
-	return fmt.Sprintf("postgres://%v:%v@%v/%v", o.username, o.password, o.address, o.database)
+	return (&url.URL{
+		Scheme: "postgresql",
+		User:   url.UserPassword(o.username, o.password),
+		Host:   o.address,
+		Path:   o.database,
+	}).String()
 }
 
 func NewPgxDB(opts PgxOptions) (*sql.DB, error) {
-	err := opts.Validate()
-	if err != nil {
+	if err := opts.Validate(); err != nil {
 		return nil, fmt.Errorf("validate options, err=%v", err)
 	}
 

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/karasunokami/chat-service/internal/config"
+	"github.com/karasunokami/chat-service/internal/server"
 	serverclient "github.com/karasunokami/chat-service/internal/server-client"
 	clientv1 "github.com/karasunokami/chat-service/internal/server-client/v1"
 	gethistory "github.com/karasunokami/chat-service/internal/usecases/client/get-history"
@@ -15,23 +16,21 @@ const nameServerClient = "server-client"
 func initServerClient(
 	deps serverDeps,
 	clientServerConfig config.ClientServerConfig,
-) (*serverclient.Server, error) {
+) (*server.Server, error) {
 	serverHandlers, err := initServerHandlers(deps)
 	if err != nil {
 		return nil, fmt.Errorf("init server hanlders, err=%v", err)
 	}
 
 	// build server client
-	srv, err := serverclient.New(serverclient.NewOptions(
+	srv, err := server.New(server.NewOptions(
+		deps.clientLogger,
 		clientServerConfig.Addr,
 		clientServerConfig.AllowOrigins,
+		deps.kcClient,
 		clientServerConfig.RequiredAccess.Resource,
 		clientServerConfig.RequiredAccess.Role,
-		deps.errHandler.Handle,
-		deps.logger,
-		deps.swagger,
-		serverHandlers,
-		deps.kcClient,
+		serverclient.NewHandlersRegistrar(deps.clientSwagger, serverHandlers, deps.errHandler.Handle),
 	))
 	if err != nil {
 		return nil, fmt.Errorf("build server: %v", err)
@@ -47,13 +46,19 @@ func initServerHandlers(deps serverDeps) (clientv1.Handlers, error) {
 		return clientv1.Handlers{}, fmt.Errorf("init get history usecase: %v", err)
 	}
 
-	sendMessageUseCase, err := sendmessage.New(sendmessage.NewOptions(deps.chatRepo, deps.msgRepo, deps.problemsRepo, deps.db))
+	sendMessageUseCase, err := sendmessage.New(sendmessage.NewOptions(
+		deps.chatRepo,
+		deps.msgRepo,
+		deps.outboxService,
+		deps.problemsRepo,
+		deps.db,
+	))
 	if err != nil {
 		return clientv1.Handlers{}, fmt.Errorf("init send message usecase: %v", err)
 	}
 
 	// create client handlers
-	serverV1Handlers, err := clientv1.NewHandlers(clientv1.NewOptions(deps.logger, getHistoryUseCase, sendMessageUseCase))
+	serverV1Handlers, err := clientv1.NewHandlers(clientv1.NewOptions(deps.clientLogger, getHistoryUseCase, sendMessageUseCase))
 	if err != nil {
 		return clientv1.Handlers{}, fmt.Errorf("create v1 handlers: %v", err)
 	}
