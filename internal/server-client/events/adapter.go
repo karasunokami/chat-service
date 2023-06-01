@@ -16,13 +16,16 @@ func (Adapter) Adapt(ev eventstream.Event) (any, error) {
 
 	case *eventstream.NewMessageEvent:
 		return adaptNewMessageEvent(e), nil
+
+	case *eventstream.MessageBlockedEvent:
+		return adaptMessageBlockedEvent(e), nil
 	}
 
 	return nil, fmt.Errorf("unknown event type: %T", ev)
 }
 
-func adaptMessageSendEvent(ev *eventstream.MessageSentEvent) MessageSentEvent {
-	return MessageSentEvent{
+func adaptMessageSendEvent(ev *eventstream.MessageSentEvent) DefaultEvent {
+	return DefaultEvent{
 		EventId:   ev.EventID,
 		EventType: "MessageSentEvent",
 		MessageId: ev.MessageID,
@@ -30,14 +33,23 @@ func adaptMessageSendEvent(ev *eventstream.MessageSentEvent) MessageSentEvent {
 	}
 }
 
+func adaptMessageBlockedEvent(ev *eventstream.MessageBlockedEvent) DefaultEvent {
+	return DefaultEvent{
+		EventId:   ev.EventID,
+		EventType: "MessageBlockedEvent",
+		MessageId: ev.MessageID,
+		RequestId: ev.RequestID,
+	}
+}
+
 func adaptNewMessageEvent(ev *eventstream.NewMessageEvent) NewMessageEvent {
 	return NewMessageEvent{
-		AuthorId:  ev.UserID.AsPointer(),
-		Body:      pointer.Ptr(ev.MessageBody),
-		CreatedAt: pointer.Ptr(ev.CreatedAt),
+		AuthorId:  pointer.PtrWithZeroAsNil(ev.UserID),
+		Body:      ev.MessageBody,
+		CreatedAt: ev.CreatedAt,
 		EventId:   ev.EventID,
 		EventType: "NewMessageEvent",
-		IsService: pointer.Ptr(ev.IsService),
+		IsService: ev.IsService,
 		MessageId: ev.MessageID,
 		RequestId: ev.RequestID,
 	}

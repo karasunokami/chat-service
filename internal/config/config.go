@@ -80,9 +80,10 @@ type PSQLClientConfig struct {
 }
 
 type ServicesConfig struct {
-	MessageProducerService MessageProducerServiceConfig `toml:"msg_producer" validate:"required"`
-	OutboxService          OutboxServiceConfig          `toml:"outbox" validate:"required"`
-	ManagerLoad            ManagerLoadConfig            `toml:"manager_load" validate:"required"`
+	MessageProducerService MessageProducerServiceConfig      `toml:"msg_producer" validate:"required"`
+	OutboxService          OutboxServiceConfig               `toml:"outbox" validate:"required"`
+	ManagerLoad            ManagerLoadServiceConfig          `toml:"manager_load" validate:"required"`
+	AfcVerdictsProcessor   AfcVerdictsProcessorServiceConfig `toml:"afc_verdicts_processor" validate:"required"`
 }
 
 type MessageProducerServiceConfig struct {
@@ -98,6 +99,15 @@ type OutboxServiceConfig struct {
 	ReserveFor time.Duration `toml:"reserve_for" validate:"required"`
 }
 
-type ManagerLoadConfig struct {
+type ManagerLoadServiceConfig struct {
 	MaxProblemsAtSameTime int `toml:"max_problems_at_same_time" validate:"required,gte=1,lte=100"`
+}
+
+type AfcVerdictsProcessorServiceConfig struct {
+	Brokers                  []string `toml:"brokers" validate:"required"`
+	ConsumersCount           int      `toml:"consumers_count" validate:"required,gte=1,lte=100"`
+	ConsumersGroupName       string   `toml:"consumers_group_name" validate:"required"`
+	VerdictsTopicName        string   `toml:"verdicts_topic_name" validate:"required"`
+	VerdictsDqlTopicName     string   `toml:"verdicts_dql_topic_name" validate:"required"`
+	VerdictsSigningPublicKey string   `toml:"verdicts_signing_public_key"`
 }

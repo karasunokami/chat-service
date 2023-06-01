@@ -112,3 +112,42 @@ func (e *NewMessageEvent) Matches(x interface{}) bool {
 func (e *NewMessageEvent) String() string {
 	return fmt.Sprintf("%v", *e)
 }
+
+// MessageBlockedEvent indicates that the message was checked by AFC
+// and marked as blocked.
+type MessageBlockedEvent struct {
+	event
+
+	EventID   types.EventID   `validate:"required"`
+	RequestID types.RequestID `validate:"required"`
+	MessageID types.MessageID `validate:"required"`
+}
+
+func NewMessageBlockedEvent(
+	eventID types.EventID,
+	requestID types.RequestID,
+	messageID types.MessageID,
+) *MessageBlockedEvent {
+	return &MessageBlockedEvent{
+		EventID:   eventID,
+		RequestID: requestID,
+		MessageID: messageID,
+	}
+}
+
+func (e *MessageBlockedEvent) Validate() error {
+	return validator.Validator.Struct(e)
+}
+
+func (e *MessageBlockedEvent) Matches(x interface{}) bool {
+	ev, ok := x.(*MessageBlockedEvent)
+	if !ok {
+		return false
+	}
+
+	return ev.RequestID == e.RequestID && ev.MessageID == e.MessageID
+}
+
+func (e *MessageBlockedEvent) String() string {
+	return fmt.Sprintf("{RequestID: %v, MessageID: %v}", e.RequestID, e.MessageID)
+}

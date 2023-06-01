@@ -55,6 +55,9 @@ vars:
   ### E2E tests ###
   E2E_CLIENT_V1_DST: ./tests/e2e/api/client/v1/client.gen.go
   E2E_CLIENT_V1_PKG: apiclientv1
+
+  E2E_CLIENT_EVENTS_DST: ./tests/e2e/api/client/events/events.gen.go
+  E2E_CLIENT_EVENTS_PKG: apiclientevents
   ###
 
   ENT_FEATURES: |
@@ -159,6 +162,9 @@ tasks:
     cmds:
       - echo "[E2E] Generate client API..."
       - "{{.DOCKER_TOOLS_CMD}} oapi-codegen --old-config-style -generate types,client -package {{.E2E_CLIENT_V1_PKG}} {{.CLIENT_V1_SRC}} > {{.E2E_CLIENT_V1_DST}}"
+      - echo "[E2E] Generate client events..."
+      - "{{.DOCKER_TOOLS_CMD}} oapi-codegen --old-config-style -generate skip-prune,types -package {{.E2E_CLIENT_EVENTS_PKG}} {{.EVENTS_V1_SRC}} > {{.E2E_CLIENT_EVENTS_DST}}"
+
 
   ent:gen:
     aliases: [ gen:ent ]

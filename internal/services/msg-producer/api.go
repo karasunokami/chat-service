@@ -8,6 +8,7 @@ import (
 	"github.com/karasunokami/chat-service/internal/types"
 
 	"github.com/segmentio/kafka-go"
+	"go.uber.org/zap"
 )
 
 type Message struct {
@@ -37,6 +38,8 @@ func (s *Service) ProduceMessage(ctx context.Context, msg Message) error {
 	if err != nil {
 		return fmt.Errorf("write data to kafka writer, err=%v", err)
 	}
+
+	s.logger.Debug("Message produced", zap.Any("messageId", msg.ID), zap.String("body", msg.Body))
 
 	return nil
 }

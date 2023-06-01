@@ -24,13 +24,13 @@ func initServerManager(
 
 	// build manager server client
 	srv, err := server.New(server.NewOptions(
-		deps.clientLogger,
+		deps.managerLogger,
 		managerServerConfig.Addr,
 		managerServerConfig.AllowOrigins,
 		managerServerConfig.SecWsProtocol,
 		managerServerConfig.RequiredAccess.Resource,
 		managerServerConfig.RequiredAccess.Role,
-		servermanager.NewHandlersRegistrar(deps.clientSwagger, serverHandlers, deps.errHandler.Handle),
+		servermanager.NewHandlersRegistrar(deps.managerSwagger, serverHandlers, deps.errHandler.Handle),
 		deps.kcClient,
 		deps.eventsStream,
 	))

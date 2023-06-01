@@ -1,5 +1,5 @@
 [global]
-env = "prod"
+env = "dev"
 
 # Logger
 
@@ -58,7 +58,7 @@ debug_mode = false
 brokers = ["localhost:9092"]
 topic = "chat.messages"
 batch_size = 1
-encrypt_key = "24432646294A404E635266546A576E5A" # Leave it blank to disable encryption.
+encrypt_key = "51655468576D5A7134743777397A2443" # Leave it blank to disable encryption.
 
 [services.outbox]
 workers = 2
@@ -67,3 +67,18 @@ reserve_for = "5m"
 
 [services.manager_load]
 max_problems_at_same_time = 1
+
+[services.afc_verdicts_processor]
+brokers = ["localhost:9092"]
+consumers_count = 5
+consumers_group_name = "group"
+verdicts_topic_name = "afc.msg-verdicts"
+verdicts_dql_topic_name = "afc.msg-verdicts.dlq"
+verdicts_signing_public_key = """
+-----BEGIN PUBLIC KEY-----
+MIGeMA0GCSqGSIb3DQEBAQUAA4GMADCBiAKBgHfj1jei7ySAjFFqvwsabfSXpAH7
+iMQKYcYSLuXULYKTX0crg8ZaZs0P9HQkl2Y24snMlmQWeT43DPfAt49MKcvR6pcZ
+JaBqrPJq5sXcjLWJ5n5wkKzEvGn3a8W6EygIJKJiaYLUS9qOQz2MBx4q3y2s4aE6
+Qer9hpNqGfW7uBmNAgMBAAE=
+-----END PUBLIC KEY-----
+"""

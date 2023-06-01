@@ -9,7 +9,11 @@ import (
 	msgproducer "github.com/karasunokami/chat-service/internal/services/msg-producer"
 	"github.com/karasunokami/chat-service/internal/services/outbox"
 	"github.com/karasunokami/chat-service/internal/types"
+
+	"go.uber.org/zap"
 )
+
+const serviceName = "send-client-message-job"
 
 //go:generate mockgen -source=$GOFILE -destination=mocks/job_mock.gen.go -package=sendclientmessagejobmocks
 
@@ -39,6 +43,8 @@ type Job struct {
 	msgProducer messageProducer
 	msgRepo     messageRepository
 	eventStream eventStream
+
+	logger *zap.Logger
 }
 
 func New(opts Options) (*Job, error) {
@@ -50,6 +56,8 @@ func New(opts Options) (*Job, error) {
 		msgProducer: opts.msgProducer,
 		msgRepo:     opts.msgRepo,
 		eventStream: opts.eventStream,
+
+		logger: zap.L().Named(serviceName),
 	}, nil
 }
 
@@ -86,6 +94,8 @@ func (j *Job) Handle(ctx context.Context, payload string) error {
 	if err != nil {
 		return fmt.Errorf("publish message to event stream, err=%v", err)
 	}
+
+	j.logger.Debug("Publish message to event stream", zap.Any("msgID", msg.ID))
 
 	return nil
 }

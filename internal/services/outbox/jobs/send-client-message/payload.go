@@ -19,7 +19,7 @@ func MarshalPayload(messageID types.MessageID) (string, error) {
 
 	d, err := json.Marshal(p)
 	if err != nil {
-		return "", fmt.Errorf("json marshal jobPayload, err=%v", err)
+		return "", fmt.Errorf("json marshal job payload, err=%v", err)
 	}
 
 	return string(d), nil
@@ -30,7 +30,7 @@ func unmarshalPayload(payload string) (jobPayload, error) {
 
 	err := json.Unmarshal([]byte(payload), &jp)
 	if err != nil {
-		return jobPayload{}, fmt.Errorf("unmarshal payload to job payload, err=%v", err)
+		return jobPayload{}, fmt.Errorf("unmarshal job payload, err=%v", err)
 	}
 
 	return jp, nil

@@ -62,6 +62,16 @@ func (s *Service) RegisterJob(job Job) error {
 	return s.registerJobInService(job)
 }
 
+func (s *Service) RegisterJobs(jobs ...Job) error {
+	for _, job := range jobs {
+		if err := s.registerJobInService(job); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (s *Service) MustRegisterJob(job Job) {
 	err := s.RegisterJob(job)
 	if err != nil {
