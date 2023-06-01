@@ -3,6 +3,7 @@ package schema
 import (
 	"entgo.io/ent"
 	"entgo.io/ent/schema/field"
+	"entgo.io/ent/schema/index"
 	"github.com/karasunokami/chat-service/internal/types"
 )
 
@@ -19,15 +20,16 @@ func (Job) Fields() []ent.Field {
 		field.String("name").NotEmpty().Immutable(),
 		field.Text("payload").NotEmpty().Immutable(),
 		field.Int("attempts").Min(0).Max(jobMaxAttempts).Default(0),
-		field.Time("available_at").Immutable().Optional(),
-		field.Time("reserved_until").Optional(),
+		field.Time("available_at").Immutable(),
+		field.Time("reserved_until").Default(defaultTime()),
 		field.Time("created_at").Immutable().Default(defaultTime()),
 	}
 }
 
 func (Job) Indexes() []ent.Index {
-	// FIXME: Расставь индексы на основе запросов в сервисе Outbox.
-	return nil
+	return []ent.Index{
+		index.Fields("available_at", "reserved_until"),
+	}
 }
 
 type FailedJob struct {

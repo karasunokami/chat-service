@@ -88,16 +88,16 @@ type ServicesConfig struct {
 type MessageProducerServiceConfig struct {
 	Brokers    []string `toml:"brokers" validate:"required"`
 	Topic      string   `toml:"topic" validate:"required"`
-	BatchSize  int      `toml:"batch_size" validate:"required"`
+	BatchSize  int      `toml:"batch_size" validate:"required,gte=1,lte=100"`
 	EncryptKey string   `toml:"encrypt_key"`
 }
 
 type OutboxServiceConfig struct {
-	Workers    int           `toml:"workers" validate:"required"`
+	Workers    int           `toml:"workers" validate:"required,gte=1,lte=100"`
 	IdleTime   time.Duration `toml:"idle_time" validate:"required"`
 	ReserveFor time.Duration `toml:"reserve_for" validate:"required"`
 }
 
 type ManagerLoadConfig struct {
-	MaxProblemsAtSameTime int `toml:"max_problems_at_same_time" validate:"required,gte=1"`
+	MaxProblemsAtSameTime int `toml:"max_problems_at_same_time" validate:"required,gte=1,lte=100"`
 }

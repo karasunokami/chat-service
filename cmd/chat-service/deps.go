@@ -185,11 +185,6 @@ func startNewDeps(ctx context.Context, cfg config.Config) (serverDeps, error) {
 		return serverDeps{}, fmt.Errorf("register send client message job, err=%v", err)
 	}
 
-	err = d.outboxService.Run(ctx)
-	if err != nil {
-		return serverDeps{}, fmt.Errorf("start outbox servcie, err=%v", err)
-	}
-
 	return d, nil
 }
 
@@ -230,7 +225,6 @@ func configureZap(logLevel, env, dsn string) {
 		logger.WithEnv(env),
 		logger.WithSentryDSN(dsn),
 	))
-	logger.Sync()
 }
 
 func closeIfNotNil(c io.Closer) error {

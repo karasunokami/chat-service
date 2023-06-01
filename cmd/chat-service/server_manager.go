@@ -4,7 +4,8 @@ import (
 	"fmt"
 
 	"github.com/karasunokami/chat-service/internal/config"
-	server "github.com/karasunokami/chat-service/internal/server-manager"
+	"github.com/karasunokami/chat-service/internal/server"
+	servermanager "github.com/karasunokami/chat-service/internal/server-manager"
 	managerv1 "github.com/karasunokami/chat-service/internal/server-manager/v1"
 	canreceiveproblems "github.com/karasunokami/chat-service/internal/usecases/manager/can-receive-problems"
 	freehands "github.com/karasunokami/chat-service/internal/usecases/manager/free-hands"
@@ -23,17 +24,13 @@ func initServerManager(
 
 	// build manager server client
 	srv, err := server.New(server.NewOptions(
+		deps.clientLogger,
 		managerServerConfig.Addr,
 		managerServerConfig.AllowOrigins,
-		managerServerConfig.SecWsProtocol,
+		deps.kcClient,
 		managerServerConfig.RequiredAccess.Resource,
 		managerServerConfig.RequiredAccess.Role,
-		deps.errHandler.Handle,
-		deps.managerLogger,
-		deps.managerSwagger,
-		deps.kcClient,
-		serverHandlers,
-		deps.eventsStream,
+		servermanager.NewHandlersRegistrar(deps.clientSwagger, serverHandlers, deps.errHandler.Handle),
 	))
 	if err != nil {
 		return nil, fmt.Errorf("build server: %v", err)

@@ -4,9 +4,7 @@ package server
 import (
 	fmt461e464ebed9 "fmt"
 
-	"github.com/getkin/kin-openapi/openapi3"
-	keycloakclient "github.com/karasunokami/chat-service/internal/clients/keycloak"
-	inmemeventstream "github.com/karasunokami/chat-service/internal/services/event-stream/in-mem"
+	"github.com/karasunokami/chat-service/internal/middlewares"
 	errors461e464ebed9 "github.com/kazhuravlev/options-gen/pkg/errors"
 	validator461e464ebed9 "github.com/kazhuravlev/options-gen/pkg/validator"
 	"github.com/labstack/echo/v4"
@@ -16,32 +14,26 @@ import (
 type OptOptionsSetter func(o *Options)
 
 func NewOptions(
+	logger *zap.Logger,
 	addr string,
 	allowOrigins []string,
-	wsSecProtocol string,
-	resource string,
-	role string,
-	errorHandler echo.HTTPErrorHandler,
-	logger *zap.Logger,
-	swagger *openapi3.T,
-	keycloakClient *keycloakclient.Client,
-	eventsStream *inmemeventstream.Service,
+	introspector middlewares.Introspector,
+	requiredResource string,
+	requiredRole string,
+	handlersRegistrar func(e *echo.Echo),
 	options ...OptOptionsSetter,
 ) Options {
 	o := Options{}
 
 	// Setting defaults from field tag (if present)
 
+	o.logger = logger
 	o.addr = addr
 	o.allowOrigins = allowOrigins
-	o.wsSecProtocol = wsSecProtocol
-	o.resource = resource
-	o.role = role
-	o.errorHandler = errorHandler
-	o.logger = logger
-	o.swagger = swagger
-	o.keycloakClient = keycloakClient
-	o.eventsStream = eventsStream
+	o.introspector = introspector
+	o.requiredResource = requiredResource
+	o.requiredRole = requiredRole
+	o.handlersRegistrar = handlersRegistrar
 
 	for _, opt := range options {
 		opt(&o)
@@ -51,17 +43,21 @@ func NewOptions(
 
 func (o *Options) Validate() error {
 	errs := new(errors461e464ebed9.ValidationErrors)
+	errs.Add(errors461e464ebed9.NewValidationError("logger", _validate_Options_logger(o)))
 	errs.Add(errors461e464ebed9.NewValidationError("addr", _validate_Options_addr(o)))
 	errs.Add(errors461e464ebed9.NewValidationError("allowOrigins", _validate_Options_allowOrigins(o)))
-	errs.Add(errors461e464ebed9.NewValidationError("wsSecProtocol", _validate_Options_wsSecProtocol(o)))
-	errs.Add(errors461e464ebed9.NewValidationError("resource", _validate_Options_resource(o)))
-	errs.Add(errors461e464ebed9.NewValidationError("role", _validate_Options_role(o)))
-	errs.Add(errors461e464ebed9.NewValidationError("errorHandler", _validate_Options_errorHandler(o)))
-	errs.Add(errors461e464ebed9.NewValidationError("logger", _validate_Options_logger(o)))
-	errs.Add(errors461e464ebed9.NewValidationError("swagger", _validate_Options_swagger(o)))
-	errs.Add(errors461e464ebed9.NewValidationError("keycloakClient", _validate_Options_keycloakClient(o)))
-	errs.Add(errors461e464ebed9.NewValidationError("eventsStream", _validate_Options_eventsStream(o)))
+	errs.Add(errors461e464ebed9.NewValidationError("introspector", _validate_Options_introspector(o)))
+	errs.Add(errors461e464ebed9.NewValidationError("requiredResource", _validate_Options_requiredResource(o)))
+	errs.Add(errors461e464ebed9.NewValidationError("requiredRole", _validate_Options_requiredRole(o)))
+	errs.Add(errors461e464ebed9.NewValidationError("handlersRegistrar", _validate_Options_handlersRegistrar(o)))
 	return errs.AsError()
+}
+
+func _validate_Options_logger(o *Options) error {
+	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.logger, "required"); err != nil {
+		return fmt461e464ebed9.Errorf("field `logger` did not pass the test: %w", err)
+	}
+	return nil
 }
 
 func _validate_Options_addr(o *Options) error {
@@ -78,58 +74,30 @@ func _validate_Options_allowOrigins(o *Options) error {
 	return nil
 }
 
-func _validate_Options_wsSecProtocol(o *Options) error {
-	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.wsSecProtocol, "required"); err != nil {
-		return fmt461e464ebed9.Errorf("field `wsSecProtocol` did not pass the test: %w", err)
+func _validate_Options_introspector(o *Options) error {
+	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.introspector, "required"); err != nil {
+		return fmt461e464ebed9.Errorf("field `introspector` did not pass the test: %w", err)
 	}
 	return nil
 }
 
-func _validate_Options_resource(o *Options) error {
-	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.resource, "required"); err != nil {
-		return fmt461e464ebed9.Errorf("field `resource` did not pass the test: %w", err)
+func _validate_Options_requiredResource(o *Options) error {
+	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.requiredResource, "required"); err != nil {
+		return fmt461e464ebed9.Errorf("field `requiredResource` did not pass the test: %w", err)
 	}
 	return nil
 }
 
-func _validate_Options_role(o *Options) error {
-	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.role, "required"); err != nil {
-		return fmt461e464ebed9.Errorf("field `role` did not pass the test: %w", err)
+func _validate_Options_requiredRole(o *Options) error {
+	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.requiredRole, "required"); err != nil {
+		return fmt461e464ebed9.Errorf("field `requiredRole` did not pass the test: %w", err)
 	}
 	return nil
 }
 
-func _validate_Options_errorHandler(o *Options) error {
-	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.errorHandler, "required"); err != nil {
-		return fmt461e464ebed9.Errorf("field `errorHandler` did not pass the test: %w", err)
-	}
-	return nil
-}
-
-func _validate_Options_logger(o *Options) error {
-	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.logger, "required"); err != nil {
-		return fmt461e464ebed9.Errorf("field `logger` did not pass the test: %w", err)
-	}
-	return nil
-}
-
-func _validate_Options_swagger(o *Options) error {
-	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.swagger, "required"); err != nil {
-		return fmt461e464ebed9.Errorf("field `swagger` did not pass the test: %w", err)
-	}
-	return nil
-}
-
-func _validate_Options_keycloakClient(o *Options) error {
-	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.keycloakClient, "required"); err != nil {
-		return fmt461e464ebed9.Errorf("field `keycloakClient` did not pass the test: %w", err)
-	}
-	return nil
-}
-
-func _validate_Options_eventsStream(o *Options) error {
-	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.eventsStream, "required"); err != nil {
-		return fmt461e464ebed9.Errorf("field `eventsStream` did not pass the test: %w", err)
+func _validate_Options_handlersRegistrar(o *Options) error {
+	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.handlersRegistrar, "required"); err != nil {
+		return fmt461e464ebed9.Errorf("field `handlersRegistrar` did not pass the test: %w", err)
 	}
 	return nil
 }

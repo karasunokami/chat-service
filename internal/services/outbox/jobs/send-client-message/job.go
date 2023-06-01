@@ -3,22 +3,17 @@ package sendclientmessagejob
 import (
 	"context"
 	"fmt"
-	"time"
 
 	messagesrepo "github.com/karasunokami/chat-service/internal/repositories/messages"
 	eventstream "github.com/karasunokami/chat-service/internal/services/event-stream"
 	msgproducer "github.com/karasunokami/chat-service/internal/services/msg-producer"
+	"github.com/karasunokami/chat-service/internal/services/outbox"
 	"github.com/karasunokami/chat-service/internal/types"
 )
 
 //go:generate mockgen -source=$GOFILE -destination=mocks/job_mock.gen.go -package=sendclientmessagejobmocks
 
-const (
-	Name = "send-client-message"
-
-	executionTimeout = time.Second * 3
-	maxAttempts      = 5
-)
+const Name = "send-client-message"
 
 type messageProducer interface {
 	ProduceMessage(ctx context.Context, message msgproducer.Message) error
@@ -40,6 +35,7 @@ type Options struct {
 }
 
 type Job struct {
+	outbox.DefaultJob
 	msgProducer messageProducer
 	msgRepo     messageRepository
 	eventStream eventStream
@@ -92,14 +88,6 @@ func (j *Job) Handle(ctx context.Context, payload string) error {
 	}
 
 	return nil
-}
-
-func (j *Job) ExecutionTimeout() time.Duration {
-	return executionTimeout
-}
-
-func (j *Job) MaxAttempts() int {
-	return maxAttempts
 }
 
 func repoMsgToProducerMsg(msg *messagesrepo.Message) msgproducer.Message {

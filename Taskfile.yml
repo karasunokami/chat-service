@@ -60,6 +60,7 @@ vars:
   ENT_FEATURES: |
     sql/lock
     sql/upsert
+    sql/execquery
 
 tasks:
   default:
