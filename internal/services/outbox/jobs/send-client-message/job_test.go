@@ -68,11 +68,6 @@ func TestJob_Handle(t *testing.T) {
 		IsService:   isService,
 	}).Return(nil)
 
-	eventStream.EXPECT().Publish(ctx, clientID, &eventstream.MessageSentEvent{
-		RequestID: requestID,
-		MessageID: msgID,
-	}).Return(nil)
-
 	// Action & assert.
 	payload, err := sendclientmessagejob.MarshalPayload(msgID)
 	require.NoError(t, err)

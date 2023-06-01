@@ -100,11 +100,15 @@ func (e *NewMessageEvent) Matches(x interface{}) bool {
 		return false
 	}
 
-	return ev.RequestID == e.RequestID && ev.ChatID == e.ChatID && ev.MessageID == e.MessageID && ev.UserID == e.UserID && ev.CreatedAt == e.CreatedAt && ev.MessageBody == e.MessageBody && ev.IsService == e.IsService
-
+	return ev.RequestID == e.RequestID &&
+		ev.ChatID == e.ChatID &&
+		ev.MessageID == e.MessageID &&
+		ev.UserID == e.UserID &&
+		ev.CreatedAt == e.CreatedAt &&
+		ev.MessageBody == e.MessageBody &&
+		ev.IsService == e.IsService
 }
 
 func (e *NewMessageEvent) String() string {
 	return fmt.Sprintf("%v", *e)
-
 }

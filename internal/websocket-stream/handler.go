@@ -3,8 +3,6 @@ package websocketstream
 import (
 	"context"
 	"fmt"
-	"io"
-	"sync"
 	"time"
 
 	"github.com/karasunokami/chat-service/internal/middlewares"
@@ -14,6 +12,7 @@ import (
 	gorillaws "github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 )
 
 const (
@@ -38,8 +37,6 @@ type Options struct {
 
 type HTTPHandler struct {
 	Options
-
-	mu sync.Mutex
 }
 
 func NewHTTPHandler(opts Options) (*HTTPHandler, error) {
@@ -56,13 +53,6 @@ func (h *HTTPHandler) Serve(eCtx echo.Context) error {
 		return fmt.Errorf("upgrade connection, err=%v", err)
 	}
 
-	go h.listenShutdown(ws)
-
-	err = h.readLoop(ws)
-	if err != nil {
-		return fmt.Errorf("run read loop, err=%v", err)
-	}
-
 	userID := middlewares.MustUserID(eCtx)
 
 	ctx := context.Background()
@@ -71,130 +61,92 @@ func (h *HTTPHandler) Serve(eCtx echo.Context) error {
 		return fmt.Errorf("event stream subscribe, err=%v", err)
 	}
 
-	err = h.writeLoop(eventsCh, ws)
-	if err != nil {
-		return fmt.Errorf("run write loop, err=%v", err)
-	}
+	cws := newConcurrentWS(h.logger, ws)
 
-	err = h.writePingsLoop(ws)
-	if err != nil {
-		return fmt.Errorf("run write pings loop, err=%v", err)
-	}
+	eg, _ := errgroup.WithContext(ctx)
+
+	eg.Go(func() error { return h.listenShutdown(cws) })
+	eg.Go(func() error { return h.readLoop(cws) })
+	eg.Go(func() error { return h.writeLoop(eventsCh, cws) })
+	eg.Go(func() error { return h.writePingsLoop(cws) })
 
 	h.logger.Debug("WS handler started for user", zap.String("userID", userID.String()))
 
-	return nil
+	return eg.Wait()
 }
 
 // readLoop listen PONGs.
-func (h *HTTPHandler) readLoop(ws Websocket) error {
-	go func() {
-		for {
-			msgType, _, err := ws.NextReader()
+func (h *HTTPHandler) readLoop(cws *concurrentWS) error {
+	for {
+		msgType, _, err := cws.NextReader()
+		if err != nil {
+			return fmt.Errorf("ws next reader, err=%v", err)
+		}
+
+		if msgType == gorillaws.PongMessage {
+			err = cws.SetReadDeadline(time.Now().Add(writeTimeout))
 			if err != nil {
-				h.logger.Error("ws next reader", zap.Error(err))
-
-				return
-			}
-
-			if msgType == gorillaws.PongMessage {
-				err = h.setReadDeadline(writeTimeout, ws)
-				if err != nil {
-					h.logger.Error("ws set read deadline", zap.Error(err))
-				}
+				h.logger.Error("ws set read deadline", zap.Error(err))
 			}
 		}
-	}()
-
-	return nil
+	}
 }
 
 // writeLoop listen events and writes them into Websocket.
-func (h *HTTPHandler) writeLoop(events <-chan eventstream.Event, ws Websocket) error {
-	go func() {
-		for ev := range events {
-			err := h.setWriteDeadline(writeTimeout, ws)
-			if err != nil {
-				h.logger.Error("ws, set write timeout", zap.Error(err))
-			}
-
-			w, err := ws.NextWriter(gorillaws.TextMessage)
-			if err != nil {
-				h.logger.Error("write loop, get next writer", zap.Error(err))
-
-				return
-			}
-
-			adapted, err := h.eventAdapter.Adapt(ev)
-			if err != nil {
-				h.logger.Error(fmt.Sprintf("adapt event with type %T", ev), zap.Error(err))
-
-				return
-			}
-
-			err = h.eventWriter.Write(adapted, w)
-			if err != nil {
-				h.logger.Error("write loop, write event", zap.Error(err))
-			}
-
-			err = h.closeWriter(w)
-			if err != nil {
-				h.logger.Error("write loop, close writer", zap.Error(err))
-			}
+func (h *HTTPHandler) writeLoop(events <-chan eventstream.Event, cws *concurrentWS) error {
+	for ev := range events {
+		err := cws.SetWriteDeadline(time.Now().Add(writeTimeout))
+		if err != nil {
+			return fmt.Errorf("set write deadline, err=%v", err)
 		}
-	}()
+
+		w, err := cws.NextWriter(gorillaws.TextMessage)
+		if err != nil {
+			return fmt.Errorf("write loop, get next writer, err=%v", err)
+		}
+
+		adapted, err := h.eventAdapter.Adapt(ev)
+		if err != nil {
+			return fmt.Errorf("adapt event with type %T, err=%v", ev, err)
+		}
+
+		err = h.eventWriter.Write(adapted, w)
+		if err != nil {
+			h.logger.Error("write loop, write event", zap.Error(err))
+		}
+
+		err = cws.CloseWriter(w)
+		if err != nil {
+			h.logger.Error("write loop, close writer", zap.Error(err))
+		}
+	}
 
 	return nil
 }
 
-func (h *HTTPHandler) writePingsLoop(ws Websocket) error {
-	go func() {
-		t := time.NewTicker(h.pingPeriod)
-		defer t.Stop()
+func (h *HTTPHandler) writePingsLoop(cws *concurrentWS) error {
+	t := time.NewTicker(h.pingPeriod)
+	defer t.Stop()
 
-		for range t.C {
-			err := ws.WriteControl(gorillaws.PingMessage, []byte{}, time.Now().Add(writeTimeout))
-			if err != nil {
-				h.logger.Error("ws, write control", zap.Error(err))
-
-				return
-			}
-
-			err = h.setWriteDeadline(writeTimeout, ws)
-			if err != nil {
-				h.logger.Error("set write timeout", zap.Error(err))
-			}
+	for range t.C {
+		err := cws.SetWriteDeadline(time.Now().Add(writeTimeout))
+		if err != nil {
+			return fmt.Errorf("set write deadline, err=%v", err)
 		}
-	}()
+
+		err = cws.WriteControl(gorillaws.PingMessage, []byte{}, time.Now().Add(writeTimeout))
+		if err != nil {
+			return fmt.Errorf("ws get next writer, err=%v", err)
+		}
+	}
 
 	return nil
 }
 
-func (h *HTTPHandler) listenShutdown(ws Websocket) {
-	closer := newWsCloser(h.logger, ws)
-
+func (h *HTTPHandler) listenShutdown(cws *concurrentWS) error {
 	<-h.shutdownCh
 
-	closer.Close(gorillaws.CloseNormalClosure)
-}
+	cws.Close(gorillaws.CloseNormalClosure)
 
-func (h *HTTPHandler) setWriteDeadline(d time.Duration, ws Websocket) error {
-	h.mu.Lock()
-	defer h.mu.Unlock()
-
-	return ws.SetWriteDeadline(time.Now().Add(d))
-}
-
-func (h *HTTPHandler) setReadDeadline(d time.Duration, ws Websocket) error {
-	h.mu.Lock()
-	defer h.mu.Unlock()
-
-	return ws.SetReadDeadline(time.Now().Add(d))
-}
-
-func (h *HTTPHandler) closeWriter(w io.WriteCloser) error {
-	h.mu.Lock()
-	defer h.mu.Unlock()
-
-	return w.Close()
+	return nil
 }

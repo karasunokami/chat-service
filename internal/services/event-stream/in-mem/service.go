@@ -95,7 +95,9 @@ func (s *Service) closeChanOnCtxDone(ctx context.Context, ch chan eventstream.Ev
 
 func (s *Service) safeSendToCh(ch chan eventstream.Event, event eventstream.Event) {
 	defer func() {
-		recover()
+		if e := recover(); e != nil {
+			s.logger.Warn("safe send to ch recovered", zap.Any("recovered", e))
+		}
 	}()
 
 	ch <- event
