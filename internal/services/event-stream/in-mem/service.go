@@ -15,20 +15,20 @@ const serviceName = "event-stream"
 
 type (
 	clientChMap map[int]chan eventstream.Event
-	subsMqp     map[string]clientChMap
+	subsMap     map[string]clientChMap
 )
 
 type Service struct {
 	mu sync.RWMutex
 	wg sync.WaitGroup
 
-	subs   subsMqp
+	subs   subsMap
 	logger *zap.Logger
 }
 
 func New() *Service {
 	return &Service{
-		subs:   make(subsMqp),
+		subs:   make(subsMap),
 		logger: zap.L().Named(serviceName),
 	}
 }

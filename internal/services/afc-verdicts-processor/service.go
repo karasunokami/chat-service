@@ -213,13 +213,12 @@ func (s *Service) handleWithRetries(ctx context.Context, mp messagePayload) erro
 
 				lastError = multierr.Append(lastError, err)
 
-				if he, converted := convertToHandleErr(err); converted {
-					if he.temporary {
-						continue
-					}
-
-					return err
+				if he, converted := convertToHandleErr(err); converted && he.IsTemporary() {
+					// retry
+					continue
 				}
+
+				return err
 			}
 
 			return nil
@@ -247,17 +246,17 @@ func (s *Service) handleMessageByStatus(ctx context.Context, mp messagePayload) 
 func (s *Service) handleMessageOk(ctx context.Context, msgID types.MessageID) error {
 	err := s.msgRepo.MarkAsVisibleForManager(ctx, msgID)
 	if err != nil {
-		return fmt.Errorf("msg repo mark as visible for manager, err=%w", err)
+		return fmt.Errorf("msg repo mark as visible for manager, err=%v", err)
 	}
 
 	payload, err := clientmessagesentjob.MarshalPayload(msgID)
 	if err != nil {
-		return fmt.Errorf("marshal client message sent job payload, err=%w", err)
+		return fmt.Errorf("marshal client message sent job payload, err=%v", err)
 	}
 
 	_, err = s.outBox.Put(ctx, clientmessagesentjob.Name, payload, time.Now())
 	if err != nil {
-		return fmt.Errorf("outbox svc put, err=%w", err)
+		return fmt.Errorf("outbox svc put, err=%v", err)
 	}
 
 	return nil
@@ -266,17 +265,17 @@ func (s *Service) handleMessageOk(ctx context.Context, msgID types.MessageID) er
 func (s *Service) handleMessageSuspicious(ctx context.Context, msgID types.MessageID) error {
 	err := s.msgRepo.BlockMessage(ctx, msgID)
 	if err != nil {
-		return fmt.Errorf("msg repo block message, err=%w", err)
+		return fmt.Errorf("msg repo block message, err=%v", err)
 	}
 
 	payload, err := clientmessageblockedjob.MarshalPayload(msgID)
 	if err != nil {
-		return fmt.Errorf("marshal client message blocked job payload, err=%w", err)
+		return fmt.Errorf("marshal client message blocked job payload, err=%v", err)
 	}
 
 	_, err = s.outBox.Put(ctx, clientmessageblockedjob.Name, payload, time.Now())
 	if err != nil {
-		return fmt.Errorf("outbox svc put, err=%w", err)
+		return fmt.Errorf("outbox svc put, err=%v", err)
 	}
 
 	return nil
@@ -300,7 +299,7 @@ func (s *Service) writeMessageToDlq(ctx context.Context, m kafka.Message, lastEr
 
 	err := s.dlqWriter.WriteMessages(ctx, dlqMessage)
 	if err != nil {
-		s.logger.Error("Write message to DLQ", zap.Error(err))
+		s.logger.Error("Write message to DLQ", zap.Error(err), zap.Any("message", dlqMessage))
 	}
 }
 
@@ -318,7 +317,7 @@ func (s *Service) parseMessage(data []byte) (messagePayload, error) {
 
 	mp, err := unmarshalPayload(data)
 	if err != nil {
-		return messagePayload{}, fmt.Errorf("unmarshal payload, err=%w", err)
+		return messagePayload{}, fmt.Errorf("unmarshal payload, err=%v", err)
 	}
 
 	return mp, nil
