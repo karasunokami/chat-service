@@ -44,7 +44,7 @@ func adaptMessageBlockedEvent(ev *eventstream.MessageBlockedEvent) DefaultEvent 
 
 func adaptNewMessageEvent(ev *eventstream.NewMessageEvent) NewMessageEvent {
 	return NewMessageEvent{
-		AuthorId:  pointer.PtrWithZeroAsNil(ev.UserID),
+		AuthorId:  pointer.PtrWithZeroAsNil(ev.AuthorID),
 		Body:      ev.MessageBody,
 		CreatedAt: ev.CreatedAt,
 		EventId:   ev.EventID,

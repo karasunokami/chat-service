@@ -6,6 +6,7 @@ import (
 	"github.com/karasunokami/chat-service/internal/config"
 	"github.com/karasunokami/chat-service/internal/server"
 	servermanager "github.com/karasunokami/chat-service/internal/server-manager"
+	managerevents "github.com/karasunokami/chat-service/internal/server-manager/events"
 	managerv1 "github.com/karasunokami/chat-service/internal/server-manager/v1"
 	canreceiveproblems "github.com/karasunokami/chat-service/internal/usecases/manager/can-receive-problems"
 	freehands "github.com/karasunokami/chat-service/internal/usecases/manager/free-hands"
@@ -33,6 +34,7 @@ func initServerManager(
 		servermanager.NewHandlersRegistrar(deps.managerSwagger, serverHandlers, deps.errHandler.Handle),
 		deps.kcClient,
 		deps.eventsStream,
+		managerevents.Adapter{},
 	))
 	if err != nil {
 		return nil, fmt.Errorf("build server: %v", err)

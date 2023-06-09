@@ -6,6 +6,7 @@ import (
 
 	"github.com/karasunokami/chat-service/internal/middlewares"
 	eventstream "github.com/karasunokami/chat-service/internal/services/event-stream"
+	websocketstream "github.com/karasunokami/chat-service/internal/websocket-stream"
 	errors461e464ebed9 "github.com/kazhuravlev/options-gen/pkg/errors"
 	validator461e464ebed9 "github.com/kazhuravlev/options-gen/pkg/validator"
 	"github.com/labstack/echo/v4"
@@ -24,6 +25,7 @@ func NewOptions(
 	handlersRegistrar func(e *echo.Echo),
 	introspector middlewares.Introspector,
 	eventStream eventstream.EventStream,
+	eventsAdapter websocketstream.EventAdapter,
 	options ...OptOptionsSetter,
 ) Options {
 	o := Options{}
@@ -39,6 +41,7 @@ func NewOptions(
 	o.handlersRegistrar = handlersRegistrar
 	o.introspector = introspector
 	o.eventStream = eventStream
+	o.eventsAdapter = eventsAdapter
 
 	for _, opt := range options {
 		opt(&o)
@@ -57,6 +60,7 @@ func (o *Options) Validate() error {
 	errs.Add(errors461e464ebed9.NewValidationError("handlersRegistrar", _validate_Options_handlersRegistrar(o)))
 	errs.Add(errors461e464ebed9.NewValidationError("introspector", _validate_Options_introspector(o)))
 	errs.Add(errors461e464ebed9.NewValidationError("eventStream", _validate_Options_eventStream(o)))
+	errs.Add(errors461e464ebed9.NewValidationError("eventsAdapter", _validate_Options_eventsAdapter(o)))
 	return errs.AsError()
 }
 
@@ -119,6 +123,13 @@ func _validate_Options_introspector(o *Options) error {
 func _validate_Options_eventStream(o *Options) error {
 	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.eventStream, "required"); err != nil {
 		return fmt461e464ebed9.Errorf("field `eventStream` did not pass the test: %w", err)
+	}
+	return nil
+}
+
+func _validate_Options_eventsAdapter(o *Options) error {
+	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.eventsAdapter, "required"); err != nil {
+		return fmt461e464ebed9.Errorf("field `eventsAdapter` did not pass the test: %w", err)
 	}
 	return nil
 }

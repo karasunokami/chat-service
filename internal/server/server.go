@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/karasunokami/chat-service/internal/middlewares"
-	clientevents "github.com/karasunokami/chat-service/internal/server-client/events"
 	eventstream "github.com/karasunokami/chat-service/internal/services/event-stream"
 	websocketstream "github.com/karasunokami/chat-service/internal/websocket-stream"
 
@@ -27,15 +26,16 @@ const (
 
 //go:generate options-gen -out-filename=server_options.gen.go -from-struct=Options
 type Options struct {
-	logger            *zap.Logger              `option:"mandatory" validate:"required"`
-	addr              string                   `option:"mandatory" validate:"required,hostname_port"`
-	allowOrigins      []string                 `option:"mandatory" validate:"min=1"`
-	wsSecProtocol     string                   `option:"mandatory" validate:"required"`
-	requiredResource  string                   `option:"mandatory" validate:"required"`
-	requiredRole      string                   `option:"mandatory" validate:"required"`
-	handlersRegistrar func(e *echo.Echo)       `option:"mandatory" validate:"required"`
-	introspector      middlewares.Introspector `option:"mandatory" validate:"required"`
-	eventStream       eventstream.EventStream  `option:"mandatory" validate:"required"`
+	logger            *zap.Logger                  `option:"mandatory" validate:"required"`
+	addr              string                       `option:"mandatory" validate:"required,hostname_port"`
+	allowOrigins      []string                     `option:"mandatory" validate:"min=1"`
+	wsSecProtocol     string                       `option:"mandatory" validate:"required"`
+	requiredResource  string                       `option:"mandatory" validate:"required"`
+	requiredRole      string                       `option:"mandatory" validate:"required"`
+	handlersRegistrar func(e *echo.Echo)           `option:"mandatory" validate:"required"`
+	introspector      middlewares.Introspector     `option:"mandatory" validate:"required"`
+	eventStream       eventstream.EventStream      `option:"mandatory" validate:"required"`
+	eventsAdapter     websocketstream.EventAdapter `option:"mandatory" validate:"required"`
 }
 
 type Server struct {
@@ -86,7 +86,7 @@ func New(opts Options) (*Server, error) {
 	wsHandler, err := websocketstream.NewHTTPHandler(websocketstream.NewOptions(
 		opts.logger,
 		opts.eventStream,
-		clientevents.Adapter{},
+		opts.eventsAdapter,
 		websocketstream.JSONEventWriter{},
 		websocketstream.NewUpgrader(opts.allowOrigins, opts.wsSecProtocol),
 		shutdownCh,

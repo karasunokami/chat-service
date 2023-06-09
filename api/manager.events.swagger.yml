@@ -1,0 +1,77 @@
+openapi: 3.1.0
+info:
+  title: Bank Support Chat Manager Events
+  version: v1
+
+servers:
+  - url: ws://localhost:8081/ws
+    description: Development server
+
+paths:
+  /stub:
+    get:
+      description: It uses for generating events. Otherwise it doesn't.
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+
+components:
+  # noinspection YAMLSchemaValidation
+  schemas:
+
+    Event:
+      type: object
+      required: [eventType]
+      properties:
+        eventType:
+          type: string
+      oneOf:
+        - $ref: "#/components/schemas/NewChatEvent"
+      discriminator:
+        propertyName: eventType
+
+    DefaultEvent:
+      type: object
+      required: [ eventId, requestId, eventType ]
+      properties:
+        eventType:
+          type: string
+        requestId:
+          type: string
+          format: uuid
+          x-go-type: types.RequestID
+          x-go-type-import:
+            path: "github.com/karasunokami/chat-service/internal/types"
+        eventId:
+          type: string
+          format: uuid
+          x-go-type: types.EventID
+          x-go-type-import:
+            path: "github.com/karasunokami/chat-service/internal/types"
+
+    NewChatEvent:
+      allOf:
+        - $ref: "#/components/schemas/DefaultEvent"
+        - type: object
+          required: [ chatId, clientId, canTakeMoreProblems ]
+          properties:
+
+            chatId:
+              type: string
+              format: uuid
+              x-go-type: types.ChatID
+              x-go-type-import:
+                path: "github.com/karasunokami/chat-service/internal/types"
+
+            clientId:
+              type: string
+              format: uuid
+              x-go-type: types.UserID
+              x-go-type-import:
+                path: "github.com/karasunokami/chat-service/internal/types"
+
+            canTakeMoreProblems:
+              type: boolean

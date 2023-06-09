@@ -20,10 +20,12 @@ import (
 	inmemeventstream "github.com/karasunokami/chat-service/internal/services/event-stream/in-mem"
 	managerload "github.com/karasunokami/chat-service/internal/services/manager-load"
 	inmemmanagerpool "github.com/karasunokami/chat-service/internal/services/manager-pool/in-mem"
+	managerscheduler "github.com/karasunokami/chat-service/internal/services/manager-scheduler"
 	msgproducer "github.com/karasunokami/chat-service/internal/services/msg-producer"
 	"github.com/karasunokami/chat-service/internal/services/outbox"
 	clientmessageblockedjob "github.com/karasunokami/chat-service/internal/services/outbox/jobs/client-message-blocked"
 	clientmessagesentjob "github.com/karasunokami/chat-service/internal/services/outbox/jobs/client-message-sent"
+	managerassignedtoproblemjob "github.com/karasunokami/chat-service/internal/services/outbox/jobs/manager-assigned-to-problem"
 	sendclientmessagejob "github.com/karasunokami/chat-service/internal/services/outbox/jobs/send-client-message"
 	"github.com/karasunokami/chat-service/internal/store"
 
@@ -56,6 +58,7 @@ type serverDeps struct {
 	managerPool                 *inmemmanagerpool.Service
 	eventsStream                *inmemeventstream.Service
 	afcVerdictsProcessorService *afcverdictsprocessor.Service
+	managerSchedulerService     *managerscheduler.Service
 }
 
 func startNewDeps(ctx context.Context, cfg config.Config) (serverDeps, error) {
@@ -193,6 +196,17 @@ func startNewDeps(ctx context.Context, cfg config.Config) (serverDeps, error) {
 		return serverDeps{}, fmt.Errorf("configure afc verdicts processor, err=%v", err)
 	}
 
+	d.managerSchedulerService, err = managerscheduler.New(managerscheduler.NewOptions(
+		cfg.Services.ManagerScheduler.Period,
+		d.managerPool,
+		d.outboxService,
+		d.problemsRepo,
+		d.db,
+	))
+	if err != nil {
+		return serverDeps{}, fmt.Errorf("create manager scheduler service, err=%v", err)
+	}
+
 	// register service jobs
 	sendClientMessageJob, err := sendclientmessagejob.New(sendclientmessagejob.NewOptions(
 		d.msgProducerService,
@@ -219,7 +233,21 @@ func startNewDeps(ctx context.Context, cfg config.Config) (serverDeps, error) {
 		return serverDeps{}, fmt.Errorf("create client message sent job, err=%v", err)
 	}
 
-	err = d.outboxService.RegisterJobs(sendClientMessageJob, clientMessageBlockedJob, clientMessageSentJob)
+	managerAssignedToProblemJob, err := managerassignedtoproblemjob.New(managerassignedtoproblemjob.NewOptions(
+		d.msgProducerService,
+		d.eventsStream,
+		d.msgRepo,
+	))
+	if err != nil {
+		return serverDeps{}, fmt.Errorf("create manager assigned to problem job, err=%v", err)
+	}
+
+	err = d.outboxService.RegisterJobs(
+		sendClientMessageJob,
+		clientMessageBlockedJob,
+		clientMessageSentJob,
+		managerAssignedToProblemJob,
+	)
 	if err != nil {
 		return serverDeps{}, fmt.Errorf("register jobs, err=%v", err)
 	}

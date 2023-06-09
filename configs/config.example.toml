@@ -82,3 +82,6 @@ JaBqrPJq5sXcjLWJ5n5wkKzEvGn3a8W6EygIJKJiaYLUS9qOQz2MBx4q3y2s4aE6
 Qer9hpNqGfW7uBmNAgMBAAE=
 -----END PUBLIC KEY-----
 """
+
+[services.manager_scheduler]
+period = "5s"

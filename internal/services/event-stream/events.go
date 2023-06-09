@@ -62,9 +62,9 @@ type NewMessageEvent struct {
 	RequestID   types.RequestID `validate:"required"`
 	ChatID      types.ChatID    `validate:"required"`
 	MessageID   types.MessageID `validate:"required"`
-	UserID      types.UserID    `validate:"required"`
 	CreatedAt   time.Time       `validate:"required"`
 	MessageBody string          `validate:"required"`
+	AuthorID    types.UserID
 	IsService   bool
 }
 
@@ -73,7 +73,7 @@ func NewNewMessageEvent(
 	requestID types.RequestID,
 	chatID types.ChatID,
 	messageID types.MessageID,
-	userID types.UserID,
+	authorID types.UserID,
 	createdAt time.Time,
 	messageBody string,
 	isService bool,
@@ -83,7 +83,7 @@ func NewNewMessageEvent(
 		RequestID:   requestID,
 		ChatID:      chatID,
 		MessageID:   messageID,
-		UserID:      userID,
+		AuthorID:    authorID,
 		CreatedAt:   createdAt,
 		MessageBody: messageBody,
 		IsService:   isService,
@@ -103,7 +103,7 @@ func (e *NewMessageEvent) Matches(x interface{}) bool {
 	return ev.RequestID == e.RequestID &&
 		ev.ChatID == e.ChatID &&
 		ev.MessageID == e.MessageID &&
-		ev.UserID == e.UserID &&
+		ev.AuthorID == e.AuthorID &&
 		ev.CreatedAt == e.CreatedAt &&
 		ev.MessageBody == e.MessageBody &&
 		ev.IsService == e.IsService
@@ -150,4 +150,53 @@ func (e *MessageBlockedEvent) Matches(x interface{}) bool {
 
 func (e *MessageBlockedEvent) String() string {
 	return fmt.Sprintf("{RequestID: %v, MessageID: %v}", e.RequestID, e.MessageID)
+}
+
+// Manager Events
+
+// NewChatEvent is a signal about the appearance of a new chat for manager.
+type NewChatEvent struct {
+	event
+
+	CanTakeMoreProblems bool            `validate:"required"`
+	EventID             types.EventID   `validate:"required"`
+	RequestID           types.RequestID `validate:"required"`
+	ChatID              types.ChatID    `validate:"required"`
+	ClientID            types.UserID    `validate:"required"`
+}
+
+func NewNewChatEvent(
+	eventID types.EventID,
+	requestID types.RequestID,
+	chatID types.ChatID,
+	clientID types.UserID,
+	canTakeMoreProblems bool,
+) *NewChatEvent {
+	return &NewChatEvent{
+		CanTakeMoreProblems: canTakeMoreProblems,
+		EventID:             eventID,
+		RequestID:           requestID,
+		ChatID:              chatID,
+		ClientID:            clientID,
+	}
+}
+
+func (e *NewChatEvent) Validate() error {
+	return validator.Validator.Struct(e)
+}
+
+func (e *NewChatEvent) Matches(x interface{}) bool {
+	ev, ok := x.(*NewChatEvent)
+	if !ok {
+		return false
+	}
+
+	return ev.RequestID == e.RequestID &&
+		ev.ChatID == e.ChatID &&
+		ev.ClientID == e.ClientID &&
+		ev.CanTakeMoreProblems == e.CanTakeMoreProblems
+}
+
+func (e *NewChatEvent) String() string {
+	return fmt.Sprintf("%v", *e)
 }

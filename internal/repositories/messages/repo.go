@@ -4,7 +4,11 @@ import (
 	"fmt"
 
 	"github.com/karasunokami/chat-service/internal/store"
+
+	"go.uber.org/zap"
 )
+
+const serviceName = "messagesRepo"
 
 //go:generate options-gen -out-filename=repo_options.gen.go -from-struct=Options
 type Options struct {
@@ -13,6 +17,7 @@ type Options struct {
 
 type Repo struct {
 	Options
+	logger *zap.Logger
 }
 
 func New(opts Options) (*Repo, error) {
@@ -20,5 +25,8 @@ func New(opts Options) (*Repo, error) {
 		return nil, fmt.Errorf("validate options err=%v", err)
 	}
 
-	return &Repo{Options: opts}, nil
+	return &Repo{
+		Options: opts,
+		logger:  zap.L().Named(serviceName),
+	}, nil
 }
