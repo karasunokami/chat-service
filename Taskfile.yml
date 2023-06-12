@@ -63,6 +63,9 @@ vars:
   E2E_CLIENT_EVENTS_DST: ./tests/e2e/api/client/events/events.gen.go
   E2E_CLIENT_EVENTS_PKG: apiclientevents
 
+  E2E_MANAGER_V1_DST: ./tests/e2e/api/manager/v1/client.gen.go
+  E2E_MANAGER_V1_PKG: apimanagerv1
+
   E2E_MANAGER_EVENTS_DST: ./tests/e2e/api/manager/events/events.gen.go
   E2E_MANAGER_EVENTS_PKG: apimanagerevents
   ###
@@ -125,7 +128,7 @@ tasks:
     cmds:
       - echo "- End-to-end tests..."
       # NOTE: It's important to run tests serial (without `-p` flag) – for correct `clientsPool` sharing.
-      - "{{.DOCKER_TOOLS_CMD_TPL}} --env-file .env --network host chat-service-tools ginkgo --fail-fast --timeout=1m --tags e2e {{.CLI_ARGS}} ./tests/e2e"
+      - "{{.DOCKER_TOOLS_CMD_TPL}} --env-file .env --network host chat-service-tools ginkgo --fail-fast --timeout=30s --tags e2e {{.CLI_ARGS}} ./tests/e2e"
 
   build:
     cmds:
@@ -170,8 +173,13 @@ tasks:
     cmds:
       - echo "[E2E] Generate client API..."
       - "{{.DOCKER_TOOLS_CMD}} oapi-codegen --old-config-style -generate types,client -package {{.E2E_CLIENT_V1_PKG}} {{.CLIENT_V1_SRC}} > {{.E2E_CLIENT_V1_DST}}"
+
       - echo "[E2E] Generate client events..."
       - "{{.DOCKER_TOOLS_CMD}} oapi-codegen --old-config-style -generate skip-prune,types -package {{.E2E_CLIENT_EVENTS_PKG}} {{.CLIENT_EVENTS_V1_SRC}} > {{.E2E_CLIENT_EVENTS_DST}}"
+
+      - echo "[E2E] Generate manager API..."
+      - "{{.DOCKER_TOOLS_CMD}} oapi-codegen --old-config-style -generate types,client -package {{.E2E_MANAGER_V1_PKG}} {{.MANAGER_V1_SRC}} > {{.E2E_MANAGER_V1_DST}}"
+
       - echo "[E2E] Generate manager events..."
       - "{{.DOCKER_TOOLS_CMD}} oapi-codegen --old-config-style -generate skip-prune,types -package {{.E2E_MANAGER_EVENTS_PKG}} {{.MANAGER_EVENTS_V1_SRC}} > {{.E2E_MANAGER_EVENTS_DST}}"
 

@@ -228,6 +228,7 @@ func startNewDeps(ctx context.Context, cfg config.Config) (serverDeps, error) {
 	clientMessageSentJob, err := clientmessagesentjob.New(clientmessagesentjob.NewOptions(
 		d.eventsStream,
 		d.msgRepo,
+		d.problemsRepo,
 	))
 	if err != nil {
 		return serverDeps{}, fmt.Errorf("create client message sent job, err=%v", err)

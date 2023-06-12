@@ -195,8 +195,6 @@ func (s *Service) handleWithRetries(ctx context.Context, mp messagePayload) erro
 		case <-ctx.Done():
 			return nil
 
-		case <-time.After(lastDelay):
-
 		default:
 			if lastError != nil {
 				delay := s.getDelay(lastDelay)

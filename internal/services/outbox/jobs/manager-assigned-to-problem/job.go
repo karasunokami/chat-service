@@ -112,7 +112,7 @@ func (j *Job) Handle(ctx context.Context, payload string) error {
 	err = j.eventStream.Publish(ctx, pl.ManagerID, eventstream.NewNewChatEvent(
 		pl.CanTakeMoreProblems,
 		types.NewEventID(),
-		serviceMsg.InitialRequestID,
+		msg.InitialRequestID,
 		serviceMsg.ChatID,
 		msg.AuthorID,
 	))

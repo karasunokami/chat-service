@@ -8,7 +8,7 @@ import (
 	"github.com/karasunokami/chat-service/internal/validator"
 )
 
-//go:generate gonstructor --output=events.gen.go --type=NewMessageEvent --type=MessageSentEvent --type=MessageBlockedEvent --type=NewChatEvent
+//go:generate gonstructor --output=events.gen.go --type=NewMessageEvent --type=MessageSentEvent --type=MessageBlockedEvent --type=NewChatEvent --type=NewManagerMessageEvent
 
 type Event interface {
 	eventMarker()
@@ -111,7 +111,7 @@ func (e *MessageBlockedEvent) String() string {
 // NewChatEvent is a signal about the appearance of a new chat for manager.
 type NewChatEvent struct {
 	event               `gonstructor:"-"`
-	CanTakeMoreProblems bool            `validate:"required"`
+	CanTakeMoreProblems bool            `validate:"boolean"`
 	EventID             types.EventID   `validate:"required"`
 	RequestID           types.RequestID `validate:"required"`
 	ChatID              types.ChatID    `validate:"required"`
@@ -135,5 +135,39 @@ func (e *NewChatEvent) Matches(x interface{}) bool {
 }
 
 func (e *NewChatEvent) String() string {
+	return fmt.Sprintf("%v", *e)
+}
+
+// NewManagerMessageEvent is a signal about the appearance of a new manager message in the chat.
+type NewManagerMessageEvent struct {
+	event       `gonstructor:"-"`
+	EventID     types.EventID   `validate:"required"`
+	RequestID   types.RequestID `validate:"required"`
+	ChatID      types.ChatID    `validate:"required"`
+	MessageID   types.MessageID `validate:"required"`
+	CreatedAt   time.Time       `validate:"required"`
+	MessageBody string          `validate:"required"`
+	AuthorID    types.UserID    `validate:"required"`
+}
+
+func (e *NewManagerMessageEvent) Validate() error {
+	return validator.Validator.Struct(e)
+}
+
+func (e *NewManagerMessageEvent) Matches(x interface{}) bool {
+	ev, ok := x.(*NewManagerMessageEvent)
+	if !ok {
+		return false
+	}
+
+	return ev.RequestID == e.RequestID &&
+		ev.ChatID == e.ChatID &&
+		ev.MessageID == e.MessageID &&
+		ev.CreatedAt == e.CreatedAt &&
+		ev.MessageBody == e.MessageBody &&
+		ev.AuthorID == e.AuthorID
+}
+
+func (e *NewManagerMessageEvent) String() string {
 	return fmt.Sprintf("%v", *e)
 }

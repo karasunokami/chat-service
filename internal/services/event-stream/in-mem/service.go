@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/imkira/go-observer"
 	eventstream "github.com/karasunokami/chat-service/internal/services/event-stream"
 	"github.com/karasunokami/chat-service/internal/types"
 
@@ -13,113 +14,98 @@ import (
 
 const serviceName = "event-stream"
 
-type (
-	clientChMap map[int]chan eventstream.Event
-	subsMap     map[string]clientChMap
-)
-
 type Service struct {
-	mu sync.RWMutex
-	wg sync.WaitGroup
-
-	subs   subsMap
-	logger *zap.Logger
+	wg        sync.WaitGroup
+	mu        sync.RWMutex
+	subs      map[types.UserID]observer.Property
+	subsCount map[types.UserID]int
+	logger    *zap.Logger
 }
 
 func New() *Service {
 	return &Service{
-		subs:   make(subsMap),
-		logger: zap.L().Named(serviceName),
+		wg:        sync.WaitGroup{},
+		mu:        sync.RWMutex{},
+		subs:      map[types.UserID]observer.Property{},
+		subsCount: map[types.UserID]int{},
+		logger:    zap.L().Named(serviceName),
 	}
 }
 
 func (s *Service) Subscribe(ctx context.Context, userID types.UserID) (<-chan eventstream.Event, error) {
 	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	uid := userID.String()
-
-	if _, ex := s.subs[uid]; !ex {
-		s.subs[uid] = make(clientChMap, 0)
+	p, ok := s.subs[userID]
+	if !ok {
+		p = observer.NewProperty(nil)
+		s.subs[userID] = p
 	}
 
-	ch := make(chan eventstream.Event)
+	s.subsCount[userID]++
+	s.mu.Unlock()
 
-	ind := len(s.subs[uid])
-	s.subs[uid][ind] = ch
+	stream := p.Observe()
+	events := make(chan eventstream.Event)
 
 	s.wg.Add(1)
-	go s.closeChanOnCtxDone(ctx, ch, uid, ind)
+	go func() {
+		defer func() {
+			s.mu.Lock()
+			s.subsCount[userID]--
+			s.mu.Unlock()
 
-	s.logger.Debug("Subscriber added to event stream", zap.String("userID", uid), zap.Int("subsCount", len(s.subs[uid])))
+			close(events)
+			s.wg.Done()
+		}()
 
-	return ch, nil
+		for {
+			select {
+			case <-ctx.Done():
+				return
+
+			case <-stream.Changes():
+				select {
+				case <-ctx.Done():
+					return
+				case events <- stream.Next().(eventstream.Event):
+				}
+			}
+		}
+	}()
+
+	return events, nil
 }
 
-func (s *Service) Publish(ctx context.Context, userID types.UserID, event eventstream.Event) error {
+func (s *Service) Publish(_ context.Context, userID types.UserID, event eventstream.Event) error {
 	if err := event.Validate(); err != nil {
-		return fmt.Errorf("validate event, err=%v", err)
+		return fmt.Errorf("invalid event, err=%v", err)
 	}
 
-	s.mu.RLock()
-	defer s.mu.RUnlock()
+	if v := s.getSubsCount(userID); v == 0 {
+		s.logger.With(zap.Stringer("user_id", userID)).Debug("no subscribers")
 
-	chs, ex := s.subs[userID.String()]
-	if !ex || len(chs) == 0 {
 		return nil
 	}
 
-	s.logger.Debug("Publishing message for client", zap.String("clientID", userID.String()), zap.Any("event", event))
+	s.mu.RLock()
+	p := s.subs[userID]
+	s.mu.RUnlock()
 
-	for ind, c := range chs {
-		err := s.safeSendToCh(ctx, c, event)
-		if err != nil {
-			delete(chs, ind)
-		}
-	}
+	p.Update(event)
+
+	s.logger.Debug("Publishing message for client", zap.Stringer("clientID", userID), zap.Any("event", event))
 
 	return nil
 }
 
 func (s *Service) Close() error {
-	s.logger.Info("Stopping service...")
-
 	s.wg.Wait()
-
-	s.logger.Info("Stopping service done")
 
 	return nil
 }
 
-func (s *Service) closeChanOnCtxDone(ctx context.Context, ch chan eventstream.Event, userID string, ind int) {
-	defer s.wg.Done()
+func (s *Service) getSubsCount(uid types.UserID) int {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 
-	<-ctx.Done()
-
-	s.logger.Debug("Stopping event stream subscriber...")
-
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	close(ch)
-	delete(s.subs[userID], ind)
-
-	s.logger.Debug("Stopping event stream subscriber done")
-}
-
-func (s *Service) safeSendToCh(ctx context.Context, ch chan<- eventstream.Event, event eventstream.Event) (err error) {
-	defer func() {
-		if e := recover(); e != nil {
-			if re, ok := e.(error); ok {
-				err = re
-			}
-		}
-	}()
-
-	select {
-	case <-ctx.Done():
-	case ch <- event:
-	}
-
-	return
+	return s.subsCount[uid]
 }

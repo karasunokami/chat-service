@@ -51,31 +51,31 @@ func (mr *MockeventStreamMockRecorder) Publish(ctx, userID, event interface{}) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Publish", reflect.TypeOf((*MockeventStream)(nil).Publish), ctx, userID, event)
 }
 
-// MockmessageRepository is a mock of messageRepository interface.
-type MockmessageRepository struct {
+// MockmessageRepo is a mock of messageRepo interface.
+type MockmessageRepo struct {
 	ctrl     *gomock.Controller
-	recorder *MockmessageRepositoryMockRecorder
+	recorder *MockmessageRepoMockRecorder
 }
 
-// MockmessageRepositoryMockRecorder is the mock recorder for MockmessageRepository.
-type MockmessageRepositoryMockRecorder struct {
-	mock *MockmessageRepository
+// MockmessageRepoMockRecorder is the mock recorder for MockmessageRepo.
+type MockmessageRepoMockRecorder struct {
+	mock *MockmessageRepo
 }
 
-// NewMockmessageRepository creates a new mock instance.
-func NewMockmessageRepository(ctrl *gomock.Controller) *MockmessageRepository {
-	mock := &MockmessageRepository{ctrl: ctrl}
-	mock.recorder = &MockmessageRepositoryMockRecorder{mock}
+// NewMockmessageRepo creates a new mock instance.
+func NewMockmessageRepo(ctrl *gomock.Controller) *MockmessageRepo {
+	mock := &MockmessageRepo{ctrl: ctrl}
+	mock.recorder = &MockmessageRepoMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockmessageRepository) EXPECT() *MockmessageRepositoryMockRecorder {
+func (m *MockmessageRepo) EXPECT() *MockmessageRepoMockRecorder {
 	return m.recorder
 }
 
 // GetMessageByID mocks base method.
-func (m *MockmessageRepository) GetMessageByID(ctx context.Context, msgID types.MessageID) (*messagesrepo.Message, error) {
+func (m *MockmessageRepo) GetMessageByID(ctx context.Context, msgID types.MessageID) (*messagesrepo.Message, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetMessageByID", ctx, msgID)
 	ret0, _ := ret[0].(*messagesrepo.Message)
@@ -84,7 +84,45 @@ func (m *MockmessageRepository) GetMessageByID(ctx context.Context, msgID types.
 }
 
 // GetMessageByID indicates an expected call of GetMessageByID.
-func (mr *MockmessageRepositoryMockRecorder) GetMessageByID(ctx, msgID interface{}) *gomock.Call {
+func (mr *MockmessageRepoMockRecorder) GetMessageByID(ctx, msgID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMessageByID", reflect.TypeOf((*MockmessageRepository)(nil).GetMessageByID), ctx, msgID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMessageByID", reflect.TypeOf((*MockmessageRepo)(nil).GetMessageByID), ctx, msgID)
+}
+
+// MockproblemsRepo is a mock of problemsRepo interface.
+type MockproblemsRepo struct {
+	ctrl     *gomock.Controller
+	recorder *MockproblemsRepoMockRecorder
+}
+
+// MockproblemsRepoMockRecorder is the mock recorder for MockproblemsRepo.
+type MockproblemsRepoMockRecorder struct {
+	mock *MockproblemsRepo
+}
+
+// NewMockproblemsRepo creates a new mock instance.
+func NewMockproblemsRepo(ctrl *gomock.Controller) *MockproblemsRepo {
+	mock := &MockproblemsRepo{ctrl: ctrl}
+	mock.recorder = &MockproblemsRepoMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockproblemsRepo) EXPECT() *MockproblemsRepoMockRecorder {
+	return m.recorder
+}
+
+// GetManagerID mocks base method.
+func (m *MockproblemsRepo) GetManagerID(ctx context.Context, problemID types.ProblemID) (types.UserID, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetManagerID", ctx, problemID)
+	ret0, _ := ret[0].(types.UserID)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetManagerID indicates an expected call of GetManagerID.
+func (mr *MockproblemsRepoMockRecorder) GetManagerID(ctx, problemID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetManagerID", reflect.TypeOf((*MockproblemsRepo)(nil).GetManagerID), ctx, problemID)
 }

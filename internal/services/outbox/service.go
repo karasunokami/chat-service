@@ -145,7 +145,7 @@ func (s *Service) runWorker(ctx context.Context) {
 					continue
 				}
 
-				s.lg.Error("handle job, err=%v", zap.Error(err))
+				s.lg.Error("handle job, err=%v", zap.String("job", j.Name), zap.Error(err))
 			}
 
 		case <-ctx.Done():

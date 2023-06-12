@@ -10,6 +10,7 @@ import (
 	"github.com/karasunokami/chat-service/internal/store/chat"
 	"github.com/karasunokami/chat-service/internal/store/message"
 	"github.com/karasunokami/chat-service/internal/store/predicate"
+	"github.com/karasunokami/chat-service/internal/store/problem"
 	"github.com/karasunokami/chat-service/internal/types"
 )
 
@@ -41,7 +42,8 @@ func (r *Repo) GetClientChatMessages(
 		limit = cursor.PageSize
 	}
 
-	query := r.buildMessagesQuery(ctx, limit, cursor, clientID)
+	query := r.buildMessagesQuery(ctx, limit, cursor)
+	query = query.Where(message.HasChatWith(chat.ClientID(clientID)))
 
 	msgs, err := query.All(ctx)
 	if err != nil {
@@ -58,9 +60,53 @@ func (r *Repo) GetClientChatMessages(
 	}, nil
 }
 
-func (r *Repo) buildMessagesQuery(ctx context.Context, limit int, cursor *Cursor, clientID types.UserID) *store.MessageQuery {
+// GetManagerChatMessages returns Nth page of messages in the chat for client side.
+func (r *Repo) GetManagerChatMessages(
+	ctx context.Context,
+	chatID types.ChatID,
+	managerID types.UserID,
+	pageSize int,
+	cursor *Cursor,
+) ([]Message, *Cursor, error) {
+	err := validateParams(pageSize, cursor)
+	if err != nil {
+		return nil, nil, fmt.Errorf("validate params, err=%w", err)
+	}
+
+	limit := pageSize
+	if cursor != nil {
+		limit = cursor.PageSize
+	}
+
+	query := r.buildMessagesQuery(ctx, limit, cursor)
+
+	query = query.Where(
+		message.ChatIDEQ(chatID),
+		message.IsVisibleForManager(true),
+		message.HasChatWith(
+			chat.HasProblemsWith(
+				problem.ManagerIDEQ(managerID),
+			),
+		),
+	)
+
+	msgs, err := query.All(ctx)
+	if err != nil {
+		return nil, nil, fmt.Errorf("query messages, err=%v", err)
+	}
+
+	if len(msgs) <= limit {
+		return storeMessagesToRepoMessages(msgs), nil, nil
+	}
+
+	return storeMessagesToRepoMessages(msgs[:limit]), &Cursor{
+		LastCreatedAt: msgs[limit-1].CreatedAt,
+		PageSize:      limit,
+	}, nil
+}
+
+func (r *Repo) buildMessagesQuery(ctx context.Context, limit int, cursor *Cursor) *store.MessageQuery {
 	predicates := []predicate.Message{
-		message.HasChatWith(chat.ClientID(clientID)),
 		message.IsVisibleForClient(true),
 	}
 

@@ -120,6 +120,13 @@ var (
 				OnDelete:   schema.NoAction,
 			},
 		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "problem_chat_id_manager_id",
+				Unique:  false,
+				Columns: []*schema.Column{ProblemsColumns[4], ProblemsColumns[1]},
+			},
+		},
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{

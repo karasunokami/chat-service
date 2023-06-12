@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/karasunokami/chat-service/internal/store/chat"
+	"github.com/karasunokami/chat-service/internal/store/problem"
 	"github.com/karasunokami/chat-service/internal/types"
 )
 
@@ -18,4 +19,18 @@ func (r *Repo) CreateIfNotExists(ctx context.Context, userID types.UserID) (type
 	}
 
 	return chatID, nil
+}
+
+func (r *Repo) GetManagerOpened(ctx context.Context, managerID types.UserID) ([]*Chat, error) {
+	chats, err := r.db.Chat(ctx).Query().
+		Where(chat.HasProblemsWith(
+			problem.ManagerIDEQ(managerID),
+			problem.ResolvedAtIsNil(),
+		)).
+		All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("query chats, err=%v", err)
+	}
+
+	return storeChatsToRepoChats(chats), nil
 }

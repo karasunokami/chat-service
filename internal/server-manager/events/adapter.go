@@ -9,20 +9,37 @@ import (
 type Adapter struct{}
 
 func (Adapter) Adapt(ev eventstream.Event) (any, error) {
-	if e, ok := ev.(*eventstream.NewChatEvent); ok {
-		return adaptNewChatEvent(e), nil
+	var event Event
+	var err error
+
+	switch v := ev.(type) {
+	case *eventstream.NewChatEvent:
+		err = event.FromNewChatEvent(NewChatEvent{
+			CanTakeMoreProblems: v.CanTakeMoreProblems,
+			ChatId:              v.ChatID,
+			ClientId:            v.ClientID,
+			EventId:             v.EventID,
+			RequestId:           v.RequestID,
+		})
+
+	case *eventstream.NewManagerMessageEvent:
+		err = event.FromNewMessageEvent(NewMessageEvent{
+			AuthorId:  v.AuthorID,
+			Body:      v.MessageBody,
+			ChatId:    v.ChatID,
+			CreatedAt: v.CreatedAt,
+			EventId:   v.EventID,
+			MessageId: v.MessageID,
+			RequestId: v.RequestID,
+		})
+
+	default:
+		return nil, fmt.Errorf("unknown manager event: %v (%T)", v, v)
 	}
 
-	return nil, fmt.Errorf("unknown event type: %T", ev)
-}
-
-func adaptNewChatEvent(ev *eventstream.NewChatEvent) NewChatEvent {
-	return NewChatEvent{
-		CanTakeMoreProblems: ev.CanTakeMoreProblems,
-		ChatId:              ev.ChatID,
-		ClientId:            ev.ClientID,
-		EventId:             ev.EventID,
-		EventType:           "NewChatEvent",
-		RequestId:           ev.RequestID,
+	if err != nil {
+		return nil, err
 	}
+
+	return event, nil
 }
