@@ -100,9 +100,9 @@ func (j *Job) Handle(ctx context.Context, payload string) error {
 		msg.InitialRequestID,
 		serviceMsg.ChatID,
 		serviceMsg.ID,
-		types.UserIDNil,
 		serviceMsg.CreatedAt,
 		serviceMsg.Body,
+		types.UserIDNil,
 		serviceMsg.IsService,
 	))
 	if err != nil {
@@ -110,11 +110,11 @@ func (j *Job) Handle(ctx context.Context, payload string) error {
 	}
 
 	err = j.eventStream.Publish(ctx, pl.ManagerID, eventstream.NewNewChatEvent(
+		pl.CanTakeMoreProblems,
 		types.NewEventID(),
 		serviceMsg.InitialRequestID,
 		serviceMsg.ChatID,
 		msg.AuthorID,
-		pl.CanTakeMoreProblems,
 	))
 	if err != nil {
 		return fmt.Errorf("publish message to event stream, err=%v", err)

@@ -86,9 +86,9 @@ func (j *Job) Handle(ctx context.Context, payload string) error {
 		msg.InitialRequestID,
 		msg.ChatID,
 		msg.ID,
-		msg.AuthorID,
 		msg.CreatedAt,
 		msg.Body,
+		msg.AuthorID,
 		msg.IsService,
 	))
 	if err != nil {

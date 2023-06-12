@@ -8,7 +8,7 @@ import (
 	"github.com/karasunokami/chat-service/internal/validator"
 )
 
-//go:generate gonstructor --output=events.gen.go --type=NewMessageEvent --type=MessageSentEvent --type=MessageBlockedEvent
+//go:generate gonstructor --output=events.gen.go --type=NewMessageEvent --type=MessageSentEvent --type=MessageBlockedEvent --type=NewChatEvent
 
 type Event interface {
 	eventMarker()
@@ -110,29 +110,12 @@ func (e *MessageBlockedEvent) String() string {
 
 // NewChatEvent is a signal about the appearance of a new chat for manager.
 type NewChatEvent struct {
-	event
-
+	event               `gonstructor:"-"`
 	CanTakeMoreProblems bool            `validate:"required"`
 	EventID             types.EventID   `validate:"required"`
 	RequestID           types.RequestID `validate:"required"`
 	ChatID              types.ChatID    `validate:"required"`
 	ClientID            types.UserID    `validate:"required"`
-}
-
-func NewNewChatEvent(
-	eventID types.EventID,
-	requestID types.RequestID,
-	chatID types.ChatID,
-	clientID types.UserID,
-	canTakeMoreProblems bool,
-) *NewChatEvent {
-	return &NewChatEvent{
-		CanTakeMoreProblems: canTakeMoreProblems,
-		EventID:             eventID,
-		RequestID:           requestID,
-		ChatID:              chatID,
-		ClientID:            clientID,
-	}
 }
 
 func (e *NewChatEvent) Validate() error {
