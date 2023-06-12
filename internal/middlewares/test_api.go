@@ -7,22 +7,28 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-type testAPIClaims struct {
-	Subject types.UserID `json:"sub,omitempty"`
-}
+func AuthWith(uid types.UserID) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			SetToken(c, uid)
 
-func (c *testAPIClaims) Valid() error {
-	return nil
-}
-
-func (c *testAPIClaims) UserID() types.UserID {
-	return c.Subject
+			return next(c)
+		}
+	}
 }
 
 func SetToken(c echo.Context, uid types.UserID) {
-	c.Set(tokenCtxKey, &jwt.Token{
-		Claims: &testAPIClaims{
-			Subject: uid,
-		},
-	})
+	c.Set(tokenCtxKey, &jwt.Token{Claims: &claimsMock{uid: uid}, Valid: true})
+}
+
+type claimsMock struct {
+	uid types.UserID
+}
+
+func (m *claimsMock) Valid() error {
+	return nil
+}
+
+func (m *claimsMock) UserID() types.UserID {
+	return m.uid
 }

@@ -6,7 +6,9 @@ import (
 	"time"
 
 	messagesrepo "github.com/karasunokami/chat-service/internal/repositories/messages"
+	eventstream "github.com/karasunokami/chat-service/internal/services/event-stream"
 	msgproducer "github.com/karasunokami/chat-service/internal/services/msg-producer"
+	"github.com/karasunokami/chat-service/internal/services/outbox"
 	sendclientmessagejob "github.com/karasunokami/chat-service/internal/services/outbox/jobs/send-client-message"
 	sendclientmessagejobmocks "github.com/karasunokami/chat-service/internal/services/outbox/jobs/send-client-message/mocks"
 	"github.com/karasunokami/chat-service/internal/types"
@@ -24,24 +26,29 @@ func TestJob_Handle(t *testing.T) {
 
 	msgProducer := sendclientmessagejobmocks.NewMockmessageProducer(ctrl)
 	msgRepo := sendclientmessagejobmocks.NewMockmessageRepository(ctrl)
-	job, err := sendclientmessagejob.New(sendclientmessagejob.NewOptions(msgProducer, msgRepo))
+	eventStream := sendclientmessagejobmocks.NewMockeventStream(ctrl)
+	job, err := sendclientmessagejob.New(sendclientmessagejob.NewOptions(msgProducer, msgRepo, eventStream))
 	require.NoError(t, err)
 
 	clientID := types.NewUserID()
 	msgID := types.NewMessageID()
 	chatID := types.NewChatID()
+	requestID := types.NewRequestID()
+	createdAt := time.Now()
+	const isService = false
 	const body = "Hello!"
 
 	msg := messagesrepo.Message{
 		ID:                  msgID,
 		ChatID:              chatID,
 		AuthorID:            clientID,
+		InitialRequestID:    requestID,
 		Body:                body,
-		CreatedAt:           time.Now(),
+		CreatedAt:           createdAt,
 		IsVisibleForClient:  true,
 		IsVisibleForManager: false,
 		IsBlocked:           false,
-		IsService:           false,
+		IsService:           isService,
 	}
 	msgRepo.EXPECT().GetMessageByID(gomock.Any(), msgID).Return(&msg, nil)
 
@@ -52,8 +59,18 @@ func TestJob_Handle(t *testing.T) {
 		FromClient: true,
 	}).Return(nil)
 
+	eventStream.EXPECT().Publish(ctx, clientID, &eventstream.NewMessageEvent{
+		RequestID:   requestID,
+		ChatID:      chatID,
+		MessageID:   msgID,
+		UserID:      clientID,
+		CreatedAt:   createdAt,
+		MessageBody: body,
+		IsService:   isService,
+	}).Return(nil)
+
 	// Action & assert.
-	payload, err := sendclientmessagejob.MarshalPayload(msgID)
+	payload, err := outbox.MarshalMessageIDPayload(msgID)
 	require.NoError(t, err)
 
 	err = job.Handle(ctx, payload)

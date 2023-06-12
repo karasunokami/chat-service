@@ -55,6 +55,7 @@ func run() (errReturned error) {
 		cfg.Servers.Debug.Addr,
 		deps.clientSwagger,
 		deps.managerSwagger,
+		deps.clientEventsSwagger,
 	))
 	if err != nil {
 		return fmt.Errorf("init debug server: %v", err)
@@ -79,6 +80,7 @@ func run() (errReturned error) {
 
 	// run services
 	eg.Go(func() error { return deps.outboxService.Run(ctx) })
+	eg.Go(func() error { return deps.afcVerdictsProcessorService.Run(ctx) })
 
 	// wait for command line signal
 	if err = eg.Wait(); err != nil && !errors.Is(err, context.Canceled) {

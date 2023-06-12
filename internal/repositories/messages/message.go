@@ -8,9 +8,10 @@ import (
 )
 
 type Message struct {
-	ID       types.MessageID
-	ChatID   types.ChatID
-	AuthorID types.UserID
+	ID               types.MessageID
+	ChatID           types.ChatID
+	AuthorID         types.UserID
+	InitialRequestID types.RequestID
 
 	Body string
 
@@ -33,6 +34,7 @@ func storeMessageToRepoMessage(m *store.Message) *Message {
 		IsVisibleForManager: m.IsVisibleForManager,
 		IsBlocked:           m.IsBlocked,
 		IsService:           m.IsService,
+		InitialRequestID:    m.InitialRequestID,
 	}
 }
 

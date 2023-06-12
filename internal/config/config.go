@@ -39,12 +39,14 @@ type ClientServerConfig struct {
 	Addr           string               `toml:"addr" validate:"required,hostname_port"`
 	AllowOrigins   []string             `toml:"allow_origins" validate:"required"`
 	RequiredAccess RequiredAccessConfig `toml:"required_access" validate:"required"`
+	SecWsProtocol  string               `toml:"sec_ws_protocol" validate:"required"`
 }
 
 type ManagerServerConfig struct {
 	Addr           string               `toml:"addr" validate:"required,hostname_port"`
 	AllowOrigins   []string             `toml:"allow_origins" validate:"required"`
 	RequiredAccess RequiredAccessConfig `toml:"required_access" validate:"required"`
+	SecWsProtocol  string               `toml:"sec_ws_protocol" validate:"required"`
 }
 
 type RequiredAccessConfig struct {
@@ -78,13 +80,14 @@ type PSQLClientConfig struct {
 }
 
 type ServicesConfig struct {
-	MessageProducerService MessageProducerServiceConfig `toml:"msg_producer" validate:"required"`
-	OutboxService          OutboxServiceConfig          `toml:"outbox" validate:"required"`
-	ManagerLoad            ManagerLoadConfig            `toml:"manager_load" validate:"required"`
+	MessageProducerService MessageProducerServiceConfig      `toml:"msg_producer" validate:"required"`
+	OutboxService          OutboxServiceConfig               `toml:"outbox" validate:"required"`
+	ManagerLoad            ManagerLoadServiceConfig          `toml:"manager_load" validate:"required"`
+	AfcVerdictsProcessor   AfcVerdictsProcessorServiceConfig `toml:"afc_verdicts_processor" validate:"required"`
 }
 
 type MessageProducerServiceConfig struct {
-	Brokers    []string `toml:"brokers" validate:"required"`
+	Brokers    []string `toml:"brokers" validate:"dive,hostname_port"`
 	Topic      string   `toml:"topic" validate:"required"`
 	BatchSize  int      `toml:"batch_size" validate:"required,gte=1,lte=100"`
 	EncryptKey string   `toml:"encrypt_key"`
@@ -96,6 +99,15 @@ type OutboxServiceConfig struct {
 	ReserveFor time.Duration `toml:"reserve_for" validate:"required"`
 }
 
-type ManagerLoadConfig struct {
+type ManagerLoadServiceConfig struct {
 	MaxProblemsAtSameTime int `toml:"max_problems_at_same_time" validate:"required,gte=1,lte=100"`
+}
+
+type AfcVerdictsProcessorServiceConfig struct {
+	Brokers                  []string `toml:"brokers" validate:"required"`
+	ConsumersCount           int      `toml:"consumers_count" validate:"required,gte=1,lte=100"`
+	ConsumersGroupName       string   `toml:"consumers_group_name" validate:"required"`
+	VerdictsTopicName        string   `toml:"verdicts_topic_name" validate:"required"`
+	VerdictsDqlTopicName     string   `toml:"verdicts_dql_topic_name" validate:"required"`
+	VerdictsSigningPublicKey string   `toml:"verdicts_signing_public_key"`
 }

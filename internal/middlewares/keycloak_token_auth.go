@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	keycloakclient "github.com/karasunokami/chat-service/internal/clients/keycloak"
 	"github.com/karasunokami/chat-service/internal/types"
@@ -30,10 +31,12 @@ type Introspector interface {
 // each request is verified by the Keycloak server.
 func NewKeyCloakTokenAuth(introspector Introspector, resource, role string) echo.MiddlewareFunc {
 	return middleware.KeyAuthWithConfig(middleware.KeyAuthConfig{
-		KeyLookup:  "header:Authorization",
+		KeyLookup:  "header:Authorization,header:Sec-WebSocket-Protocol",
 		AuthScheme: "Bearer",
 		Validator: func(tokenStr string, eCtx echo.Context) (bool, error) {
-			res, err := introspector.IntrospectToken(eCtx.Request().Context(), tokenStr)
+			extractedTokenStr := extractToken(tokenStr)
+
+			res, err := introspector.IntrospectToken(eCtx.Request().Context(), extractedTokenStr)
 			if err != nil {
 				return false, fmt.Errorf("introspect token, err=%w", err)
 			}
@@ -44,7 +47,7 @@ func NewKeyCloakTokenAuth(introspector Introspector, resource, role string) echo
 
 			cl := claims{}
 
-			token, _, err := jwt.NewParser().ParseUnverified(tokenStr, &cl)
+			token, _, err := jwt.NewParser().ParseUnverified(extractedTokenStr, &cl)
 			if err != nil {
 				return false, fmt.Errorf("jwt parse with claims, err=%v", err)
 			}
@@ -54,7 +57,7 @@ func NewKeyCloakTokenAuth(introspector Introspector, resource, role string) echo
 				return false, fmt.Errorf("validate claims, err=%w", err)
 			}
 
-			if !cl.ResourceAccess.HasResourceRole(resource, role) {
+			if !cl.ResourcesAccess.HasResourceRole(resource, role) {
 				return false, ErrNoRequiredResourceRole
 			}
 
@@ -63,6 +66,16 @@ func NewKeyCloakTokenAuth(introspector Introspector, resource, role string) echo
 			return true, nil
 		},
 	})
+}
+
+func extractToken(tokenStr string) string {
+	parts := strings.Split(tokenStr, ", ")
+
+	if len(parts) >= 2 {
+		return parts[1]
+	}
+
+	return parts[0]
 }
 
 func MustUserID(eCtx echo.Context) types.UserID {

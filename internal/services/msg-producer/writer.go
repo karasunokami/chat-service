@@ -6,8 +6,6 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-const serviceName = "msg-producer"
-
 func NewKafkaWriter(brokers []string, topic string, batchSize int) KafkaWriter {
 	return &kafka.Writer{
 		Addr:         kafka.TCP(brokers...),

@@ -10,7 +10,10 @@ import (
 	"io"
 
 	"github.com/segmentio/kafka-go"
+	"go.uber.org/zap"
 )
+
+const serviceName = "msg-producer"
 
 type KafkaWriter interface {
 	io.Closer
@@ -28,6 +31,7 @@ type Service struct {
 	wr           KafkaWriter
 	cipher       cipher.AEAD
 	nonceFactory func(size int) ([]byte, error)
+	logger       *zap.Logger
 }
 
 func New(opts Options) (*Service, error) {
@@ -42,6 +46,7 @@ func New(opts Options) (*Service, error) {
 	s := &Service{
 		wr:           opts.wr,
 		nonceFactory: opts.nonceFactory,
+		logger:       zap.L().Named(serviceName),
 	}
 
 	if opts.encryptKey != "" {

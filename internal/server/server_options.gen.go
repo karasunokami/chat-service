@@ -5,6 +5,7 @@ import (
 	fmt461e464ebed9 "fmt"
 
 	"github.com/karasunokami/chat-service/internal/middlewares"
+	eventstream "github.com/karasunokami/chat-service/internal/services/event-stream"
 	errors461e464ebed9 "github.com/kazhuravlev/options-gen/pkg/errors"
 	validator461e464ebed9 "github.com/kazhuravlev/options-gen/pkg/validator"
 	"github.com/labstack/echo/v4"
@@ -17,10 +18,12 @@ func NewOptions(
 	logger *zap.Logger,
 	addr string,
 	allowOrigins []string,
-	introspector middlewares.Introspector,
+	wsSecProtocol string,
 	requiredResource string,
 	requiredRole string,
 	handlersRegistrar func(e *echo.Echo),
+	introspector middlewares.Introspector,
+	eventStream eventstream.EventStream,
 	options ...OptOptionsSetter,
 ) Options {
 	o := Options{}
@@ -30,10 +33,12 @@ func NewOptions(
 	o.logger = logger
 	o.addr = addr
 	o.allowOrigins = allowOrigins
-	o.introspector = introspector
+	o.wsSecProtocol = wsSecProtocol
 	o.requiredResource = requiredResource
 	o.requiredRole = requiredRole
 	o.handlersRegistrar = handlersRegistrar
+	o.introspector = introspector
+	o.eventStream = eventStream
 
 	for _, opt := range options {
 		opt(&o)
@@ -46,10 +51,12 @@ func (o *Options) Validate() error {
 	errs.Add(errors461e464ebed9.NewValidationError("logger", _validate_Options_logger(o)))
 	errs.Add(errors461e464ebed9.NewValidationError("addr", _validate_Options_addr(o)))
 	errs.Add(errors461e464ebed9.NewValidationError("allowOrigins", _validate_Options_allowOrigins(o)))
-	errs.Add(errors461e464ebed9.NewValidationError("introspector", _validate_Options_introspector(o)))
+	errs.Add(errors461e464ebed9.NewValidationError("wsSecProtocol", _validate_Options_wsSecProtocol(o)))
 	errs.Add(errors461e464ebed9.NewValidationError("requiredResource", _validate_Options_requiredResource(o)))
 	errs.Add(errors461e464ebed9.NewValidationError("requiredRole", _validate_Options_requiredRole(o)))
 	errs.Add(errors461e464ebed9.NewValidationError("handlersRegistrar", _validate_Options_handlersRegistrar(o)))
+	errs.Add(errors461e464ebed9.NewValidationError("introspector", _validate_Options_introspector(o)))
+	errs.Add(errors461e464ebed9.NewValidationError("eventStream", _validate_Options_eventStream(o)))
 	return errs.AsError()
 }
 
@@ -74,9 +81,9 @@ func _validate_Options_allowOrigins(o *Options) error {
 	return nil
 }
 
-func _validate_Options_introspector(o *Options) error {
-	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.introspector, "required"); err != nil {
-		return fmt461e464ebed9.Errorf("field `introspector` did not pass the test: %w", err)
+func _validate_Options_wsSecProtocol(o *Options) error {
+	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.wsSecProtocol, "required"); err != nil {
+		return fmt461e464ebed9.Errorf("field `wsSecProtocol` did not pass the test: %w", err)
 	}
 	return nil
 }
@@ -98,6 +105,20 @@ func _validate_Options_requiredRole(o *Options) error {
 func _validate_Options_handlersRegistrar(o *Options) error {
 	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.handlersRegistrar, "required"); err != nil {
 		return fmt461e464ebed9.Errorf("field `handlersRegistrar` did not pass the test: %w", err)
+	}
+	return nil
+}
+
+func _validate_Options_introspector(o *Options) error {
+	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.introspector, "required"); err != nil {
+		return fmt461e464ebed9.Errorf("field `introspector` did not pass the test: %w", err)
+	}
+	return nil
+}
+
+func _validate_Options_eventStream(o *Options) error {
+	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.eventStream, "required"); err != nil {
+		return fmt461e464ebed9.Errorf("field `eventStream` did not pass the test: %w", err)
 	}
 	return nil
 }

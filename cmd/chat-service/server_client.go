@@ -27,10 +27,12 @@ func initServerClient(
 		deps.clientLogger,
 		clientServerConfig.Addr,
 		clientServerConfig.AllowOrigins,
-		deps.kcClient,
+		clientServerConfig.SecWsProtocol,
 		clientServerConfig.RequiredAccess.Resource,
 		clientServerConfig.RequiredAccess.Role,
 		serverclient.NewHandlersRegistrar(deps.clientSwagger, serverHandlers, deps.errHandler.Handle),
+		deps.kcClient,
+		deps.eventsStream,
 	))
 	if err != nil {
 		return nil, fmt.Errorf("build server: %v", err)
