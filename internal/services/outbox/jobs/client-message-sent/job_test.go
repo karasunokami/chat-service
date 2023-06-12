@@ -6,6 +6,7 @@ import (
 
 	messagesrepo "github.com/karasunokami/chat-service/internal/repositories/messages"
 	eventstream "github.com/karasunokami/chat-service/internal/services/event-stream"
+	"github.com/karasunokami/chat-service/internal/services/outbox"
 	clientmessagesentjob "github.com/karasunokami/chat-service/internal/services/outbox/jobs/client-message-sent"
 	clientmessagesentjobmocks "github.com/karasunokami/chat-service/internal/services/outbox/jobs/client-message-sent/mocks"
 	"github.com/karasunokami/chat-service/internal/types"
@@ -46,7 +47,7 @@ func TestJob_Handle(t *testing.T) {
 	}).Return(nil)
 
 	// Action & assert.
-	payload, err := clientmessagesentjob.MarshalPayload(msgID)
+	payload, err := outbox.MarshalMessageIDPayload(msgID)
 	require.NoError(t, err)
 
 	err = job.Handle(ctx, payload)

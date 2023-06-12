@@ -50,7 +50,7 @@ func New(opts Options) (*Job, error) {
 }
 
 func (j *Job) Handle(ctx context.Context, payload string) error {
-	jp, err := unmarshalPayload(payload)
+	jp, err := outbox.UnmarshalMessageIDPayload(payload)
 	if err != nil {
 		return fmt.Errorf("unmarshal jobPayload, err=%v", err)
 	}

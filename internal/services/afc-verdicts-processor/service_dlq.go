@@ -16,7 +16,10 @@ type KafkaDLQWriter interface {
 
 func NewKafkaDLQWriter(brokers []string, topic string) KafkaDLQWriter {
 	return &kafka.Writer{
-		Addr:  kafka.TCP(brokers...),
-		Topic: topic,
+		Addr:         kafka.TCP(brokers...),
+		Topic:        topic,
+		BatchSize:    1,
+		Async:        false,
+		RequiredAcks: kafka.RequireOne,
 	}
 }

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	messagesrepo "github.com/karasunokami/chat-service/internal/repositories/messages"
+	"github.com/karasunokami/chat-service/internal/services/outbox"
 	sendclientmessagejob "github.com/karasunokami/chat-service/internal/services/outbox/jobs/send-client-message"
 	"github.com/karasunokami/chat-service/internal/types"
 )
@@ -97,7 +98,7 @@ func (u UseCase) Handle(ctx context.Context, req Request) (Response, error) {
 			return fmt.Errorf("msg repo crate client visible message, err=%v", err)
 		}
 
-		payload, err := sendclientmessagejob.MarshalPayload(newMessage.ID)
+		payload, err := outbox.MarshalMessageIDPayload(newMessage.ID)
 		if err != nil {
 			return fmt.Errorf("marhal send client message job payload, err=%v", err)
 		}

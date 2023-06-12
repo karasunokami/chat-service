@@ -8,6 +8,7 @@ import (
 	"io"
 	"time"
 
+	"github.com/karasunokami/chat-service/internal/services/outbox"
 	clientmessageblockedjob "github.com/karasunokami/chat-service/internal/services/outbox/jobs/client-message-blocked"
 	clientmessagesentjob "github.com/karasunokami/chat-service/internal/services/outbox/jobs/client-message-sent"
 	"github.com/karasunokami/chat-service/internal/types"
@@ -193,6 +194,9 @@ func (s *Service) handleWithRetries(ctx context.Context, mp messagePayload) erro
 		select {
 		case <-ctx.Done():
 			return nil
+
+		case <-time.After(lastDelay):
+
 		default:
 			if lastError != nil {
 				delay := s.getDelay(lastDelay)
@@ -204,7 +208,11 @@ func (s *Service) handleWithRetries(ctx context.Context, mp messagePayload) erro
 				s.logger.Debug("Sleep before next handle retry", zap.Duration("duration", delay))
 
 				lastDelay = delay
-				time.Sleep(delay)
+
+				select {
+				case <-ctx.Done():
+				case <-time.After(delay):
+				}
 			}
 
 			err := s.handleMessageByStatus(ctx, mp)
@@ -213,7 +221,7 @@ func (s *Service) handleWithRetries(ctx context.Context, mp messagePayload) erro
 
 				lastError = multierr.Append(lastError, err)
 
-				if he, converted := convertToHandleErr(err); converted && he.IsTemporary() {
+				if he, converted := asHandleError(err); converted && he.IsTemporary() {
 					// retry
 					continue
 				}
@@ -244,41 +252,45 @@ func (s *Service) handleMessageByStatus(ctx context.Context, mp messagePayload) 
 }
 
 func (s *Service) handleMessageOk(ctx context.Context, msgID types.MessageID) error {
-	err := s.msgRepo.MarkAsVisibleForManager(ctx, msgID)
-	if err != nil {
-		return fmt.Errorf("msg repo mark as visible for manager, err=%v", err)
-	}
+	return s.txtor.RunInTx(ctx, func(ctx context.Context) error {
+		err := s.msgRepo.MarkAsVisibleForManager(ctx, msgID)
+		if err != nil {
+			return fmt.Errorf("msg repo mark as visible for manager, err=%v", err)
+		}
 
-	payload, err := clientmessagesentjob.MarshalPayload(msgID)
-	if err != nil {
-		return fmt.Errorf("marshal client message sent job payload, err=%v", err)
-	}
+		payload, err := outbox.MarshalMessageIDPayload(msgID)
+		if err != nil {
+			return fmt.Errorf("marshal client message sent job payload, err=%v", err)
+		}
 
-	_, err = s.outBox.Put(ctx, clientmessagesentjob.Name, payload, time.Now())
-	if err != nil {
-		return fmt.Errorf("outbox svc put, err=%v", err)
-	}
+		_, err = s.outBox.Put(ctx, clientmessagesentjob.Name, payload, time.Now())
+		if err != nil {
+			return fmt.Errorf("outbox svc put, err=%v", err)
+		}
 
-	return nil
+		return nil
+	})
 }
 
 func (s *Service) handleMessageSuspicious(ctx context.Context, msgID types.MessageID) error {
-	err := s.msgRepo.BlockMessage(ctx, msgID)
-	if err != nil {
-		return fmt.Errorf("msg repo block message, err=%v", err)
-	}
+	return s.txtor.RunInTx(ctx, func(ctx context.Context) error {
+		err := s.msgRepo.BlockMessage(ctx, msgID)
+		if err != nil {
+			return fmt.Errorf("msg repo block message, err=%v", err)
+		}
 
-	payload, err := clientmessageblockedjob.MarshalPayload(msgID)
-	if err != nil {
-		return fmt.Errorf("marshal client message blocked job payload, err=%v", err)
-	}
+		payload, err := outbox.MarshalMessageIDPayload(msgID)
+		if err != nil {
+			return fmt.Errorf("marshal client message blocked job payload, err=%v", err)
+		}
 
-	_, err = s.outBox.Put(ctx, clientmessageblockedjob.Name, payload, time.Now())
-	if err != nil {
-		return fmt.Errorf("outbox svc put, err=%v", err)
-	}
+		_, err = s.outBox.Put(ctx, clientmessageblockedjob.Name, payload, time.Now())
+		if err != nil {
+			return fmt.Errorf("outbox svc put, err=%v", err)
+		}
 
-	return nil
+		return nil
+	})
 }
 
 func (s *Service) writeMessageToDlq(ctx context.Context, m kafka.Message, lastErrorText string) {
