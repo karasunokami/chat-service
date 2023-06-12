@@ -88,7 +88,7 @@ type ServicesConfig struct {
 }
 
 type MessageProducerServiceConfig struct {
-	Brokers    []string `toml:"brokers" validate:"required"`
+	Brokers    []string `toml:"brokers" validate:"dive,hostname_port"`
 	Topic      string   `toml:"topic" validate:"required"`
 	BatchSize  int      `toml:"batch_size" validate:"required,gte=1,lte=100"`
 	EncryptKey string   `toml:"encrypt_key"`

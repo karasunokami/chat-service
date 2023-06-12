@@ -34,8 +34,12 @@ components:
         - $ref: "#/components/schemas/MessageBlockedEvent"
       discriminator:
         propertyName: eventType
+        mapping:
+          NewMessageEvent: "#/components/schemas/NewMessageEvent"
+          MessageSentEvent: "#/components/schemas/MessageSentEvent"
+          MessageBlockedEvent: "#/components/schemas/MessageBlockedEvent"
 
-    DefaultEvent:
+    BaseEvent:
       type: object
       required: [ messageId, eventId, requestId, eventType ]
       properties:
@@ -62,7 +66,7 @@ components:
 
     NewMessageEvent:
       allOf:
-        - $ref: "#/components/schemas/DefaultEvent"
+        - $ref: "#/components/schemas/BaseEvent"
         - type: object
           required: [ body, createdAt, isService ]
           properties:
@@ -82,8 +86,8 @@ components:
 
     MessageSentEvent:
       allOf:
-        - $ref: "#/components/schemas/DefaultEvent"
+        - $ref: "#/components/schemas/BaseEvent"
 
     MessageBlockedEvent:
       allOf:
-        - $ref: "#/components/schemas/DefaultEvent"
+        - $ref: "#/components/schemas/BaseEvent"

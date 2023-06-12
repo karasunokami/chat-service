@@ -14,7 +14,7 @@ func newHandleMessageError(err error, isTemporary bool) *handleMessageError {
 	}
 }
 
-func convertToHandleErr(err error) (*handleMessageError, bool) {
+func asHandleError(err error) (*handleMessageError, bool) {
 	e := &handleMessageError{}
 
 	if errors.As(err, &e) {

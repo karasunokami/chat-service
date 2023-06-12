@@ -107,7 +107,7 @@ func (s *Service) closeChanOnCtxDone(ctx context.Context, ch chan eventstream.Ev
 	s.logger.Debug("Stopping event stream subscriber done")
 }
 
-func (s *Service) safeSendToCh(ctx context.Context, ch chan eventstream.Event, event eventstream.Event) (err error) {
+func (s *Service) safeSendToCh(ctx context.Context, ch chan<- eventstream.Event, event eventstream.Event) (err error) {
 	defer func() {
 		if e := recover(); e != nil {
 			if re, ok := e.(error); ok {

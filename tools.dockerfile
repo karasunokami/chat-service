@@ -18,6 +18,8 @@ RUN \
     go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@master && \
     go install github.com/golang/mock/mockgen@latest && \
     go install github.com/onsi/ginkgo/v2/ginkgo@v2.9.1 && \
+    go install github.com/moznion/gonstructor/cmd/gonstructor@v0.5.0 && \
+    go install golang.org/x/tools/cmd/goimports@v0.7.0 && \
     mv /go/bin/* /bin
 
 workdir /app

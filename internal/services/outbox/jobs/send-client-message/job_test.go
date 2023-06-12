@@ -8,6 +8,7 @@ import (
 	messagesrepo "github.com/karasunokami/chat-service/internal/repositories/messages"
 	eventstream "github.com/karasunokami/chat-service/internal/services/event-stream"
 	msgproducer "github.com/karasunokami/chat-service/internal/services/msg-producer"
+	"github.com/karasunokami/chat-service/internal/services/outbox"
 	sendclientmessagejob "github.com/karasunokami/chat-service/internal/services/outbox/jobs/send-client-message"
 	sendclientmessagejobmocks "github.com/karasunokami/chat-service/internal/services/outbox/jobs/send-client-message/mocks"
 	"github.com/karasunokami/chat-service/internal/types"
@@ -69,7 +70,7 @@ func TestJob_Handle(t *testing.T) {
 	}).Return(nil)
 
 	// Action & assert.
-	payload, err := sendclientmessagejob.MarshalPayload(msgID)
+	payload, err := outbox.MarshalMessageIDPayload(msgID)
 	require.NoError(t, err)
 
 	err = job.Handle(ctx, payload)

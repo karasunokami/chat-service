@@ -13,8 +13,8 @@ import (
 	"github.com/karasunokami/chat-service/internal/types"
 )
 
-// DefaultEvent defines model for DefaultEvent.
-type DefaultEvent struct {
+// BaseEvent defines model for BaseEvent.
+type BaseEvent struct {
 	EventId   types.EventID   `json:"eventId"`
 	EventType string          `json:"eventType"`
 	MessageId types.MessageID `json:"messageId"`
@@ -28,10 +28,10 @@ type Event struct {
 }
 
 // MessageBlockedEvent defines model for MessageBlockedEvent.
-type MessageBlockedEvent = DefaultEvent
+type MessageBlockedEvent = BaseEvent
 
 // MessageSentEvent defines model for MessageSentEvent.
-type MessageSentEvent = DefaultEvent
+type MessageSentEvent = BaseEvent
 
 // NewMessageEvent defines model for NewMessageEvent.
 type NewMessageEvent struct {

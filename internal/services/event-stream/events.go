@@ -8,34 +8,23 @@ import (
 	"github.com/karasunokami/chat-service/internal/validator"
 )
 
+//go:generate gonstructor --output=events.gen.go --type=NewMessageEvent --type=MessageSentEvent --type=MessageBlockedEvent
+
 type Event interface {
 	eventMarker()
 	Validate() error
+	Matches(x interface{}) bool
 }
-
 type event struct{}         //
 func (*event) eventMarker() {}
 
 // MessageSentEvent indicates that the message was checked by AFC
 // and was sent to the manager. Two gray ticks.
 type MessageSentEvent struct {
-	event
-
+	event     `gonstructor:"-"`
 	EventID   types.EventID   `validate:"required"`
 	RequestID types.RequestID `validate:"required"`
 	MessageID types.MessageID `validate:"required"`
-}
-
-func NewMessageSentEvent(
-	eventID types.EventID,
-	requestID types.RequestID,
-	messageID types.MessageID,
-) *MessageSentEvent {
-	return &MessageSentEvent{
-		EventID:   eventID,
-		RequestID: requestID,
-		MessageID: messageID,
-	}
 }
 
 func (e *MessageSentEvent) Validate() error {
@@ -57,7 +46,7 @@ func (e *MessageSentEvent) String() string {
 
 // NewMessageEvent is a signal about the appearance of a new message in the chat.
 type NewMessageEvent struct {
-	event
+	event       `gonstructor:"-"`
 	EventID     types.EventID   `validate:"required"`
 	RequestID   types.RequestID `validate:"required"`
 	ChatID      types.ChatID    `validate:"required"`
@@ -66,28 +55,6 @@ type NewMessageEvent struct {
 	MessageBody string          `validate:"required"`
 	AuthorID    types.UserID
 	IsService   bool
-}
-
-func NewNewMessageEvent(
-	eventID types.EventID,
-	requestID types.RequestID,
-	chatID types.ChatID,
-	messageID types.MessageID,
-	authorID types.UserID,
-	createdAt time.Time,
-	messageBody string,
-	isService bool,
-) *NewMessageEvent {
-	return &NewMessageEvent{
-		EventID:     eventID,
-		RequestID:   requestID,
-		ChatID:      chatID,
-		MessageID:   messageID,
-		AuthorID:    authorID,
-		CreatedAt:   createdAt,
-		MessageBody: messageBody,
-		IsService:   isService,
-	}
 }
 
 func (e *NewMessageEvent) Validate() error {
@@ -116,23 +83,10 @@ func (e *NewMessageEvent) String() string {
 // MessageBlockedEvent indicates that the message was checked by AFC
 // and marked as blocked.
 type MessageBlockedEvent struct {
-	event
-
+	event     `gonstructor:"-"`
 	EventID   types.EventID   `validate:"required"`
 	RequestID types.RequestID `validate:"required"`
 	MessageID types.MessageID `validate:"required"`
-}
-
-func NewMessageBlockedEvent(
-	eventID types.EventID,
-	requestID types.RequestID,
-	messageID types.MessageID,
-) *MessageBlockedEvent {
-	return &MessageBlockedEvent{
-		EventID:   eventID,
-		RequestID: requestID,
-		MessageID: messageID,
-	}
 }
 
 func (e *MessageBlockedEvent) Validate() error {

@@ -239,7 +239,7 @@ func (c *Chat) HandleEvent(_ context.Context, data []byte) error {
 
 		c.addMessageToEnd(msg)
 
-	case apiclientevents.DefaultEvent:
+	case apiclientevents.BaseEvent:
 		c.msgMu.Lock()
 		defer c.msgMu.Unlock()
 

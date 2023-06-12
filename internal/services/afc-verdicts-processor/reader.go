@@ -4,6 +4,8 @@ import (
 	"context"
 	"io"
 
+	"github.com/karasunokami/chat-service/internal/logger"
+
 	"github.com/segmentio/kafka-go"
 )
 
@@ -23,5 +25,8 @@ func NewKafkaReader(brokers []string, groupID string, topic string) KafkaReader 
 		Brokers:               brokers,
 		GroupID:               groupID,
 		Topic:                 topic,
+		Logger:                logger.NewKafkaAdapted().WithServiceName(groupID),
+		ErrorLogger:           logger.NewKafkaAdapted().WithServiceName(groupID).ForErrors(),
+		StartOffset:           kafka.FirstOffset,
 	})
 }
