@@ -8,7 +8,7 @@ import (
 	"github.com/karasunokami/chat-service/internal/validator"
 )
 
-//go:generate gonstructor --output=events.gen.go --type=NewMessageEvent --type=MessageSentEvent --type=MessageBlockedEvent --type=NewChatEvent --type=NewManagerMessageEvent
+//go:generate gonstructor --output=events.gen.go --type=NewMessageEvent --type=MessageSentEvent --type=MessageBlockedEvent --type=NewChatEvent --type=NewManagerMessageEvent --type=ChatClosedEvent
 
 type Event interface {
 	eventMarker()
@@ -169,5 +169,33 @@ func (e *NewManagerMessageEvent) Matches(x interface{}) bool {
 }
 
 func (e *NewManagerMessageEvent) String() string {
+	return fmt.Sprintf("%v", *e)
+}
+
+// ChatClosedEvent is a signal about chat closing.
+type ChatClosedEvent struct {
+	event               `gonstructor:"-"`
+	CanTakeMoreProblems bool            `validate:"boolean"`
+	ChatID              types.ChatID    `validate:"required"`
+	EventID             types.EventID   `validate:"required"`
+	RequestID           types.RequestID `validate:"required"`
+}
+
+func (e *ChatClosedEvent) Validate() error {
+	return validator.Validator.Struct(e)
+}
+
+func (e *ChatClosedEvent) Matches(x interface{}) bool {
+	ev, ok := x.(*ChatClosedEvent)
+	if !ok {
+		return false
+	}
+
+	return ev.CanTakeMoreProblems == e.CanTakeMoreProblems &&
+		ev.ChatID == e.ChatID &&
+		ev.RequestID == e.RequestID
+}
+
+func (e *ChatClosedEvent) String() string {
 	return fmt.Sprintf("%v", *e)
 }

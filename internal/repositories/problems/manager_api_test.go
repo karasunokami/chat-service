@@ -109,6 +109,42 @@ func (s *ProblemsRepoManagerAPISuite) Test_SetManagerToProblem() {
 	})
 }
 
+func (s *ProblemsRepoManagerAPISuite) Test_GetAssignedProblemID() {
+	s.Run("set manager to problem", func() {
+		managerID := types.NewUserID()
+
+		chatID, problemID := s.createChatWithProblemAssignedTo(managerID)
+
+		foundProblemID, err := s.repo.GetAssignedProblemID(s.Ctx, managerID, chatID)
+		s.Require().NoError(err)
+		s.EqualValues(problemID, foundProblemID)
+	})
+}
+
+func (s *ProblemsRepoManagerAPISuite) Test_MarkProblemAsResolved() {
+	s.Run("mark problem as resolved", func() {
+		managerID := types.NewUserID()
+
+		_, problemID := s.createChatWithProblemAssignedTo(managerID)
+
+		err := s.repo.MarkProblemAsResolved(s.Ctx, problemID)
+		s.Require().NoError(err)
+
+		problem, err := s.Database.Problem(s.Ctx).Get(s.Ctx, problemID)
+		s.Require().NoError(err)
+		s.EqualValues(managerID, problem.ManagerID)
+		s.NotEmpty(problem.ResolvedAt)
+	})
+}
+
+func (s *ProblemsRepoManagerAPISuite) Test_CantMarkAnotherManagerProblemAsResolved() {
+	s.Run("mark problem as resolved", func() {
+		err := s.repo.MarkProblemAsResolved(s.Ctx, types.NewProblemID())
+		s.Require().Error(err)
+		s.ErrorIs(err, problemsrepo.ErrNotFound)
+	})
+}
+
 func (s *ProblemsRepoManagerAPISuite) createChatWithProblemAssignedTo(managerID types.UserID) (types.ChatID, types.ProblemID) {
 	s.T().Helper()
 

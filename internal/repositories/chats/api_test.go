@@ -113,6 +113,28 @@ func (s *ChatsRepoSuite) Test_GetManagerOpened() {
 	})
 }
 
+func (s *ChatsRepoSuite) Test_GetClientID() {
+	s.Run("chat does not exist", func() {
+		clientID, err := s.repo.GetClientID(s.Ctx, types.NewChatID())
+		s.Require().Error(err)
+		s.Require().ErrorIs(err, chatsrepo.ErrNotFound)
+		s.Empty(clientID)
+	})
+
+	s.Run("chat already exists", func() {
+		chatClientID := types.NewUserID()
+
+		// Create chat.
+		chat, err := s.Database.Chat(s.Ctx).Create().SetClientID(chatClientID).Save(s.Ctx)
+		s.Require().NoError(err)
+
+		clientID, err := s.repo.GetClientID(s.Ctx, chat.ID)
+		s.Require().NoError(err)
+		s.Require().NotEmpty(clientID)
+		s.Equal(clientID, chatClientID)
+	})
+}
+
 func (s *ChatsRepoSuite) createChatWithProblem(
 	ctx context.Context,
 	clientID, managerID types.UserID,

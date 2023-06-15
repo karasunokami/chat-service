@@ -83,10 +83,9 @@ func (r *Repo) GetManagerChatMessages(
 	query = query.Where(
 		message.ChatIDEQ(chatID),
 		message.IsVisibleForManager(true),
-		message.HasChatWith(
-			chat.HasProblemsWith(
-				problem.ManagerIDEQ(managerID),
-			),
+		message.HasProblemWith(
+			problem.ManagerID(managerID),
+			problem.ResolvedAtIsNil(),
 		),
 	)
 

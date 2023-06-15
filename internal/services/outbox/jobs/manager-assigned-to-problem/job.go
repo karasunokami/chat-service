@@ -19,13 +19,6 @@ const (
 	ServiceMessageTpl = "Manager %s will answer you"
 )
 
-//go:generate options-gen -out-filename=job_options.gen.go -from-struct=Options
-type Options struct {
-	msgProducer messageProducer   `option:"mandatory" validate:"required"`
-	eventStream eventStream       `option:"mandatory" validate:"required"`
-	msgRepo     messageRepository `option:"mandatory" validate:"required"`
-}
-
 type eventStream interface {
 	Publish(ctx context.Context, userID types.UserID, event eventstream.Event) error
 }
@@ -44,11 +37,24 @@ type messageRepository interface {
 	) (*messagesrepo.Message, error)
 }
 
+type managerLoadService interface {
+	CanManagerTakeProblem(ctx context.Context, managerID types.UserID) (bool, error)
+}
+
+//go:generate options-gen -out-filename=job_options.gen.go -from-struct=Options
+type Options struct {
+	msgProducer        messageProducer    `option:"mandatory" validate:"required"`
+	eventStream        eventStream        `option:"mandatory" validate:"required"`
+	msgRepo            messageRepository  `option:"mandatory" validate:"required"`
+	managerLoadService managerLoadService `option:"mandatory" validate:"required"`
+}
+
 type Job struct {
 	outbox.DefaultJob
-	eventStream eventStream
-	msgRepo     messageRepository
-	msgProducer messageProducer
+	eventStream        eventStream
+	msgRepo            messageRepository
+	msgProducer        messageProducer
+	managerLoadService managerLoadService
 }
 
 func New(opts Options) (*Job, error) {
@@ -57,9 +63,10 @@ func New(opts Options) (*Job, error) {
 	}
 
 	return &Job{
-		eventStream: opts.eventStream,
-		msgRepo:     opts.msgRepo,
-		msgProducer: opts.msgProducer,
+		eventStream:        opts.eventStream,
+		msgRepo:            opts.msgRepo,
+		msgProducer:        opts.msgProducer,
+		managerLoadService: opts.managerLoadService,
 	}, nil
 }
 
@@ -109,8 +116,13 @@ func (j *Job) Handle(ctx context.Context, payload string) error {
 		return fmt.Errorf("publish message to event stream, err=%v", err)
 	}
 
+	canTakeMoreProblems, err := j.managerLoadService.CanManagerTakeProblem(ctx, pl.ManagerID)
+	if err != nil {
+		return fmt.Errorf("check if manager can take more problems, err=%v", err)
+	}
+
 	err = j.eventStream.Publish(ctx, pl.ManagerID, eventstream.NewNewChatEvent(
-		pl.CanTakeMoreProblems,
+		canTakeMoreProblems,
 		types.NewEventID(),
 		msg.InitialRequestID,
 		serviceMsg.ChatID,

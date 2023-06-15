@@ -201,6 +201,65 @@ func (ws *Workspace) GetChatHistory(ctx context.Context, chatID types.ChatID) er
 	return nil
 }
 
+func (ws *Workspace) SendMessage(ctx context.Context, chatID types.ChatID, body string) error {
+	chatItem, ok := ws.getChat(chatID)
+	if !ok {
+		return fmt.Errorf("%v: %v", errUnknownChat, chatID)
+	}
+
+	resp, err := ws.api.PostSendMessageWithResponse(ctx,
+		&apimanagerv1.PostSendMessageParams{XRequestID: types.NewRequestID()},
+		apimanagerv1.PostSendMessageJSONRequestBody{
+			ChatId:      chatID,
+			MessageBody: body,
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("post request: %v", err)
+	}
+	if resp.JSON200 == nil {
+		return errNoResponseBody
+	}
+	if err := resp.JSON200.Error; err != nil {
+		return fmt.Errorf("%v: %v", err.Code, err.Message)
+	}
+
+	data := resp.JSON200.Data
+	if data == nil {
+		return errNoDataInResponse
+	}
+
+	chatItem.pushToBack(NewMessage(
+		data.Id,
+		chatID,
+		ws.ManagerID(),
+		body,
+		data.CreatedAt,
+	))
+
+	return nil
+}
+
+func (ws *Workspace) CloseChat(ctx context.Context, chatID types.ChatID) error {
+	resp, err := ws.api.PostCloseChatWithResponse(ctx,
+		&apimanagerv1.PostCloseChatParams{XRequestID: types.NewRequestID()},
+		apimanagerv1.PostCloseChatJSONRequestBody{
+			ChatId: chatID,
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("post request: %v", err)
+	}
+	if resp.JSON200 == nil {
+		return errNoResponseBody
+	}
+	if err := resp.JSON200.Error; err != nil {
+		return newRespError(fmt.Errorf("%v: %v", err.Code, err.Message), int(err.Code))
+	}
+
+	return nil
+}
+
 func (ws *Workspace) ReceiveNewProblemsAvailability(ctx context.Context) error {
 	resp, err := ws.api.PostGetFreeHandsBtnAvailabilityWithResponse(ctx,
 		&apimanagerv1.PostGetFreeHandsBtnAvailabilityParams{XRequestID: types.NewRequestID()},
@@ -273,6 +332,14 @@ func (ws *Workspace) HandleEvent(_ context.Context, data []byte) error {
 			vv.Body,
 			vv.CreatedAt,
 		))
+
+	case apimanagerevents.ChatClosedEvent:
+		err := ws.removeChat(vv.ChatId)
+		if err != nil {
+			return fmt.Errorf("remove chat from ws, err=%w", err)
+		}
+
+		ws.canTakeMoreProblems.Store(vv.CanTakeMoreProblems)
 	}
 
 	return nil
@@ -293,20 +360,20 @@ func (ws *Workspace) appendChat(chatID types.ChatID, clientID types.UserID) {
 	}
 }
 
-// func (ws *Workspace) removeChat(id types.ChatID) error {
-//	if _, ok := ws.getChat(id); !ok {
-//		return fmt.Errorf("%v: %v", errUnknownChat, id)
-//	}
-//
-//	ws.chatsMu.Lock()
-//	defer ws.chatsMu.Unlock()
-//
-//	item := ws.chatsByID[id]
-//	delete(ws.chatsByID, id)
-//	ws.chats.Remove(item.listItemRef)
-//
-//	return nil
-//}
+func (ws *Workspace) removeChat(id types.ChatID) error {
+	if _, ok := ws.getChat(id); !ok {
+		return fmt.Errorf("%v: %v", errUnknownChat, id)
+	}
+
+	ws.chatsMu.Lock()
+	defer ws.chatsMu.Unlock()
+
+	item := ws.chatsByID[id]
+	delete(ws.chatsByID, id)
+	ws.chats.Remove(item.listItemRef)
+
+	return nil
+}
 
 func (ws *Workspace) getChat(id types.ChatID) (*Chat, bool) {
 	ws.chatsMu.RLock()
@@ -329,5 +396,30 @@ func (ws *Workspace) pushMessageToBack(msg *Message) {
 		)
 	} else {
 		ws.chatsByID[chatID].pushToBack(msg)
+
+		ginkgo.GinkgoWriter.Printf(
+			"manager %s workspace: message %s with chat=%s and body=%s pushed back\n",
+			ws.id, msg.ID, chatID, msg.Body,
+		)
 	}
+}
+
+type RespError struct {
+	err  error
+	code int
+}
+
+func newRespError(err error, code int) *RespError {
+	return &RespError{
+		err:  err,
+		code: code,
+	}
+}
+
+func (e *RespError) Error() string {
+	return e.err.Error()
+}
+
+func (e *RespError) GetCode() int {
+	return e.code
 }

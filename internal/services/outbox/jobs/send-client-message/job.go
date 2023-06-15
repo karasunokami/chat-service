@@ -13,11 +13,13 @@ import (
 	"go.uber.org/zap"
 )
 
-const serviceName = "send-client-message-job"
+const (
+	Name = "send-client-message"
+
+	serviceName = "send-client-message-job"
+)
 
 //go:generate mockgen -source=$GOFILE -destination=mocks/job_mock.gen.go -package=sendclientmessagejobmocks
-
-const Name = "send-client-message"
 
 type messageProducer interface {
 	ProduceMessage(ctx context.Context, message msgproducer.Message) error

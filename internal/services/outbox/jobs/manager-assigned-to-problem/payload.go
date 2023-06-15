@@ -9,9 +9,8 @@ import (
 )
 
 type jobPayload struct {
-	ManagerID           types.UserID    `json:"managerId" validate:"required"`
-	ProblemID           types.ProblemID `json:"problemId" validate:"required"`
-	CanTakeMoreProblems bool            `json:"canTakeMoreProblems"`
+	ManagerID types.UserID    `json:"managerId" validate:"required"`
+	ProblemID types.ProblemID `json:"problemId" validate:"required"`
 }
 
 func (p jobPayload) validate() error {
@@ -21,12 +20,10 @@ func (p jobPayload) validate() error {
 func MarshalPayload(
 	managerID types.UserID,
 	problemID types.ProblemID,
-	canTakeMoreProblems bool,
 ) (string, error) {
 	p := jobPayload{
-		ManagerID:           managerID,
-		ProblemID:           problemID,
-		CanTakeMoreProblems: canTakeMoreProblems,
+		ManagerID: managerID,
+		ProblemID: problemID,
 	}
 
 	if err := p.validate(); err != nil {

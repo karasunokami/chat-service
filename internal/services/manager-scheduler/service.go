@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	managerpool "github.com/karasunokami/chat-service/internal/services/manager-pool"
 	managerassignedtoproblemjob "github.com/karasunokami/chat-service/internal/services/outbox/jobs/manager-assigned-to-problem"
 	"github.com/karasunokami/chat-service/internal/store"
 	"github.com/karasunokami/chat-service/internal/types"
@@ -28,14 +27,20 @@ type transactor interface {
 	RunInTx(ctx context.Context, f func(context.Context) error) error
 }
 
+type managersPool interface {
+	Get(ctx context.Context) (types.UserID, error)
+	Put(ctx context.Context, managerID types.UserID) error
+	Size() int
+}
+
 //go:generate options-gen -out-filename=service_options.gen.go -from-struct=Options
 type Options struct {
 	period time.Duration `option:"mandatory" validate:"min=100ms,max=1m"`
 
-	mngrPool      managerpool.Pool `option:"mandatory" validate:"required"`
-	outboxService outboxService    `option:"mandatory" validate:"required"`
-	problemsRepo  problemsRepo     `option:"mandatory" validate:"required"`
-	transactor    transactor       `option:"mandatory" validate:"required"`
+	managersPool  managersPool  `option:"mandatory" validate:"required"`
+	outboxService outboxService `option:"mandatory" validate:"required"`
+	problemsRepo  problemsRepo  `option:"mandatory" validate:"required"`
+	transactor    transactor    `option:"mandatory" validate:"required"`
 }
 
 type Service struct {
@@ -64,7 +69,7 @@ func (s *Service) Run(ctx context.Context) error {
 			return nil
 
 		case <-ticker.C:
-			managersAvailableCount := s.mngrPool.Size()
+			managersAvailableCount := s.managersPool.Size()
 			if managersAvailableCount <= 0 {
 				continue
 			}
@@ -77,14 +82,14 @@ func (s *Service) Run(ctx context.Context) error {
 			}
 
 			for _, problem := range problems {
-				mngID, err := s.mngrPool.Get(ctx)
+				mngID, err := s.managersPool.Get(ctx)
 				if err != nil {
 					return fmt.Errorf("get manager from managers pool, err=%v", err)
 				}
 
 				err = s.setManagerToProblem(ctx, mngID, problem)
 				if err != nil {
-					err := s.mngrPool.Put(ctx, mngID)
+					err := s.managersPool.Put(ctx, mngID)
 					if err != nil {
 						s.logger.Error("return manager to managers pool", zap.Error(err))
 					}
@@ -105,15 +110,9 @@ func (s *Service) setManagerToProblem(ctx context.Context, mngID types.UserID, p
 			return fmt.Errorf("set manager to problem, err=%v", err)
 		}
 
-		canTakeMoreProblems, err := s.mngrPool.Contains(ctx, mngID)
-		if err != nil {
-			return fmt.Errorf("check if manager can take more problems, err=%v", err)
-		}
-
 		payload, err := managerassignedtoproblemjob.MarshalPayload(
 			mngID,
 			problem.ID,
-			canTakeMoreProblems,
 		)
 		if err != nil {
 			return fmt.Errorf("marshal manager assigned to problem job payload, err=%v", err)

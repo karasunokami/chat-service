@@ -126,4 +126,82 @@ var _ = Describe("Manager Scheduling Smoke", Ordered, func() {
 		Expect(lastMsg.AuthorID.String()).Should(Equal(clientChat.ClientID().String()))
 		Expect(lastMsg.CreatedAt.IsZero()).Should(BeFalse())
 	})
+
+	It("manager answers back", func() {
+		lastChat, ok := managerWs.LastChat()
+		Expect(ok).Should(BeTrue())
+		Expect(lastChat.MessagesCount()).Should(Equal(1))
+
+		body := `Hi!`
+
+		err := managerWs.SendMessage(ctx, lastChat.ID, body)
+		Expect(err).ShouldNot(HaveOccurred())
+
+		waitForEvent(clientStream) // NewMessageEvent
+
+		clientLastMsg, ok := clientChat.LastMessage()
+		Expect(ok).Should(BeTrue())
+		Expect(clientLastMsg.ID).ShouldNot(BeEmpty())
+		Expect(clientLastMsg.AuthorID.String()).Should(Equal(managerWs.ManagerID().String()))
+		Expect(clientLastMsg.CreatedAt.IsZero()).Should(BeFalse())
+		Expect(clientLastMsg.Body).Should(Equal(body))
+		Expect(clientLastMsg.IsService).Should(Equal(false))
+		Expect(clientLastMsg.IsBlocked).Should(Equal(false))
+
+		waitForEvent(managerStream) // NewMessageEvent
+
+		n := managerWs.ChatsCount()
+		Expect(n).Should(Equal(1))
+
+		managerChat, ok := managerWs.LastChat()
+		Expect(ok).Should(BeTrue())
+
+		managerLastMsg, ok := managerChat.LastMessage()
+		Expect(ok).Should(BeTrue())
+		Expect(managerLastMsg.ID).ShouldNot(BeEmpty())
+		Expect(managerLastMsg.ChatID).Should(Equal(managerChat.ID))
+		Expect(managerLastMsg.Body).Should(Equal(body))
+		Expect(managerLastMsg.AuthorID.String()).Should(Equal(managerWs.ManagerID().String()))
+		Expect(managerLastMsg.CreatedAt.IsZero()).Should(BeFalse())
+
+		err = managerWs.Refresh(ctx)
+		Expect(err).ShouldNot(HaveOccurred())
+
+		Expect(managerChat.MessagesCount()).Should(Equal(2))
+	})
+
+	It("manager closes chat", func() {
+		lastChat, ok := managerWs.LastChat()
+		Expect(ok).Should(BeTrue())
+
+		chatsCount := managerWs.ChatsCount()
+
+		err := managerWs.CloseChat(ctx, lastChat.ID)
+		Expect(err).ShouldNot(HaveOccurred())
+
+		waitForEvent(managerStream) // ChatClosedEvent
+
+		Expect(managerWs.ChatsCount()).Should(Equal(chatsCount - 1))
+
+		err = managerWs.GetChats(ctx)
+		Expect(err).ShouldNot(HaveOccurred())
+
+		waitForEvent(clientStream) // NewMessageEvent
+
+		err = managerWs.Refresh(ctx)
+		Expect(err).ShouldNot(HaveOccurred())
+
+		clientLastMsg, ok := lastChat.LastMessage()
+		Expect(ok).Should(BeTrue())
+		Expect(clientLastMsg.ID).ShouldNot(BeEmpty())
+		Expect(clientLastMsg.ChatID).Should(Equal(lastChat.ID))
+		Expect(clientLastMsg.AuthorID.String()).Should(Equal(managerWs.ManagerID().String()))
+		Expect(clientLastMsg.CreatedAt.IsZero()).Should(BeFalse())
+		Expect(clientLastMsg.Body).ShouldNot(BeEmpty())
+
+		err = clientChat.Refresh(ctx)
+		Expect(err).ShouldNot(HaveOccurred())
+
+		Expect(clientChat.MessagesCount()).Should(Equal(4))
+	})
 })

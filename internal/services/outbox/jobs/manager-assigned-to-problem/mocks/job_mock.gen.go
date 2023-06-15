@@ -141,3 +141,41 @@ func (mr *MockmessageRepositoryMockRecorder) GetFirstProblemMessage(ctx, problem
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFirstProblemMessage", reflect.TypeOf((*MockmessageRepository)(nil).GetFirstProblemMessage), ctx, problemID)
 }
+
+// MockmanagerLoadService is a mock of managerLoadService interface.
+type MockmanagerLoadService struct {
+	ctrl     *gomock.Controller
+	recorder *MockmanagerLoadServiceMockRecorder
+}
+
+// MockmanagerLoadServiceMockRecorder is the mock recorder for MockmanagerLoadService.
+type MockmanagerLoadServiceMockRecorder struct {
+	mock *MockmanagerLoadService
+}
+
+// NewMockmanagerLoadService creates a new mock instance.
+func NewMockmanagerLoadService(ctrl *gomock.Controller) *MockmanagerLoadService {
+	mock := &MockmanagerLoadService{ctrl: ctrl}
+	mock.recorder = &MockmanagerLoadServiceMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockmanagerLoadService) EXPECT() *MockmanagerLoadServiceMockRecorder {
+	return m.recorder
+}
+
+// CanManagerTakeProblem mocks base method.
+func (m *MockmanagerLoadService) CanManagerTakeProblem(ctx context.Context, managerID types.UserID) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CanManagerTakeProblem", ctx, managerID)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CanManagerTakeProblem indicates an expected call of CanManagerTakeProblem.
+func (mr *MockmanagerLoadServiceMockRecorder) CanManagerTakeProblem(ctx, managerID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanManagerTakeProblem", reflect.TypeOf((*MockmanagerLoadService)(nil).CanManagerTakeProblem), ctx, managerID)
+}

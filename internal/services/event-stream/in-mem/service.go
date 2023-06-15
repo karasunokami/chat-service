@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/imkira/go-observer"
 	eventstream "github.com/karasunokami/chat-service/internal/services/event-stream"
 	"github.com/karasunokami/chat-service/internal/types"
 
+	"github.com/imkira/go-observer"
 	"go.uber.org/zap"
 )
 

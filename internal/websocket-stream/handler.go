@@ -92,7 +92,7 @@ func (h *HTTPHandler) Serve(eCtx echo.Context) error {
 	})
 
 	if err := eg.Wait(); err != nil {
-		if !errors.Is(err, gorillaws.ErrCloseSent) {
+		if gorillaws.IsUnexpectedCloseError(err, gorillaws.CloseNormalClosure, gorillaws.CloseNoStatusReceived) {
 			h.logger.Error("unexpected error", zap.Error(err))
 			wsCloser.Close(gorillaws.CloseInternalServerErr)
 		}

@@ -27,6 +27,15 @@ type BaseEvent struct {
 	RequestId types.RequestID `json:"requestId"`
 }
 
+// ChatClosedEvent defines model for ChatClosedEvent.
+type ChatClosedEvent struct {
+	CanTakeMoreProblems bool            `json:"canTakeMoreProblems"`
+	ChatId              types.ChatID    `json:"chatId"`
+	EventId             types.EventID   `json:"eventId"`
+	EventType           string          `json:"eventType"`
+	RequestId           types.RequestID `json:"requestId"`
+}
+
 // Event defines model for Event.
 type Event struct {
 	EventType string `json:"eventType"`
@@ -115,6 +124,36 @@ func (t *Event) MergeNewMessageEvent(v NewMessageEvent) error {
 	return err
 }
 
+// AsChatClosedEvent returns the union data inside the Event as a ChatClosedEvent
+func (t Event) AsChatClosedEvent() (ChatClosedEvent, error) {
+	var body ChatClosedEvent
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromChatClosedEvent overwrites any union data inside the Event as the provided ChatClosedEvent
+func (t *Event) FromChatClosedEvent(v ChatClosedEvent) error {
+	t.EventType = "ChatClosedEvent"
+
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeChatClosedEvent performs a merge with any union data inside the Event, using the provided ChatClosedEvent
+func (t *Event) MergeChatClosedEvent(v ChatClosedEvent) error {
+	t.EventType = "ChatClosedEvent"
+
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JsonMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
 func (t Event) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator string `json:"eventType"`
@@ -129,6 +168,8 @@ func (t Event) ValueByDiscriminator() (interface{}, error) {
 		return nil, err
 	}
 	switch discriminator {
+	case "ChatClosedEvent":
+		return t.AsChatClosedEvent()
 	case "NewChatEvent":
 		return t.AsNewChatEvent()
 	case "NewMessageEvent":
@@ -184,18 +225,18 @@ func (t *Event) UnmarshalJSON(b []byte) error {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/8yWQVPbPBCG/4pnv2+mFyUO7YXxrZROhwPQKfTEcFDsjS1iS6p2nZTJ+L93VjFJXEJh",
-	"aGHIJYq1kp7d9105K8hd451FywTZCiivsNFxeKQJPy/QsvzwwXkMbDBOoTw+KWQ4c6HRDBm0rSlAAd96",
-	"hAyIg7ElKPg5Kt2ofyhfNI57nhzvzo1M411YH6S5ggxKw1U7HeeuSec6aGqtm+vGpHmleUQYFibH1FjG",
-	"YHWdxo2h69Sa7DIet/qNpVMQ8EeL9Gzyb/3yF2Hv8UzAArKrTYl3oXfTu94Au+kN5izpbdQqDOXBNMZq",
-	"dkEeNNp7ySpbwRkuP1Wa+1j4L90aIO3VTwcxSpacIpEu8bFVg7BO3dnm9kw3grrF7xQ4i+czyK5W8H/A",
-	"2ZNQOvVo8JDgWu1z7gP+2KfAg7UelnEFuq6fkM22pySVIVqu7aWe46kL+DW4aY0N7UBOnatRWzlafPRc",
-	"CwvzS/VeXpu/uBa+E4ZX6ay+fDu8am/t76t+3e3phX8hvW65cuHtVU7B1BW3e6/SN2vCgJqx+MgDtEIz",
-	"jtg0eI+vU9Cs9XxuNr0dXsW7W1S1NU2vktpx9qYI+0wsmxo7c1FXw7XMHmk7Ty5aL9CJ6JOcaqtLDEn0",
-	"LIGCBQYyzkIGi4N4f3u02hvI4MP4YDwBFTONfk6J26kMSly/j1DeR57Xy084aQkpmbmQlGgxaDa2TOJ9",
-	"S+PknCsMS0OYGE4Kh2Tf8RjieRLprAgFX5Av5BCpD3lnad1J7yeTeJc6y3fd6X1t8rgwvSEBuPuXI6M/",
-	"dWzfrf1HgYiEgWKnDzM6xgXWzjdoOVlHgYI21JDBkrI0rV2u68oRZ4eTw4N0SSLDrwAAAP///d3KmXsJ",
-	"AAA=",
+	"H4sIAAAAAAAC/+xWTW/bOBD9K8LsAnuhLWf3Eui2SYoihyRFk56CHGhpLDGWSJUzshsY+u/FUIo/laRI",
+	"2yCH+mKanCHfvDeP9ApSV9XOomWCZAWUFljpMDzRhB8WaFl+1N7V6NlgWEKZPs9kOHO+0gwJNI3JQAE/",
+	"1AgJEHtjc1DwbZS7UT8pXzQOe56fba+NTFU73x2kuYAEcsNFMx2nrorn2mtqrJvrysRpoXlE6BcmxdhY",
+	"Rm91GYeNoW1Vh+wmHLfaw9Iq8Pi1QXo18s99+m/B3sMzHjNIbtcUb4PeLu9uDdhN7zFlKe+00HxaOsJs",
+	"rZsuy6sZJLcr+NvjDBL4K94IHvdqxxupW7WvdartjZ7jhfP4ybtpiRVtcTt1rkRt5XQp77XMCvI3oXWo",
+	"mjX0Q07vWgVrLjNDqTeVsZqdl4lK17VUlKwOqR8mej9MwSUuZfLZrJ2YkHKBRDrHl7J2wlr1qOzDpa6k",
+	"yk03tQqcxR/olB0o0iwvBO8heD5+n532Tg1dPE/Ye8hAT1pll/Y/PhFcpfmJW/0LoX8bB3f0beFVg9wP",
+	"m/nAO79Cet1w4fz7Y07B1GUPgy/hu21Cj5ox+593oGWaccSmwgN8rYKq0/O11fTt8Ca9u4GqNk3Tq6S2",
+	"OntNwlATy6bGzlzQ1XApqyfazqPrphbQkegTXWirc/RR6Fl54xboyTgLCSyOwn1fo9W1gQT+Gx+NJ6BC",
+	"paGfY+JmKoMcu4cP5eGruUs/56ghpGjmfJSjRa/Z2DwK9y2Noysu0C8NYWQ4yhyS/YfHEM6TSGdFKPiI",
+	"fC2HCD9UO0udk/6dTMJd6iw/urOuS5OGxPieBMDjn1QZPefY3q39R4GIhJ6C03crOsMFlq6u0HLURYGC",
+	"xpeQwJKSOC5dqsvCESfHk+OjeEkiw/cAAAD//9rdvLI6CwAA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

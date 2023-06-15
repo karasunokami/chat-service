@@ -23,10 +23,12 @@ import (
 	managerscheduler "github.com/karasunokami/chat-service/internal/services/manager-scheduler"
 	msgproducer "github.com/karasunokami/chat-service/internal/services/msg-producer"
 	"github.com/karasunokami/chat-service/internal/services/outbox"
+	chatclosed "github.com/karasunokami/chat-service/internal/services/outbox/jobs/chat-closed"
 	clientmessageblockedjob "github.com/karasunokami/chat-service/internal/services/outbox/jobs/client-message-blocked"
 	clientmessagesentjob "github.com/karasunokami/chat-service/internal/services/outbox/jobs/client-message-sent"
 	managerassignedtoproblemjob "github.com/karasunokami/chat-service/internal/services/outbox/jobs/manager-assigned-to-problem"
 	sendclientmessagejob "github.com/karasunokami/chat-service/internal/services/outbox/jobs/send-client-message"
+	sendmanagermessagejob "github.com/karasunokami/chat-service/internal/services/outbox/jobs/send-manager-message"
 	"github.com/karasunokami/chat-service/internal/store"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -238,9 +240,30 @@ func startNewDeps(ctx context.Context, cfg config.Config) (serverDeps, error) {
 		d.msgProducerService,
 		d.eventsStream,
 		d.msgRepo,
+		d.managerLoad,
 	))
 	if err != nil {
 		return serverDeps{}, fmt.Errorf("create manager assigned to problem job, err=%v", err)
+	}
+
+	sendManagerMessageJob, err := sendmanagermessagejob.New(sendmanagermessagejob.NewOptions(
+		d.eventsStream,
+		d.msgProducerService,
+		d.msgRepo,
+	))
+	if err != nil {
+		return serverDeps{}, fmt.Errorf("create send manager message job, err=%v", err)
+	}
+
+	chatClosedJob, err := chatclosed.New(chatclosed.NewOptions(
+		d.msgProducerService,
+		d.msgRepo,
+		d.chatRepo,
+		d.eventsStream,
+		d.managerLoad,
+	))
+	if err != nil {
+		return serverDeps{}, fmt.Errorf("create chat closed job, err=%v", err)
 	}
 
 	err = d.outboxService.RegisterJobs(
@@ -248,6 +271,8 @@ func startNewDeps(ctx context.Context, cfg config.Config) (serverDeps, error) {
 		clientMessageBlockedJob,
 		clientMessageSentJob,
 		managerAssignedToProblemJob,
+		sendManagerMessageJob,
+		chatClosedJob,
 	)
 	if err != nil {
 		return serverDeps{}, fmt.Errorf("register jobs, err=%v", err)

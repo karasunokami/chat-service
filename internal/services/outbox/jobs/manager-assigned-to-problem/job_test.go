@@ -27,7 +27,13 @@ func TestJob_Handle(t *testing.T) {
 	msgRepo := managerassignedtoproblemjobmocks.NewMockmessageRepository(ctrl)
 	eventStream := managerassignedtoproblemjobmocks.NewMockeventStream(ctrl)
 	msgProducer := managerassignedtoproblemjobmocks.NewMockmessageProducer(ctrl)
-	job, err := managerassignedtoproblemjob.New(managerassignedtoproblemjob.NewOptions(msgProducer, eventStream, msgRepo))
+	managerLoad := managerassignedtoproblemjobmocks.NewMockmanagerLoadService(ctrl)
+	job, err := managerassignedtoproblemjob.New(managerassignedtoproblemjob.NewOptions(
+		msgProducer,
+		eventStream,
+		msgRepo,
+		managerLoad,
+	))
 	require.NoError(t, err)
 
 	clientID := types.NewUserID()
@@ -94,8 +100,10 @@ func TestJob_Handle(t *testing.T) {
 		CanTakeMoreProblems: canTakeMoreProblem,
 	}).Return(nil)
 
+	managerLoad.EXPECT().CanManagerTakeProblem(ctx, mngID).Return(true, nil)
+
 	// Action & assert.
-	payload, err := managerassignedtoproblemjob.MarshalPayload(mngID, problemID, canTakeMoreProblem)
+	payload, err := managerassignedtoproblemjob.MarshalPayload(mngID, problemID)
 	require.NoError(t, err)
 
 	err = job.Handle(ctx, payload)

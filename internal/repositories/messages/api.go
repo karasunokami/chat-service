@@ -84,6 +84,30 @@ func (r *Repo) CreateService(
 	return storeMessageToRepoMessage(mes), nil
 }
 
+func (r *Repo) CreateFullVisible(
+	ctx context.Context,
+	reqID types.RequestID,
+	problemID types.ProblemID,
+	chatID types.ChatID,
+	authorID types.UserID,
+	msgBody string,
+) (*Message, error) {
+	mes, err := r.db.Message(ctx).Create().
+		SetInitialRequestID(reqID).
+		SetProblemID(problemID).
+		SetChatID(chatID).
+		SetAuthorID(authorID).
+		SetBody(msgBody).
+		SetIsVisibleForClient(true).
+		SetIsVisibleForManager(true).
+		Save(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("db create new message, err=%v", err)
+	}
+
+	return storeMessageToRepoMessage(mes), nil
+}
+
 // GetFirstProblemMessage get first message of problem by problem id.
 func (r *Repo) GetFirstProblemMessage(ctx context.Context, problemID types.ProblemID) (*Message, error) {
 	mes, err := r.db.Message(ctx).Query().
