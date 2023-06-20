@@ -27,7 +27,12 @@ func (r *Repo) GetMessageByRequestID(ctx context.Context, reqID types.RequestID)
 }
 
 func (r *Repo) GetMessageByID(ctx context.Context, id types.MessageID) (*Message, error) {
-	mes, err := r.db.Message(ctx).Get(ctx, id)
+	mes, err := r.db.Message(ctx).Query().
+		Where(
+			message.IsService(false),
+			message.IDEQ(id),
+		).
+		First(ctx)
 	if err != nil {
 		if store.IsNotFound(err) {
 			return nil, ErrMsgNotFound

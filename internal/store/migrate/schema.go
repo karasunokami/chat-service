@@ -3,6 +3,7 @@
 package migrate
 
 import (
+	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/dialect/sql/schema"
 	"entgo.io/ent/schema/field"
 )
@@ -19,6 +20,13 @@ var (
 		Name:       "chats",
 		Columns:    ChatsColumns,
 		PrimaryKey: []*schema.Column{ChatsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "chat_client_id",
+				Unique:  false,
+				Columns: []*schema.Column{ChatsColumns[1]},
+			},
+		},
 	}
 	// FailedJobsColumns holds the columns for the "failed_jobs" table.
 	FailedJobsColumns = []*schema.Column{
@@ -93,9 +101,22 @@ var (
 		},
 		Indexes: []*schema.Index{
 			{
+				Name:    "message_initial_request_id",
+				Unique:  true,
+				Columns: []*schema.Column{MessagesColumns[2]},
+				Annotation: &entsql.IndexAnnotation{
+					Where: "not is_service",
+				},
+			},
+			{
 				Name:    "message_created_at_chat_id",
 				Unique:  false,
 				Columns: []*schema.Column{MessagesColumns[9], MessagesColumns[10]},
+			},
+			{
+				Name:    "message_created_at_problem_id",
+				Unique:  false,
+				Columns: []*schema.Column{MessagesColumns[9], MessagesColumns[11]},
 			},
 		},
 	}
@@ -122,9 +143,14 @@ var (
 		},
 		Indexes: []*schema.Index{
 			{
-				Name:    "problem_chat_id_manager_id",
+				Name:    "problem_chat_id",
 				Unique:  false,
-				Columns: []*schema.Column{ProblemsColumns[4], ProblemsColumns[1]},
+				Columns: []*schema.Column{ProblemsColumns[4]},
+			},
+			{
+				Name:    "problem_manager_id",
+				Unique:  false,
+				Columns: []*schema.Column{ProblemsColumns[1]},
 			},
 		},
 	}

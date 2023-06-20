@@ -40,6 +40,7 @@ func (Problem) Edges() []ent.Edge {
 
 func (Problem) Indexes() []ent.Index {
 	return []ent.Index{
-		index.Fields("chat_id", "manager_id"),
+		index.Fields("chat_id"),
+		index.Fields("manager_id"),
 	}
 }
