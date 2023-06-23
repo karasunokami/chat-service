@@ -14,7 +14,7 @@ import (
 var ErrInvalidRequest = errors.New("invalid request")
 
 type chatsRepo interface {
-	GetManagerOpened(ctx context.Context, managerID types.UserID) ([]*chatsrepo.Chat, error)
+	GetManagerOpened(ctx context.Context, managerID types.UserID) ([]chatsrepo.Chat, error)
 }
 
 //go:generate options-gen -out-filename=usecase_options.gen.go -from-struct=Options

@@ -29,7 +29,7 @@ type messageProducer interface {
 
 type messageRepository interface {
 	GetFirstProblemMessage(ctx context.Context, problemID types.ProblemID) (*messagesrepo.Message, error)
-	CreateService(
+	CreateClientService(
 		ctx context.Context,
 		problemID types.ProblemID,
 		chatID types.ChatID,
@@ -87,7 +87,7 @@ func (j *Job) Handle(ctx context.Context, payload string) error {
 		return fmt.Errorf("add service message to problem, err=%v", err)
 	}
 
-	serviceMsg, err := j.msgRepo.CreateService(
+	serviceMsg, err := j.msgRepo.CreateClientService(
 		ctx,
 		pl.ProblemID,
 		msg.ChatID,

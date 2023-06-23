@@ -56,7 +56,7 @@ func New(opts Options) (*Server, error) {
 		middleware.RecoverWithConfig(middleware.RecoverConfig{
 			DisableStackAll: true,
 			LogErrorFunc: func(c echo.Context, err error, stack []byte) error {
-				opts.logger.Error("recovered", zap.ByteString("stack", stack), zap.Error(err))
+				opts.logger.Error("Recovered", zap.ByteString("stack", stack), zap.Error(err))
 
 				return err
 			},
@@ -118,7 +118,7 @@ func (s *Server) Run(ctx context.Context) error {
 	})
 
 	eg.Go(func() error {
-		s.lg.Info("listen and serve", zap.String("addr", s.srv.Addr))
+		s.lg.Info("Listen and serve", zap.String("addr", s.srv.Addr))
 
 		if err := s.srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			return fmt.Errorf("listen and serve: %v", err)

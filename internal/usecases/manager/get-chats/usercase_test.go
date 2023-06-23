@@ -91,7 +91,7 @@ func (s *UseCaseSuite) TestSuccessStory() {
 	chatID1 := types.NewChatID()
 	chatID2 := types.NewChatID()
 
-	expectedChats := []*chatsrepo.Chat{
+	expectedChats := []chatsrepo.Chat{
 		{
 			ID:       chatID1,
 			ClientID: clientID,

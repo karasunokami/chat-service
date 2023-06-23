@@ -37,10 +37,10 @@ func (m *MockchatsRepo) EXPECT() *MockchatsRepoMockRecorder {
 }
 
 // GetManagerOpened mocks base method.
-func (m *MockchatsRepo) GetManagerOpened(ctx context.Context, managerID types.UserID) ([]*chatsrepo.Chat, error) {
+func (m *MockchatsRepo) GetManagerOpened(ctx context.Context, managerID types.UserID) ([]chatsrepo.Chat, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetManagerOpened", ctx, managerID)
-	ret0, _ := ret[0].([]*chatsrepo.Chat)
+	ret0, _ := ret[0].([]chatsrepo.Chat)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

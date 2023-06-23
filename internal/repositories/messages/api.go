@@ -29,7 +29,6 @@ func (r *Repo) GetMessageByRequestID(ctx context.Context, reqID types.RequestID)
 func (r *Repo) GetMessageByID(ctx context.Context, id types.MessageID) (*Message, error) {
 	mes, err := r.db.Message(ctx).Query().
 		Where(
-			message.IsService(false),
 			message.IDEQ(id),
 		).
 		First(ctx)
@@ -68,8 +67,8 @@ func (r *Repo) CreateClientVisible(
 	return storeMessageToRepoMessage(mes), nil
 }
 
-// CreateService creates a service message.
-func (r *Repo) CreateService(
+// CreateClientService creates a client service message.
+func (r *Repo) CreateClientService(
 	ctx context.Context,
 	problemID types.ProblemID,
 	chatID types.ChatID,

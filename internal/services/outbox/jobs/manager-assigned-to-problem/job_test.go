@@ -72,7 +72,7 @@ func TestJob_Handle(t *testing.T) {
 	}
 
 	msgRepo.EXPECT().GetFirstProblemMessage(gomock.Any(), problemID).Return(&msg, nil)
-	msgRepo.EXPECT().CreateService(gomock.Any(), problemID, chatID, expectedBody).Return(&serviceMsg, nil)
+	msgRepo.EXPECT().CreateClientService(gomock.Any(), problemID, chatID, expectedBody).Return(&serviceMsg, nil)
 
 	msgProducer.EXPECT().ProduceMessage(gomock.Any(), msgproducer.Message{
 		ID:         serviceMsgID,
