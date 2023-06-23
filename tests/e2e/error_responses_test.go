@@ -10,6 +10,7 @@ import (
 
 	"github.com/karasunokami/chat-service/internal/types"
 	apiclientv1 "github.com/karasunokami/chat-service/tests/e2e/api/client/v1"
+	apimanagerv1 "github.com/karasunokami/chat-service/tests/e2e/api/manager/v1"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -20,12 +21,15 @@ var _ = Describe("Error Responses", Ordered, func() {
 		ctx    context.Context
 		cancel context.CancelFunc
 
-		apiClientV1 *apiclientv1.ClientWithResponses
+		apiClientV1  *apiclientv1.ClientWithResponses
+		apiManagerV1 *apimanagerv1.ClientWithResponses
 	)
 
 	BeforeAll(func() {
 		ctx, cancel = context.WithCancel(suiteCtx)
+
 		apiClientV1, _ = newClientAPI(ctx, clientsPool.Get())
+		apiManagerV1, _ = newManagerAPI(ctx, managersPool.Get())
 	})
 
 	AfterAll(func() {
@@ -82,9 +86,30 @@ var _ = Describe("Error Responses", Ordered, func() {
 		Expect(err).ShouldNot(HaveOccurred())
 		expectSendClientMsgRespCode(resp, http.StatusBadRequest)
 	})
+
+	It("5001 no problem, message body is empty", func() {
+		// Action.
+		resp, err := apiManagerV1.PostCloseChatWithResponse(ctx,
+			&apimanagerv1.PostCloseChatParams{XRequestID: types.NewRequestID()},
+			apimanagerv1.PostCloseChatJSONRequestBody{ChatId: types.NewChatID()},
+		)
+		Expect(err).ShouldNot(HaveOccurred())
+
+		// Assert.
+		Expect(err).ShouldNot(HaveOccurred())
+		expectManagerCloseChatRespCode(resp, 5001)
+	})
 })
 
 func expectSendClientMsgRespCode[TCode ~int](resp *apiclientv1.PostSendMessageResponse, code TCode) {
+	printResponse(resp.Body)
+	Expect(resp).ShouldNot(BeNil())
+	Expect(resp.JSON200).ShouldNot(BeNil())
+	Expect(resp.JSON200.Error).ShouldNot(BeNil())
+	Expect(resp.JSON200.Error.Code).Should(BeNumerically("==", code))
+}
+
+func expectManagerCloseChatRespCode[TCode ~int](resp *apimanagerv1.PostCloseChatResponse, code TCode) {
 	printResponse(resp.Body)
 	Expect(resp).ShouldNot(BeNil())
 	Expect(resp.JSON200).ShouldNot(BeNil())

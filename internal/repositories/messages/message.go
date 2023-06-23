@@ -12,6 +12,7 @@ type Message struct {
 	ChatID           types.ChatID
 	AuthorID         types.UserID
 	InitialRequestID types.RequestID
+	ProblemID        types.ProblemID
 
 	Body string
 
@@ -35,6 +36,7 @@ func storeMessageToRepoMessage(m *store.Message) *Message {
 		IsBlocked:           m.IsBlocked,
 		IsService:           m.IsService,
 		InitialRequestID:    m.InitialRequestID,
+		ProblemID:           m.ProblemID,
 	}
 }
 

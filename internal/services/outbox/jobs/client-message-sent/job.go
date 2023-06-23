@@ -2,9 +2,11 @@ package clientmessagesentjob
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	messagesrepo "github.com/karasunokami/chat-service/internal/repositories/messages"
+	problemsrepo "github.com/karasunokami/chat-service/internal/repositories/problems"
 	eventstream "github.com/karasunokami/chat-service/internal/services/event-stream"
 	"github.com/karasunokami/chat-service/internal/services/outbox"
 	"github.com/karasunokami/chat-service/internal/types"
@@ -16,22 +18,28 @@ const Name = "client-message-sent"
 
 //go:generate options-gen -out-filename=job_options.gen.go -from-struct=Options
 type Options struct {
-	eventStream eventStream       `option:"mandatory" validate:"required"`
-	msgRepo     messageRepository `option:"mandatory" validate:"required"`
+	eventStream  eventStream  `option:"mandatory" validate:"required"`
+	msgRepo      messageRepo  `option:"mandatory" validate:"required"`
+	problemsRepo problemsRepo `option:"mandatory" validate:"required"`
 }
 
 type eventStream interface {
 	Publish(ctx context.Context, userID types.UserID, event eventstream.Event) error
 }
 
-type messageRepository interface {
+type messageRepo interface {
 	GetMessageByID(ctx context.Context, msgID types.MessageID) (*messagesrepo.Message, error)
+}
+
+type problemsRepo interface {
+	GetManagerID(ctx context.Context, problemID types.ProblemID) (types.UserID, error)
 }
 
 type Job struct {
 	outbox.DefaultJob
-	eventStream eventStream
-	msgRepo     messageRepository
+	eventStream  eventStream
+	msgRepo      messageRepo
+	problemsRepo problemsRepo
 }
 
 func New(opts Options) (*Job, error) {
@@ -40,8 +48,9 @@ func New(opts Options) (*Job, error) {
 	}
 
 	return &Job{
-		eventStream: opts.eventStream,
-		msgRepo:     opts.msgRepo,
+		eventStream:  opts.eventStream,
+		msgRepo:      opts.msgRepo,
+		problemsRepo: opts.problemsRepo,
 	}, nil
 }
 
@@ -67,6 +76,30 @@ func (j *Job) Handle(ctx context.Context, payload string) error {
 	))
 	if err != nil {
 		return fmt.Errorf("publish message to event stream, err=%v", err)
+	}
+
+	if !msg.IsService && !msg.ProblemID.IsZero() {
+		managerID, err := j.problemsRepo.GetManagerID(ctx, msg.ProblemID)
+		if err != nil {
+			if errors.Is(err, problemsrepo.ErrNotFound) {
+				return nil
+			}
+
+			return fmt.Errorf("get manager id by problem id, err=%v", err)
+		}
+
+		err = j.eventStream.Publish(ctx, managerID, eventstream.NewNewManagerMessageEvent(
+			types.NewEventID(),
+			msg.InitialRequestID,
+			msg.ChatID,
+			msg.ID,
+			msg.CreatedAt,
+			msg.Body,
+			msg.AuthorID,
+		))
+		if err != nil {
+			return fmt.Errorf("publish message to event stream, err=%v", err)
+		}
 	}
 
 	return nil

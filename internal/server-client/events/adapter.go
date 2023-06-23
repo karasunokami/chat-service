@@ -15,7 +15,7 @@ func (Adapter) Adapt(ev eventstream.Event) (any, error) {
 	switch v := ev.(type) {
 	case *eventstream.NewMessageEvent:
 		err = event.FromNewMessageEvent(NewMessageEvent{
-			AuthorId:  v.UserID.AsPointer(),
+			AuthorId:  v.AuthorID.AsPointer(),
 			Body:      v.MessageBody,
 			CreatedAt: v.CreatedAt,
 			IsService: v.IsService,

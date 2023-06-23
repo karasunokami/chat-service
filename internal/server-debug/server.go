@@ -58,7 +58,7 @@ func New(opts Options) (*Server, error) {
 			DisablePrintStack: false,
 			LogLevel:          0,
 			LogErrorFunc: func(c echo.Context, err error, stack []byte) error {
-				lg.Error("recovered", zap.ByteString("stack", stack), zap.Error(err))
+				lg.Error("Recovered", zap.ByteString("stack", stack), zap.Error(err))
 
 				return nil
 			},
@@ -111,7 +111,7 @@ func (s *Server) Run(ctx context.Context) error {
 	})
 
 	eg.Go(func() error {
-		s.lg.Info("listen and serve", zap.String("addr", s.srv.Addr))
+		s.lg.Info("Listen and serve", zap.String("addr", s.srv.Addr))
 
 		if err := s.srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			return fmt.Errorf("listen and serve: %v", err)
@@ -145,7 +145,7 @@ func (s *Server) LogLevel(c echo.Context) error {
 }
 
 func (s *Server) DebugError(c echo.Context) error {
-	s.lg.Error("look for me in the Sentry")
+	s.lg.Error("Look for me in the Sentry")
 
 	err := c.String(http.StatusOK, "event sent")
 	if err != nil {

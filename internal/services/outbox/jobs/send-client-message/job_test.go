@@ -63,7 +63,7 @@ func TestJob_Handle(t *testing.T) {
 		RequestID:   requestID,
 		ChatID:      chatID,
 		MessageID:   msgID,
-		UserID:      clientID,
+		AuthorID:    clientID,
 		CreatedAt:   createdAt,
 		MessageBody: body,
 		IsService:   isService,

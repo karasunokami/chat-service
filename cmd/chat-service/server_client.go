@@ -6,6 +6,7 @@ import (
 	"github.com/karasunokami/chat-service/internal/config"
 	"github.com/karasunokami/chat-service/internal/server"
 	serverclient "github.com/karasunokami/chat-service/internal/server-client"
+	clientevents "github.com/karasunokami/chat-service/internal/server-client/events"
 	clientv1 "github.com/karasunokami/chat-service/internal/server-client/v1"
 	gethistory "github.com/karasunokami/chat-service/internal/usecases/client/get-history"
 	sendmessage "github.com/karasunokami/chat-service/internal/usecases/client/send-message"
@@ -33,6 +34,7 @@ func initServerClient(
 		serverclient.NewHandlersRegistrar(deps.clientSwagger, serverHandlers, deps.errHandler.Handle),
 		deps.kcClient,
 		deps.eventsStream,
+		clientevents.Adapter{},
 	))
 	if err != nil {
 		return nil, fmt.Errorf("build server: %v", err)

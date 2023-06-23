@@ -114,7 +114,7 @@ func (s *Service) findAndReserveJobs(ctx context.Context) {
 					continue
 				}
 
-				s.lg.Error("find and reserve job", zap.Error(err))
+				s.lg.Error("Find and reserve job", zap.Error(err))
 
 				continue
 			}
@@ -145,7 +145,7 @@ func (s *Service) runWorker(ctx context.Context) {
 					continue
 				}
 
-				s.lg.Error("handle job, err=%v", zap.Error(err))
+				s.lg.Error("Handle job, err=%v", zap.String("job", j.Name), zap.Error(err))
 			}
 
 		case <-ctx.Done():

@@ -266,9 +266,9 @@ func newMessageEvent(body string) eventstream.Event {
 		types.NewRequestID(),
 		types.NewChatID(),
 		types.NewMessageID(),
-		types.NewUserID(),
 		time.Now(),
 		body,
+		types.NewUserID(),
 		false,
 	)
 }

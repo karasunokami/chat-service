@@ -41,9 +41,9 @@ func TestAdapter_Adapt(t *testing.T) {
 				types.MustParse[types.RequestID]("cee5f290-bc30-11ed-b7fe-461e464ebed8"),
 				types.MustParse[types.ChatID]("31b4dc06-bc31-11ed-93cc-461e464ebed8"),
 				types.MustParse[types.MessageID]("cb36a888-bc30-11ed-b843-461e464ebed8"),
-				types.UserIDNil,
 				time.Unix(1, 1).UTC(),
 				"Manager will coming soon",
+				types.UserIDNil,
 				true,
 			),
 			expJSON: `{

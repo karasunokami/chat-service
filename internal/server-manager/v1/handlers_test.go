@@ -24,8 +24,12 @@ type HandlersSuite struct {
 	canReceiveProblemsUseCase *managerv1mocks.MockcanReceiveProblemsUseCase
 	handlers                  managerv1.Handlers
 
-	managerID        types.UserID
-	freeHandsUseCase *managerv1mocks.MockfreeHandsUseCase
+	managerID          types.UserID
+	freeHandsUseCase   *managerv1mocks.MockfreeHandsUseCase
+	getChatsUseCase    *managerv1mocks.MockgetChatsUseCase
+	getHistoryUseCase  *managerv1mocks.MockgetHistoryUseCase
+	sendMessageUseCase *managerv1mocks.MocksendMessageUseCase
+	closeChatUseCase   *managerv1mocks.MockcloseChatUseCase
 }
 
 func TestHandlersSuite(t *testing.T) {
@@ -37,11 +41,19 @@ func (s *HandlersSuite) SetupTest() {
 	s.ctrl = gomock.NewController(s.T())
 	s.canReceiveProblemsUseCase = managerv1mocks.NewMockcanReceiveProblemsUseCase(s.ctrl)
 	s.freeHandsUseCase = managerv1mocks.NewMockfreeHandsUseCase(s.ctrl)
+	s.getChatsUseCase = managerv1mocks.NewMockgetChatsUseCase(s.ctrl)
+	s.getHistoryUseCase = managerv1mocks.NewMockgetHistoryUseCase(s.ctrl)
+	s.sendMessageUseCase = managerv1mocks.NewMocksendMessageUseCase(s.ctrl)
+	s.closeChatUseCase = managerv1mocks.NewMockcloseChatUseCase(s.ctrl)
 	{
 		var err error
 		s.handlers, err = managerv1.NewHandlers(managerv1.NewOptions(
 			s.canReceiveProblemsUseCase,
 			s.freeHandsUseCase,
+			s.getChatsUseCase,
+			s.getHistoryUseCase,
+			s.sendMessageUseCase,
+			s.closeChatUseCase,
 		))
 		s.Require().NoError(err)
 	}

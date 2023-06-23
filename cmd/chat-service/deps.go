@@ -20,11 +20,15 @@ import (
 	inmemeventstream "github.com/karasunokami/chat-service/internal/services/event-stream/in-mem"
 	managerload "github.com/karasunokami/chat-service/internal/services/manager-load"
 	inmemmanagerpool "github.com/karasunokami/chat-service/internal/services/manager-pool/in-mem"
+	managerscheduler "github.com/karasunokami/chat-service/internal/services/manager-scheduler"
 	msgproducer "github.com/karasunokami/chat-service/internal/services/msg-producer"
 	"github.com/karasunokami/chat-service/internal/services/outbox"
+	chatclosed "github.com/karasunokami/chat-service/internal/services/outbox/jobs/chat-closed"
 	clientmessageblockedjob "github.com/karasunokami/chat-service/internal/services/outbox/jobs/client-message-blocked"
 	clientmessagesentjob "github.com/karasunokami/chat-service/internal/services/outbox/jobs/client-message-sent"
+	managerassignedtoproblemjob "github.com/karasunokami/chat-service/internal/services/outbox/jobs/manager-assigned-to-problem"
 	sendclientmessagejob "github.com/karasunokami/chat-service/internal/services/outbox/jobs/send-client-message"
+	sendmanagermessagejob "github.com/karasunokami/chat-service/internal/services/outbox/jobs/send-manager-message"
 	"github.com/karasunokami/chat-service/internal/store"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -56,6 +60,7 @@ type serverDeps struct {
 	managerPool                 *inmemmanagerpool.Service
 	eventsStream                *inmemeventstream.Service
 	afcVerdictsProcessorService *afcverdictsprocessor.Service
+	managerSchedulerService     *managerscheduler.Service
 }
 
 func startNewDeps(ctx context.Context, cfg config.Config) (serverDeps, error) {
@@ -193,6 +198,17 @@ func startNewDeps(ctx context.Context, cfg config.Config) (serverDeps, error) {
 		return serverDeps{}, fmt.Errorf("configure afc verdicts processor, err=%v", err)
 	}
 
+	d.managerSchedulerService, err = managerscheduler.New(managerscheduler.NewOptions(
+		cfg.Services.ManagerScheduler.Period,
+		d.managerPool,
+		d.outboxService,
+		d.problemsRepo,
+		d.db,
+	))
+	if err != nil {
+		return serverDeps{}, fmt.Errorf("create manager scheduler service, err=%v", err)
+	}
+
 	// register service jobs
 	sendClientMessageJob, err := sendclientmessagejob.New(sendclientmessagejob.NewOptions(
 		d.msgProducerService,
@@ -214,12 +230,50 @@ func startNewDeps(ctx context.Context, cfg config.Config) (serverDeps, error) {
 	clientMessageSentJob, err := clientmessagesentjob.New(clientmessagesentjob.NewOptions(
 		d.eventsStream,
 		d.msgRepo,
+		d.problemsRepo,
 	))
 	if err != nil {
 		return serverDeps{}, fmt.Errorf("create client message sent job, err=%v", err)
 	}
 
-	err = d.outboxService.RegisterJobs(sendClientMessageJob, clientMessageBlockedJob, clientMessageSentJob)
+	managerAssignedToProblemJob, err := managerassignedtoproblemjob.New(managerassignedtoproblemjob.NewOptions(
+		d.msgProducerService,
+		d.eventsStream,
+		d.msgRepo,
+		d.managerLoad,
+	))
+	if err != nil {
+		return serverDeps{}, fmt.Errorf("create manager assigned to problem job, err=%v", err)
+	}
+
+	sendManagerMessageJob, err := sendmanagermessagejob.New(sendmanagermessagejob.NewOptions(
+		d.eventsStream,
+		d.msgProducerService,
+		d.msgRepo,
+	))
+	if err != nil {
+		return serverDeps{}, fmt.Errorf("create send manager message job, err=%v", err)
+	}
+
+	chatClosedJob, err := chatclosed.New(chatclosed.NewOptions(
+		d.msgProducerService,
+		d.msgRepo,
+		d.chatRepo,
+		d.eventsStream,
+		d.managerLoad,
+	))
+	if err != nil {
+		return serverDeps{}, fmt.Errorf("create chat closed job, err=%v", err)
+	}
+
+	err = d.outboxService.RegisterJobs(
+		sendClientMessageJob,
+		clientMessageBlockedJob,
+		clientMessageSentJob,
+		managerAssignedToProblemJob,
+		sendManagerMessageJob,
+		chatClosedJob,
+	)
 	if err != nil {
 		return serverDeps{}, fmt.Errorf("register jobs, err=%v", err)
 	}
@@ -230,12 +284,12 @@ func startNewDeps(ctx context.Context, cfg config.Config) (serverDeps, error) {
 func (d serverDeps) stop() {
 	err := closeIfNotNil(d.psqlClient)
 	if err != nil {
-		d.clientLogger.Error("stop psql client", zap.Error(err))
+		d.clientLogger.Error("Stop psql client", zap.Error(err))
 	}
 
 	err = closeIfNotNil(d.managerPool)
 	if err != nil {
-		d.clientLogger.Error("stop manager pool", zap.Error(err))
+		d.clientLogger.Error("Stop manager pool", zap.Error(err))
 	}
 }
 

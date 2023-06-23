@@ -2,6 +2,7 @@ package schema
 
 import (
 	"entgo.io/ent"
+	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
@@ -51,6 +52,10 @@ func (Message) Edges() []ent.Edge {
 
 func (Message) Indexes() []ent.Index {
 	return []ent.Index{
+		index.Fields("initial_request_id").
+			Unique().
+			Annotations(entsql.IndexWhere("not is_service")),
 		index.Fields("created_at", "chat_id"),
+		index.Fields("created_at", "problem_id"),
 	}
 }
