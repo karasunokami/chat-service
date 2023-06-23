@@ -12,6 +12,7 @@ import (
 	"github.com/karasunokami/chat-service/internal/logger"
 	"github.com/karasunokami/chat-service/internal/middlewares"
 	eventstream "github.com/karasunokami/chat-service/internal/services/event-stream"
+	tokenexpiration "github.com/karasunokami/chat-service/internal/services/token-expiration"
 	"github.com/karasunokami/chat-service/internal/types"
 	websocketstream "github.com/karasunokami/chat-service/internal/websocket-stream"
 
@@ -27,19 +28,19 @@ func init() {
 	logger.MustInit(logger.NewOptions("debug"))
 }
 
+const (
+	eventsNum     = 3
+	eventInterval = time.Second
+
+	pingInterval = eventInterval / 4
+
+	origin = "http://localhost"
+
+	headerSecWsProtocol = "Sec-WebSocket-Protocol"
+	secWsProtocol       = "chat-service-protocol.test"
+)
+
 func TestHTTPHandler(t *testing.T) {
-	const (
-		eventsNum     = 3
-		eventInterval = time.Second
-
-		pingInterval = eventInterval / 4
-
-		origin = "http://localhost"
-
-		headerSecWsProtocol = "Sec-WebSocket-Protocol"
-		secWsProtocol       = "chat-service-protocol.test"
-	)
-
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -52,15 +53,7 @@ func TestHTTPHandler(t *testing.T) {
 
 	log := zap.L().Named("TestHTTPHandler")
 
-	h, err := websocketstream.NewHTTPHandler(websocketstream.NewOptions(
-		zap.L(),
-		eventStreamMock{uid: uid, ch: eventsCh},
-		eventAdapter{},
-		websocketstream.JSONEventWriter{},
-		websocketstream.NewUpgrader([]string{origin}, secWsProtocol),
-		shutdownCh,
-		websocketstream.WithPingPeriod(pingInterval),
-	))
+	h, err := newHTTPHandler(uid, eventsCh, shutdownCh)
 	require.NoError(t, err)
 
 	e := echo.New()
@@ -141,6 +134,74 @@ func TestHTTPHandler(t *testing.T) {
 		assert.Error(t, err)
 		assert.True(t, gorillaws.IsCloseError(err, gorillaws.CloseNormalClosure))
 	})
+}
+
+func TestCloseWsOnTokenExpired(t *testing.T) {
+	const tokenLiveTime = time.Second * 1
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	uid := types.NewUserID()
+
+	h, err := newHTTPHandler(uid, make(chan eventstream.Event), make(chan struct{}))
+	require.NoError(t, err)
+
+	e := echo.New()
+	e.GET("/ws", middlewares.AuthWithExp(uid, time.Now().Add(tokenLiveTime).Unix())(h.Serve))
+	s := httptest.NewServer(e)
+
+	u := url.URL{Scheme: "ws", Host: s.Listener.Addr().String(), Path: "/ws"}
+	t.Log(u.String())
+
+	header := http.Header{}
+	header.Add(echo.HeaderOrigin, origin)
+	header.Add(headerSecWsProtocol, secWsProtocol)
+
+	c, resp, err := gorillaws.DefaultDialer.DialContext(ctx, u.String(), header)
+	require.NoError(t, err)
+	assert.Equal(t, secWsProtocol, resp.Header.Get(headerSecWsProtocol))
+	defer func() {
+		require.NoError(t, c.Close())
+		require.NoError(t, resp.Body.Close())
+	}()
+
+	t.Run("ws closed by token expiration", func(t *testing.T) {
+		<-time.After(tokenLiveTime + time.Millisecond*5)
+
+		_, _, err := c.NextReader()
+		if gorillaws.IsCloseError(err, gorillaws.CloseNormalClosure) {
+			return
+		}
+
+		t.Fatalf("ws not closed by token expiraiton")
+	})
+
+	t.Run("shutdown is working properly", func(t *testing.T) {
+		_, _, err := c.NextReader()
+		assert.Error(t, err)
+		assert.True(t, gorillaws.IsCloseError(err, gorillaws.CloseNormalClosure))
+	})
+}
+
+func newHTTPHandler(
+	uid types.UserID,
+	eventsCh chan eventstream.Event,
+	shutdownCh chan struct{},
+) (*websocketstream.HTTPHandler, error) {
+	return websocketstream.NewHTTPHandler(websocketstream.NewOptions(
+		zap.L(),
+		eventStreamMock{uid: uid, ch: eventsCh},
+		eventAdapter{},
+		websocketstream.JSONEventWriter{},
+		websocketstream.NewUpgrader([]string{origin}, secWsProtocol),
+		shutdownCh,
+		tokenexpiration.New(),
+		websocketstream.WithPingPeriod(pingInterval),
+	))
 }
 
 type eventStreamMock struct {

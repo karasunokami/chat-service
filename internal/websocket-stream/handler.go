@@ -25,16 +25,21 @@ type eventStream interface {
 	Subscribe(ctx context.Context, userID types.UserID) (<-chan eventstream.Event, error)
 }
 
+type tokenExpiration interface {
+	NewExpireContext(ctx context.Context, userID string, deadline time.Time) (context.Context, error)
+}
+
 //go:generate options-gen -out-filename=handler_options.gen.go -from-struct=Options
 type Options struct {
 	pingPeriod time.Duration `default:"3s" validate:"omitempty,min=100ms,max=30s"`
 
-	logger       *zap.Logger     `option:"mandatory" validate:"required"`
-	eventStream  eventStream     `option:"mandatory" validate:"required"`
-	eventAdapter EventAdapter    `option:"mandatory" validate:"required"`
-	eventWriter  EventWriter     `option:"mandatory" validate:"required"`
-	upgrader     Upgrader        `option:"mandatory" validate:"required"`
-	shutdownCh   <-chan struct{} `option:"mandatory" validate:"required"`
+	logger          *zap.Logger     `option:"mandatory" validate:"required"`
+	eventStream     eventStream     `option:"mandatory" validate:"required"`
+	eventAdapter    EventAdapter    `option:"mandatory" validate:"required"`
+	eventWriter     EventWriter     `option:"mandatory" validate:"required"`
+	upgrader        Upgrader        `option:"mandatory" validate:"required"`
+	shutdownCh      <-chan struct{} `option:"mandatory" validate:"required"`
+	tokenExpiration tokenExpiration `option:"mandatory" validate:"required"`
 }
 
 type HTTPHandler struct {
@@ -63,13 +68,20 @@ func (h *HTTPHandler) Serve(eCtx echo.Context) error {
 		return fmt.Errorf("upgrade request, err=%v", err)
 	}
 
-	ctx, cancel := context.WithCancel(eCtx.Request().Context())
+	exp := middlewares.MustExpiresAt(eCtx)
+	uid := middlewares.MustUserID(eCtx)
+
+	ctxWithExpiration, err := h.tokenExpiration.NewExpireContext(eCtx.Request().Context(), uid.String(), exp)
+	if err != nil {
+		return fmt.Errorf("create context with token expiration timeout, err=%v", err)
+	}
+
+	wsCtx, cancel := context.WithCancel(ctxWithExpiration)
 	defer cancel()
 
 	wsCloser := newWsCloser(h.logger, ws)
-	uid := middlewares.MustUserID(eCtx)
 
-	events, err := h.eventStream.Subscribe(ctx, uid)
+	events, err := h.eventStream.Subscribe(wsCtx, uid)
 	if err != nil {
 		h.logger.Error("Cannot subscribe for events", zap.Error(err))
 		wsCloser.Close(gorillaws.CloseInternalServerErr)
@@ -77,13 +89,13 @@ func (h *HTTPHandler) Serve(eCtx echo.Context) error {
 		return nil
 	}
 
-	eg, ctx := errgroup.WithContext(ctx)
+	eg, egCtx := errgroup.WithContext(wsCtx)
 
-	eg.Go(func() error { return h.writeLoop(ctx, ws, events) })
-	eg.Go(func() error { return h.readLoop(ctx, ws) })
+	eg.Go(func() error { return h.writeLoop(egCtx, ws, events) })
+	eg.Go(func() error { return h.readLoop(egCtx, ws) })
 	eg.Go(func() error {
 		select {
-		case <-ctx.Done():
+		case <-egCtx.Done():
 		case <-h.shutdownCh:
 			wsCloser.Close(gorillaws.CloseNormalClosure)
 		}
@@ -95,9 +107,9 @@ func (h *HTTPHandler) Serve(eCtx echo.Context) error {
 		if gorillaws.IsUnexpectedCloseError(err, gorillaws.CloseNormalClosure, gorillaws.CloseNoStatusReceived) {
 			h.logger.Error("unexpected error", zap.Error(err))
 			wsCloser.Close(gorillaws.CloseInternalServerErr)
-		}
 
-		return nil
+			return err
+		}
 	}
 
 	wsCloser.Close(gorillaws.CloseNormalClosure)
