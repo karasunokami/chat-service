@@ -11,7 +11,7 @@ import (
 	"github.com/karasunokami/chat-service/internal/types"
 )
 
-var ErrNotFound = errors.New("Chat not found")
+var ErrNotFound = errors.New("chat not found")
 
 func (r *Repo) CreateIfNotExists(ctx context.Context, userID types.UserID) (types.ChatID, error) {
 	chatID, err := r.db.Chat(ctx).Create().
@@ -25,7 +25,7 @@ func (r *Repo) CreateIfNotExists(ctx context.Context, userID types.UserID) (type
 	return chatID, nil
 }
 
-func (r *Repo) GetManagerOpened(ctx context.Context, managerID types.UserID) ([]*Chat, error) {
+func (r *Repo) GetManagerOpened(ctx context.Context, managerID types.UserID) ([]Chat, error) {
 	chats, err := r.db.Chat(ctx).Query().
 		Where(chat.HasProblemsWith(
 			problem.ManagerIDEQ(managerID),

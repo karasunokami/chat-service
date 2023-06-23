@@ -32,7 +32,7 @@ type problemsRepo interface {
 }
 
 type messagesRepo interface {
-	CreateService(
+	CreateClientService(
 		ctx context.Context,
 		problemID types.ProblemID,
 		chatID types.ChatID,
@@ -93,7 +93,7 @@ func (u UseCase) Handle(ctx context.Context, req Request) error {
 			return fmt.Errorf("problems repo, mark problem as resolved, err=%w", err)
 		}
 
-		msg, err := u.messagesRepo.CreateService(ctx, problemID, req.ChatID, messageResolvedMessageBody)
+		msg, err := u.messagesRepo.CreateClientService(ctx, problemID, req.ChatID, messageResolvedMessageBody)
 		if err != nil {
 			return fmt.Errorf("messages repo, create service, err=%w", err)
 		}

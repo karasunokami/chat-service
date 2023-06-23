@@ -284,12 +284,12 @@ func startNewDeps(ctx context.Context, cfg config.Config) (serverDeps, error) {
 func (d serverDeps) stop() {
 	err := closeIfNotNil(d.psqlClient)
 	if err != nil {
-		d.clientLogger.Error("stop psql client", zap.Error(err))
+		d.clientLogger.Error("Stop psql client", zap.Error(err))
 	}
 
 	err = closeIfNotNil(d.managerPool)
 	if err != nil {
-		d.clientLogger.Error("stop manager pool", zap.Error(err))
+		d.clientLogger.Error("Stop manager pool", zap.Error(err))
 	}
 }
 

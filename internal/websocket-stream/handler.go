@@ -93,7 +93,7 @@ func (h *HTTPHandler) Serve(eCtx echo.Context) error {
 
 	if err := eg.Wait(); err != nil {
 		if gorillaws.IsUnexpectedCloseError(err, gorillaws.CloseNormalClosure, gorillaws.CloseNoStatusReceived) {
-			h.logger.Error("unexpected error", zap.Error(err))
+			h.logger.Error("Unexpected error", zap.Error(err))
 			wsCloser.Close(gorillaws.CloseInternalServerErr)
 		}
 
@@ -157,7 +157,7 @@ func (h *HTTPHandler) writeLoop(ctx context.Context, ws Websocket, events <-chan
 
 			adapted, err := h.eventAdapter.Adapt(event)
 			if err != nil {
-				h.logger.With(zap.Error(err)).Error("cannot adapt event to out stream")
+				h.logger.With(zap.Error(err)).Error("Cannot adapt event to out stream")
 
 				continue
 			}

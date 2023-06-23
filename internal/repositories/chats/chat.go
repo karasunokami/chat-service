@@ -13,8 +13,8 @@ type Chat struct {
 	CreatedAt time.Time
 }
 
-func storeChatsToRepoChats(chats []*store.Chat) []*Chat {
-	chs := make([]*Chat, 0, len(chats))
+func storeChatsToRepoChats(chats []*store.Chat) []Chat {
+	chs := make([]Chat, 0, len(chats))
 
 	for _, chat := range chats {
 		chs = append(chs, storeChatToRepoChat(chat))
@@ -23,8 +23,8 @@ func storeChatsToRepoChats(chats []*store.Chat) []*Chat {
 	return chs
 }
 
-func storeChatToRepoChat(m *store.Chat) *Chat {
-	return &Chat{
+func storeChatToRepoChat(m *store.Chat) Chat {
+	return Chat{
 		ID:        m.ID,
 		ClientID:  m.ClientID,
 		CreatedAt: m.CreatedAt,

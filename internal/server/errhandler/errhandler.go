@@ -44,6 +44,6 @@ func (h Handler) Handle(err error, eCtx echo.Context) {
 
 	eCtxErr := eCtx.JSON(http.StatusOK, h.responseBuilder(code, msg, details))
 	if eCtxErr != nil {
-		h.lg.Error("put json to echo context", zap.Error(eCtxErr))
+		h.lg.Error("Put json to echo context", zap.Error(eCtxErr))
 	}
 }

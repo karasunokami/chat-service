@@ -91,10 +91,10 @@ func (s *Service) Run(ctx context.Context) error {
 				if err != nil {
 					err := s.managersPool.Put(ctx, mngID)
 					if err != nil {
-						s.logger.Error("return manager to managers pool", zap.Error(err))
+						s.logger.Warn("Return manager to managers pool", zap.Error(err))
 					}
 
-					s.logger.Error("Fetch problems without managers", zap.Error(err))
+					s.logger.Error("Set manager to problem", zap.Error(err))
 
 					continue
 				}

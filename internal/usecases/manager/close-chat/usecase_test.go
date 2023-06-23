@@ -158,7 +158,7 @@ func (s *UseCaseSuite) TestMarkProblemAsResolvedError() {
 	s.ErrorIs(err, expectedError)
 }
 
-func (s *UseCaseSuite) TestCreateServiceMessageError() {
+func (s *UseCaseSuite) TestCreateClientServiceMessageError() {
 	// Arrange.
 	reqID := types.NewRequestID()
 	managerID := types.NewUserID()
@@ -182,7 +182,7 @@ func (s *UseCaseSuite) TestCreateServiceMessageError() {
 			return f(ctx)
 		})
 	s.problemsRepoMock.EXPECT().MarkProblemAsResolved(s.Ctx, problemID).Return(nil)
-	s.messagesRepoMock.EXPECT().CreateService(s.Ctx, problemID, chatID, gomock.Any()).
+	s.messagesRepoMock.EXPECT().CreateClientService(s.Ctx, problemID, chatID, gomock.Any()).
 		Return(nil, expectedError)
 
 	// Action.
@@ -218,7 +218,7 @@ func (s *UseCaseSuite) TestOutboxPutError() {
 			return f(ctx)
 		})
 	s.problemsRepoMock.EXPECT().MarkProblemAsResolved(s.Ctx, problemID).Return(nil)
-	s.messagesRepoMock.EXPECT().CreateService(s.Ctx, problemID, chatID, gomock.Any()).
+	s.messagesRepoMock.EXPECT().CreateClientService(s.Ctx, problemID, chatID, gomock.Any()).
 		Return(&msg, nil)
 
 	payload, err := chatclosed.MarshalPayload(managerID, msg.ID, reqID)
@@ -258,7 +258,7 @@ func (s *UseCaseSuite) TestSuccessStory() {
 			return f(ctx)
 		})
 	s.problemsRepoMock.EXPECT().MarkProblemAsResolved(s.Ctx, problemID).Return(nil)
-	s.messagesRepoMock.EXPECT().CreateService(s.Ctx, problemID, chatID, gomock.Any()).
+	s.messagesRepoMock.EXPECT().CreateClientService(s.Ctx, problemID, chatID, gomock.Any()).
 		Return(&msg, nil)
 
 	payload, err := chatclosed.MarshalPayload(managerID, msg.ID, reqID)

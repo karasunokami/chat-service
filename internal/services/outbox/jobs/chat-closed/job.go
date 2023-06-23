@@ -130,6 +130,6 @@ func repoMsgToProducerMsg(msg *messagesrepo.Message) msgproducer.Message {
 		ID:         msg.ID,
 		ChatID:     msg.ChatID,
 		Body:       msg.Body,
-		FromClient: !msg.IsService,
+		FromClient: false,
 	}
 }

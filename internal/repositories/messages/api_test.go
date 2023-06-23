@@ -53,7 +53,7 @@ func (s *MsgRepoAPISuite) Test_GetMessageByID() {
 			SetProblemID(problemID).
 			SetBody(msgBody).
 			SetIsBlocked(true).
-			SetIsService(true).
+			SetIsService(false).
 			SetInitialRequestID(types.NewRequestID()).
 			Save(s.Ctx)
 		s.Require().NoError(err)
@@ -178,14 +178,14 @@ func (s *MsgRepoAPISuite) Test_CreateClientVisible_DuplicationError() {
 	s.Require().Error(err)
 }
 
-func (s *MsgRepoAPISuite) Test_CreateService() {
+func (s *MsgRepoAPISuite) Test_CreateClientService() {
 	authorID := types.NewUserID()
 
 	// Create chat and problem.
 	problemID, chatID := s.createProblemAndChat(authorID)
 
 	// Check message was created.
-	msg, err := s.repo.CreateService(s.Ctx, problemID, chatID, msgBody)
+	msg, err := s.repo.CreateClientService(s.Ctx, problemID, chatID, msgBody)
 	s.Require().NoError(err)
 	s.Require().NotNil(msg)
 	s.NotEmpty(msg.ID)

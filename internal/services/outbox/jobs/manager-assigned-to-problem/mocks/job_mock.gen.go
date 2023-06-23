@@ -112,19 +112,19 @@ func (m *MockmessageRepository) EXPECT() *MockmessageRepositoryMockRecorder {
 	return m.recorder
 }
 
-// CreateService mocks base method.
-func (m *MockmessageRepository) CreateService(ctx context.Context, problemID types.ProblemID, chatID types.ChatID, msgBody string) (*messagesrepo.Message, error) {
+// CreateClientService mocks base method.
+func (m *MockmessageRepository) CreateClientService(ctx context.Context, problemID types.ProblemID, chatID types.ChatID, msgBody string) (*messagesrepo.Message, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateService", ctx, problemID, chatID, msgBody)
+	ret := m.ctrl.Call(m, "CreateClientService", ctx, problemID, chatID, msgBody)
 	ret0, _ := ret[0].(*messagesrepo.Message)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// CreateService indicates an expected call of CreateService.
-func (mr *MockmessageRepositoryMockRecorder) CreateService(ctx, problemID, chatID, msgBody interface{}) *gomock.Call {
+// CreateClientService indicates an expected call of CreateClientService.
+func (mr *MockmessageRepositoryMockRecorder) CreateClientService(ctx, problemID, chatID, msgBody interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateService", reflect.TypeOf((*MockmessageRepository)(nil).CreateService), ctx, problemID, chatID, msgBody)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateClientService", reflect.TypeOf((*MockmessageRepository)(nil).CreateClientService), ctx, problemID, chatID, msgBody)
 }
 
 // GetFirstProblemMessage mocks base method.

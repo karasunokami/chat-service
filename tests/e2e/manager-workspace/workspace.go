@@ -420,6 +420,6 @@ func (e *RespError) Error() string {
 	return e.err.Error()
 }
 
-func (e *RespError) GetCode() int {
+func (e *RespError) Code() int {
 	return e.code
 }
