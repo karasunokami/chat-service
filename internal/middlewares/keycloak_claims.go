@@ -19,11 +19,16 @@ type claims struct {
 	Audience        keycloakclient.StringsSliceFromStringOrSlice `json:"aud,omitempty"`
 	Subject         types.UserID                                 `json:"sub,omitempty"`
 	ResourcesAccess resourceAccess                               `json:"resource_access"`
+	// Exp field is copy of claims ExpiresAt int64 field
+	// it must be copied after parsing jwt to be accessible from handlers
+	// Adding json tag to this field is unavailable because it is
+	// overriding default claims exp field used by default jwt exp validation
+	Exp int64
 }
 
 // Valid returns errors:
 // - from StandardClaims validation;
-// - ErrNoAllowedResources, if claims doesn't contain `resource_access` map or it's empty;
+// - ErrNoAllowedResources, if claims doesn't contain `resource_access` map, or it's empty;
 // - ErrSubjectNotDefined, if claims doesn't contain `sub` field or subject is zero UUID.
 func (c claims) Valid() error {
 	if err := c.StandardClaims.Valid(); err != nil {
@@ -43,6 +48,10 @@ func (c claims) Valid() error {
 
 func (c claims) UserID() types.UserID {
 	return c.Subject
+}
+
+func (c claims) ExpiresAtUnix() int64 {
+	return c.Exp
 }
 
 type resourceAccess map[string]struct {

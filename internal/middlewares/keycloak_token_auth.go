@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	keycloakclient "github.com/karasunokami/chat-service/internal/clients/keycloak"
 	"github.com/karasunokami/chat-service/internal/types"
@@ -61,11 +62,32 @@ func NewKeyCloakTokenAuth(introspector Introspector, resource, role string) echo
 				return false, ErrNoRequiredResourceRole
 			}
 
+			// Copy standard exp field to custom exp claims field to prevent
+			// overriding by json decode
+			cl.Exp = cl.ExpiresAt
+
 			eCtx.Set(tokenCtxKey, token)
 
 			return true, nil
 		},
 	})
+}
+
+func MustUserID(eCtx echo.Context) types.UserID {
+	uid, ok := userID(eCtx)
+	if !ok {
+		panic("no user token in request context")
+	}
+	return uid
+}
+
+func MustExpiresAt(eCtx echo.Context) time.Time {
+	exp, ok := expiresAt(eCtx)
+	if !ok {
+		panic("no exp in request context")
+	}
+
+	return time.Unix(exp, 0)
 }
 
 func extractToken(tokenStr string) string {
@@ -78,21 +100,8 @@ func extractToken(tokenStr string) string {
 	return parts[0]
 }
 
-func MustUserID(eCtx echo.Context) types.UserID {
-	uid, ok := userID(eCtx)
-	if !ok {
-		panic("no user token in request context")
-	}
-	return uid
-}
-
 func userID(eCtx echo.Context) (types.UserID, bool) {
-	t := eCtx.Get(tokenCtxKey)
-	if t == nil {
-		return types.UserIDNil, false
-	}
-
-	tt, ok := t.(*jwt.Token)
+	tt, ok := extractTokenFromContext(eCtx)
 	if !ok {
 		return types.UserIDNil, false
 	}
@@ -102,4 +111,35 @@ func userID(eCtx echo.Context) (types.UserID, bool) {
 		return types.UserIDNil, false
 	}
 	return userIDProvider.UserID(), true
+}
+
+func expiresAt(eCtx echo.Context) (int64, bool) {
+	tt, ok := extractTokenFromContext(eCtx)
+	if !ok {
+		return 0, false
+	}
+
+	if expProvider, ok := tt.Claims.(interface{ ExpiresAt() int64 }); ok {
+		return expProvider.ExpiresAt(), true
+	}
+
+	if expProvider, ok := tt.Claims.(interface{ ExpiresAtUnix() int64 }); ok {
+		return expProvider.ExpiresAtUnix(), true
+	}
+
+	return 0, false
+}
+
+func extractTokenFromContext(eCtx echo.Context) (*jwt.Token, bool) {
+	t := eCtx.Get(tokenCtxKey)
+	if t == nil {
+		return nil, false
+	}
+
+	tt, ok := t.(*jwt.Token)
+	if !ok {
+		return nil, false
+	}
+
+	return tt, true
 }

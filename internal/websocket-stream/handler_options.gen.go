@@ -19,6 +19,7 @@ func NewOptions(
 	eventWriter EventWriter,
 	upgrader Upgrader,
 	shutdownCh <-chan struct{},
+	tokenExpiration tokenExpiration,
 	options ...OptOptionsSetter,
 ) Options {
 	o := Options{}
@@ -32,6 +33,7 @@ func NewOptions(
 	o.eventWriter = eventWriter
 	o.upgrader = upgrader
 	o.shutdownCh = shutdownCh
+	o.tokenExpiration = tokenExpiration
 
 	for _, opt := range options {
 		opt(&o)
@@ -54,6 +56,7 @@ func (o *Options) Validate() error {
 	errs.Add(errors461e464ebed9.NewValidationError("eventWriter", _validate_Options_eventWriter(o)))
 	errs.Add(errors461e464ebed9.NewValidationError("upgrader", _validate_Options_upgrader(o)))
 	errs.Add(errors461e464ebed9.NewValidationError("shutdownCh", _validate_Options_shutdownCh(o)))
+	errs.Add(errors461e464ebed9.NewValidationError("tokenExpiration", _validate_Options_tokenExpiration(o)))
 	return errs.AsError()
 }
 
@@ -102,6 +105,13 @@ func _validate_Options_upgrader(o *Options) error {
 func _validate_Options_shutdownCh(o *Options) error {
 	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.shutdownCh, "required"); err != nil {
 		return fmt461e464ebed9.Errorf("field `shutdownCh` did not pass the test: %w", err)
+	}
+	return nil
+}
+
+func _validate_Options_tokenExpiration(o *Options) error {
+	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.tokenExpiration, "required"); err != nil {
+		return fmt461e464ebed9.Errorf("field `tokenExpiration` did not pass the test: %w", err)
 	}
 	return nil
 }

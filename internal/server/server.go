@@ -9,6 +9,7 @@ import (
 
 	"github.com/karasunokami/chat-service/internal/middlewares"
 	eventstream "github.com/karasunokami/chat-service/internal/services/event-stream"
+	tokenexpiration "github.com/karasunokami/chat-service/internal/services/token-expiration"
 	websocketstream "github.com/karasunokami/chat-service/internal/websocket-stream"
 
 	"github.com/labstack/echo/v4"
@@ -90,6 +91,7 @@ func New(opts Options) (*Server, error) {
 		websocketstream.JSONEventWriter{},
 		websocketstream.NewUpgrader(opts.allowOrigins, opts.wsSecProtocol),
 		shutdownCh,
+		tokenexpiration.New(),
 	))
 	if err != nil {
 		return nil, fmt.Errorf("create ws handler, err=%v", err)
